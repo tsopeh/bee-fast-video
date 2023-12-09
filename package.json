@@ -13,64 +13,22 @@
   },
   "type": "module",
   "devDependencies": {
-    "@babel/core": "^7.21.0",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-transform-react-jsx": "^7.21.0",
-    "@babel/preset-env": "^7.20.2",
-    "@preact/preset-vite": "^2.5.0",
-    "@types/chrome": "^0.0.251",
-    "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^8.35.0",
+    "@preact/preset-vite": "^2.7.0",
+    "@types/chrome": "^0.0.254",
+    "@types/node": "^20.10.4",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "eslint": "^8.55.0",
     "eslint-config-preact": "^1.3.0",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsx-a11y": "^6.7.1",
-    "nodemon": "^3.0.0",
-    "preact": "^10.13.0",
-    "preact-render-to-string": "^6.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "nodemon": "^3.0.2",
+    "preact": "^10.19.3",
+    "preact-render-to-string": "^6.3.1",
     "sass": "^1.69.5",
     "typescript": "^5.3.3",
     "vite": "^5.0.7",
     "vite-plugin-checker": "^0.6.2",
     "vite-plugin-css-injected-by-js": "^3.3.0"
-  },
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "es6": true,
-      "node": true
-    },
-    "extends": [
-      "preact",
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:prettier/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaFeatures": {
-        "jsx": true
-      },
-      "ecmaVersion": "latest",
-      "sourceType": "module"
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "globals": {
-      "chrome": "readonly"
-    },
-    "rules": {
-      "prettier/prettier": [
-        "warn",
-        {
-          "singleQuote": true,
-          "jsxSingleQuote": true,
-          "trailingComma": "es5",
-          "arrowParens": "avoid"
-        }
-      ]
-    }
   }
 }

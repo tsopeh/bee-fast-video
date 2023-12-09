@@ -4,11 +4,7 @@ export const Logo = () => (
     height="180px"
     viewBox="-256 -256 1800 512"
     title="Preact"
-    style="
-display: inline-block;
-margin: -0.25em 0px 0px;
-vertical-align: middle;
-"
+    style="display: inline-block;margin: -0.25em 0px 0px;vertical-align: middle;"
   >
     <path
       d="M0,-256 221.7025033688164,-128 221.7025033688164,128 0,256 -221.7025033688164,128 -221.7025033688164,-128z"
