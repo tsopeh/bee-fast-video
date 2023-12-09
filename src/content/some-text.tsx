@@ -1,0 +1,1 @@
+export const SomeText = () => <div>Some text</div>

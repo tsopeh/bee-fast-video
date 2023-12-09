@@ -8,7 +8,7 @@
     "url": "https://github.com/tsopeh/video-king.git"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "rm -rf dist && VITE_INPUT='content' vite build && VITE_INPUT='popup' vite build",
     "dev": "nodemon"
   },
   "type": "module",
@@ -29,6 +29,7 @@
     "typescript": "^5.3.3",
     "vite": "^5.0.7",
     "vite-plugin-checker": "^0.6.2",
-    "vite-plugin-css-injected-by-js": "^3.3.0"
+    "vite-plugin-css-injected-by-js": "^3.3.0",
+    "vite-plugin-singlefile": "^0.13.5"
   }
 }

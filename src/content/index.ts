@@ -1,4 +1,6 @@
+import { render } from "preact"
 import "./content.scss"
+import { SomeText } from "./some-text"
 
 interface ObserveVideoElementsOptions {
   throttleMs: number
@@ -36,6 +38,9 @@ function initVideoManager () {
   const rootElement = document.createElement("div")
   rootElement.classList.add("video-king-root-element")
   document.body.appendChild(rootElement)
+
+  render(SomeText, rootElement)
+
   const registeredVideoElements = new Set<HTMLVideoElement>()
   return {
     updateState: () => {
