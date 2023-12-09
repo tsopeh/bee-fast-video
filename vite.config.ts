@@ -1,6 +1,7 @@
 import preact from "@preact/preset-vite"
 import { resolve } from "path"
 import { defineConfig } from "vite"
+import checker from "vite-plugin-checker"
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js"
 import makeManifest from "./src/make-manifest"
 
@@ -15,7 +16,9 @@ export default defineConfig({
     preact(),
     cssInjectedByJsPlugin({
       relativeCSSInjection: true,
-    })],
+    }),
+    checker({ typescript: true }),
+  ],
   publicDir,
   build: {
     outDir,
