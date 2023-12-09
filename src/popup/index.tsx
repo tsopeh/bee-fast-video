@@ -1,4 +1,13 @@
-import Popup from '@src/popup/Popup';
-import { initElement } from '@src/main';
+import { JSX, render } from "preact"
+import { Popup } from "./Popup"
+import "./popup.scss"
 
-initElement(<Popup />);
+export const initElement = (elem: JSX.Element) => {
+  const appContainer = document.querySelector("#app-container")
+  if (!appContainer) {
+    throw new Error("Can not find AppContainer")
+  }
+  render(elem, appContainer)
+}
+
+initElement(<Popup/>)

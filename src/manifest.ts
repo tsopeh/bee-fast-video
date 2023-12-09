@@ -1,4 +1,4 @@
-import { ManifestType } from "@src/manifest-type"
+import { ManifestType } from "./manifest-type"
 import packageJson from "../package.json"
 
 const manifest: ManifestType = {
