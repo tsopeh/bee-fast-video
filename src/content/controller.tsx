@@ -61,7 +61,14 @@ export const Controller = ({ videoEl }: Props) => {
       zIndex: zIndex,
     }}>
     <div className="underlay"></div>
-    <div><span>Is paused</span><span> - </span><span>{String(isPaused)}</span></div>
+    <button onClick={(event) => {
+      event.stopPropagation()
+      if (isPaused) {
+        videoEl.play()
+      } else {
+        videoEl.pause()
+      }
+    }}>{isPaused ? "Play" : "Pause"}</button>
   </div>
 }
 
