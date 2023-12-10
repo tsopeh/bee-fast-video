@@ -5,4 +5,8 @@
   width: 10rem;
   height: 10rem;
   background-color: rgb(255, 0, 0, 0.3);
+
+  .controller {
+    z-index: 999999;
+  }
 }
