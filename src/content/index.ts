@@ -3,29 +3,22 @@ import "./content.scss"
 import { SomeText } from "./some-text"
 
 interface ObserveVideoElementsOptions {
-  throttleMs: number
-  onMutationsSettled: () => void
+  target: Node,
+  onMutation: (mutations: Array<MutationRecord>) => void
 }
 
 function observeForVideoElements ({
-  throttleMs,
-  onMutationsSettled,
+  target,
+  onMutation,
 }: ObserveVideoElementsOptions) {
 
-  let lastSetTimeoutId: number | undefined = undefined
   const observer = new MutationObserver(
-    (mutationList, observer) => {
-      const hasMutationOfInterest = mutationList.some(mutation => mutation.type == "childList" || mutation.type == "attributes")
-      if (hasMutationOfInterest) {
-        clearTimeout(lastSetTimeoutId)
-        lastSetTimeoutId = window.setTimeout(() => {
-          onMutationsSettled()
-        }, throttleMs)
-      }
+    (mutations) => {
+      onMutation(mutations)
     },
   )
 
-  observer.observe(document.body, { childList: true, subtree: true })
+  observer.observe(target, { childList: true, subtree: true })
 
   return {
     stopObserving: () => {
@@ -43,28 +36,25 @@ function initVideoManager () {
 
   const registeredVideoElements = new Set<HTMLVideoElement>()
   return {
-    updateState: () => {
-      const foundVideoElements = new Set(Array.from(document.body.querySelectorAll("video")))
-      console.log("king: found", foundVideoElements)
-      const addedVideoElements = Array.from(foundVideoElements).filter(el => {
-        return !registeredVideoElements.has(el)
-      })
-      const removedVideoElements = Array.from(registeredVideoElements).filter(el => {
-        return !foundVideoElements.has(el)
-      })
+    updateState: (mutations: Array<MutationRecord>) => {
 
-      const hasNothingTodo = addedVideoElements.length == 0 && removedVideoElements.length == 0
+      const { addedVideoElements, removedVideoElements } = extractVideoElementsFromMutations(mutations)
+
+      const hasNothingTodo = addedVideoElements.size == 0 && removedVideoElements.size == 0
       if (hasNothingTodo) {
-        console.log("video-king: has nothing to do", registeredVideoElements)
+        console.log("video-king", "has nothing to do", registeredVideoElements)
         return
       }
       addedVideoElements.forEach(el => {
-        console.log("video-king: added", el)
+        console.log("video-king", "adding", el)
         registeredVideoElements.add(el)
       })
       removedVideoElements.forEach(el => {
-        console.log("video-king: removed", el)
-        registeredVideoElements.delete(el)
+        console.log("video-king", "removing", el)
+        const didRemove = registeredVideoElements.delete(el)
+        if (!didRemove) {
+          console.error("video-king", "Didn't manage to remove a HtmlVideoElement", el)
+        }
       })
     },
   }
@@ -73,8 +63,36 @@ function initVideoManager () {
 const videoManager = initVideoManager()
 
 observeForVideoElements({
-  throttleMs: 50,
-  onMutationsSettled: () => {
-    videoManager.updateState()
+  target: document.body,
+  onMutation: (mutations) => {
+    videoManager.updateState(mutations)
   },
 })
+
+function extractVideoElementsFromMutations (mutations: Array<MutationRecord>) {
+  return mutations.reduce((acc, mutation) => {
+    const didChildListChange = mutation.type == "childList"
+    if (didChildListChange) {
+      extractVideoElementsFromNodes(Array.from(mutation.addedNodes), acc.addedVideoElements)
+      extractVideoElementsFromNodes(Array.from(mutation.removedNodes), acc.removedVideoElements)
+    }
+    return acc
+  }, {
+    addedVideoElements: new Set<HTMLVideoElement>(),
+    removedVideoElements: new Set<HTMLVideoElement>(),
+  })
+}
+
+function extractVideoElementsFromNodes (nodes: Array<Node>, buffer: Set<HTMLVideoElement>): void {
+  nodes.forEach(node => {
+    const isVideo = node.nodeName.toLowerCase() == "video"
+    const hasChildren = node.hasChildNodes()
+    if (isVideo) {
+      buffer.add(node as HTMLVideoElement)
+    } else if (hasChildren && node instanceof HTMLElement) {
+      for (const videoEl of node.getElementsByTagName("video")) {
+        buffer.add(videoEl)
+      }
+    }
+  })
+}
