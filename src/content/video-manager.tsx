@@ -1,14 +1,18 @@
 import { h, render } from "preact"
-import { VideoControls } from "./video-controls"
+import { ControllersContainer } from "./controllers-container"
+import { createObservable } from "./observable"
 
 export function initVideoManager () {
+  const { observable, publish } = createObservable<Array<HTMLVideoElement>>()
+
   const rootElement = document.createElement("div")
   rootElement.classList.add("video-king-root-element")
   document.body.appendChild(rootElement)
 
-  render(h(VideoControls, null), rootElement)
+  render(h(ControllersContainer, { outsideStateChanges: observable }), rootElement)
 
   const registeredVideoElements = new Set<HTMLVideoElement>()
+
   return {
     updateState: (mutations: Array<MutationRecord>) => {
 
@@ -16,20 +20,19 @@ export function initVideoManager () {
 
       const hasNothingTodo = addedVideoElements.size == 0 && removedVideoElements.size == 0
       if (hasNothingTodo) {
-        console.log("video-king", "has nothing to do", registeredVideoElements)
         return
       }
       addedVideoElements.forEach(el => {
-        console.log("video-king", "adding", el)
         registeredVideoElements.add(el)
       })
       removedVideoElements.forEach(el => {
-        console.log("video-king", "removing", el)
         const didRemove = registeredVideoElements.delete(el)
         if (!didRemove) {
           console.error("video-king", "Didn't manage to remove a HtmlVideoElement", el)
         }
       })
+
+      publish(Array.from(registeredVideoElements))
     },
   }
 }
