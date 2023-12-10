@@ -38,7 +38,6 @@ export default defineConfig({
   publicDir,
   build: {
     outDir,
-    sourcemap: true,
     rollupOptions: {
       input: rollupInput,
       output: {

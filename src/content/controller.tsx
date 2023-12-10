@@ -1,3 +1,4 @@
+import { createPortal } from "preact/compat"
 import { useEffect, useState } from "preact/hooks"
 import { viewportIntersection } from "./intersection-observer"
 
@@ -47,13 +48,17 @@ export const Controller = ({ videoEl }: Props) => {
     }
   }, [])
 
-  return <div
-    className="controller"
-    style={{
-      position: "fixed",
-      top: position.top,
-      left: position.left,
-    }}>
-    <div><span>Is paused</span> - <span>{String(isPaused)}</span></div>
-  </div>
+  return <>
+    {
+      createPortal(<div
+        className="controller"
+        style={{
+          position: "fixed",
+          top: position.top,
+          left: position.left,
+        }}>
+        <div><span>Is paused</span> - <span>{String(isPaused)}</span></div>
+      </div>, videoEl.parentElement!)
+    }
+  </>
 }
