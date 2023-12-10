@@ -1,17 +1,21 @@
 import { useEffect, useState } from "preact/hooks"
+import { Controller } from "./controller"
 import { observeForVideoElements } from "./mutation-observer"
 import { computeNewState } from "./state"
 
 export const ControllersContainer = () => {
 
-  const [videoElements, setVideoElements] = useState(new Set<HTMLVideoElement>())
+  const [videoElements, setVideoElements] = useState(() => {
+    return new Set(document.body.querySelectorAll("video"))
+  })
 
   useEffect(() => {
     const { stopObserving } = observeForVideoElements({
       target: document.body,
       onMutation: (mutations) => {
         setVideoElements((prevState) => {
-          return computeNewState(prevState, mutations)
+          const newState = computeNewState(prevState, mutations)
+          return newState
         })
       },
     })
@@ -23,7 +27,9 @@ export const ControllersContainer = () => {
   return <div>
     {
       Array.from(videoElements).map((videoEl, index) => {
-        return index
+        return <Controller
+          videoEl={videoEl}
+        />
       })
     }
   </div>
