@@ -1,13 +1,10 @@
+import { h, render } from "preact"
 import "./content.scss"
-import { observeForVideoElements } from "./mutation-observer"
-import { initVideoManager } from "./video-manager"
+import { ControllersContainer } from "./controllers-container"
 
-const videoManager = initVideoManager()
+const rootElement = document.createElement("div")
+rootElement.classList.add("video-king-root-element")
+document.body.appendChild(rootElement)
 
-observeForVideoElements({
-  target: document.body,
-  onMutation: (mutations) => {
-    videoManager.updateState(mutations)
-  },
-})
+render(h(ControllersContainer, null), rootElement)
 

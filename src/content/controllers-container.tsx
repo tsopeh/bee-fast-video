@@ -1,29 +1,28 @@
 import { useEffect, useState } from "preact/hooks"
-import { Observable } from "./observable"
+import { observeForVideoElements } from "./mutation-observer"
+import { computeNewState } from "./state"
 
-interface Props {
-  outsideStateChanges: Observable<Array<HTMLVideoElement>>
-}
+export const ControllersContainer = () => {
 
-export const ControllersContainer = ({
-  outsideStateChanges,
-}: Props) => {
-
-  const [videoElements, setVideoElements] = useState<Array<HTMLVideoElement>>([])
+  const [videoElements, setVideoElements] = useState(new Set<HTMLVideoElement>())
 
   useEffect(() => {
-    const handleStateChange = (videos: Array<HTMLVideoElement>) => {
-      setVideoElements(videos)
-    }
-    outsideStateChanges.subscribe(handleStateChange)
+    const { stopObserving } = observeForVideoElements({
+      target: document.body,
+      onMutation: (mutations) => {
+        setVideoElements((prevState) => {
+          return computeNewState(prevState, mutations)
+        })
+      },
+    })
     return () => {
-      outsideStateChanges.unsubscribe(handleStateChange)
+      stopObserving()
     }
-  }, [outsideStateChanges])
+  }, [])
 
   return <div>
     {
-      videoElements.map((videoEl, index) => {
+      Array.from(videoElements).map((videoEl, index) => {
         return index
       })
     }
