@@ -11,7 +11,7 @@ function initIntersectionObservable () {
     /* Note: root = null means viewport */
     root: null,
     rootMargin: "0px",
-    threshold: Array.from({ length: stepsCount }).map((_, i) => (i + 1) / stepsCount),
+    threshold: 0,
   })
 
   return {
@@ -21,10 +21,11 @@ function initIntersectionObservable () {
     ) => {
       callbacksMap.set(videoEl, callback)
       intersectionObserver.observe(videoEl)
-    },
-    unregister: (videoEl: HTMLVideoElement) => {
-      intersectionObserver.unobserve(videoEl)
-      callbacksMap.delete(videoEl)
+      const unregisterHandler = () => {
+        intersectionObserver.unobserve(videoEl)
+        callbacksMap.delete(videoEl)
+      }
+      return unregisterHandler
     },
   }
 }

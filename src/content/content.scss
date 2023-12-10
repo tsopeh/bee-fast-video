@@ -1,12 +1,46 @@
 .video-king-root-element {
-  position: fixed;
-  top: 50vh;
+  > * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  position: absolute;
+  top: 0;
   left: 0;
-  width: 2rem;
-  height: 10rem;
-  background-color: rgb(255, 0, 0, 0.3);
+  width: 0;
+  height: 0;
 
   .controller {
-    z-index: 999999;
+    box-sizing: content-box;
+    position: absolute;
+    // top: _; Set in component.
+    // left: _; Set in component.
+    width: 10rem;
+    background-color: rgb(128, 128, 128);
+    color: rgb(255, 255, 255);
+    border: 1px solid rgb(255, 255, 255);
+    opacity: 0.4;
+    transition: all 100ms ease-in-out;
+
+    .underlay {
+      width: 0;
+      height: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      z-index: -1;
+      background-color: red;
+    }
+
+    &:hover {
+      opacity: 1;
+
+      .underlay {
+        width: 15rem;
+        height: 4rem;
+      }
+    }
   }
 }
