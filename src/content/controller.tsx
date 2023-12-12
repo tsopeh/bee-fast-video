@@ -8,6 +8,7 @@ interface Props {
 export const Controller = ({ videoEl }: Props) => {
   const [isPaused, setIsPaused] = useState(videoEl.paused)
   const [isVideoInViewport, setIsVideoInViewport] = useState(false)
+  const [isPictureInPicture, setIsPictureInPicture] = useState(document.pictureInPictureElement == videoEl)
   const [position, setPosition] = useState(() => {
     return getElementPosition(videoEl)
   })
@@ -20,8 +21,13 @@ export const Controller = ({ videoEl }: Props) => {
     const updatePosition = () => {
       setPosition(getElementPosition(videoEl))
     }
+    const onPictureInPictureChange = () => {
+      setIsPictureInPicture(document.pictureInPictureElement == videoEl)
+    }
     videoEl.addEventListener("play", onPlayPauseChange)
     videoEl.addEventListener("pause", onPlayPauseChange)
+    videoEl.addEventListener("enterpictureinpicture", onPictureInPictureChange)
+    videoEl.addEventListener("leavepictureinpicture", onPictureInPictureChange)
 
     const unregister = viewportIntersection.register(videoEl, (entry) => {
       updatePosition()
@@ -37,10 +43,16 @@ export const Controller = ({ videoEl }: Props) => {
     return () => {
       videoEl.removeEventListener("play", onPlayPauseChange)
       videoEl.removeEventListener("pause", onPlayPauseChange)
+      videoEl.removeEventListener("enterpictureinpicture", onPictureInPictureChange)
+      videoEl.removeEventListener("leavepictureinpicture", onPictureInPictureChange)
       unregister()
       styleMutationObserver.disconnect()
     }
   }, [])
+
+  if (!isVideoInViewport) {
+    return null
+  }
 
   return <div
     className="controller"
@@ -57,6 +69,15 @@ export const Controller = ({ videoEl }: Props) => {
         videoEl.pause()
       }
     }}>{isPaused ? "Play" : "Pause"}</button>
+    <button onClick={(event) => {
+      if (isPictureInPicture) {
+        document.exitPictureInPicture()
+      } else {
+        videoEl.disablePictureInPicture = false
+        videoEl.requestPictureInPicture()
+      }
+    }}>pip
+    </button>
   </div>
 }
 

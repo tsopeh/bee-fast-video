@@ -21,7 +21,7 @@
     color: rgb(255, 255, 255);
     border: 1px solid rgb(255, 255, 255);
     opacity: 0.4;
-    transition: all 100ms ease-in-out;
+    transition: opacity 100ms ease-in-out;
     z-index: 2147483647; // max int
 
     .underlay {
@@ -39,8 +39,8 @@
       opacity: 0.8;
 
       .underlay {
-        width: 16rem;
-        height: 6rem;
+        //width: 16rem;
+        //height: 6rem;
       }
     }
   }
