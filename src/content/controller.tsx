@@ -1,4 +1,5 @@
 import { useEffect, useState } from "preact/hooks"
+import { PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon } from "../assets/img/control-icons"
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -6,21 +7,20 @@ interface Props {
 }
 
 export const Controller = ({ videoEl }: Props) => {
-  const [isPaused, setIsPaused] = useState(videoEl.paused)
+  const [isPaused, setIsPaused] = useState(() => videoEl.paused)
   const [isVideoInViewport, setIsVideoInViewport] = useState(false)
-  const [isPictureInPicture, setIsPictureInPicture] = useState(document.pictureInPictureElement == videoEl)
+  const [isPictureInPicture, setIsPictureInPicture] = useState(() => document.pictureInPictureElement == videoEl)
   const [playbackRate, setPlaybackRate] = useState(videoEl.playbackRate)
-  const [shouldShowOptions, setShouldShowOptions] = useState(false)
-  const [position, setPosition] = useState(() => {
-    return getElementPosition(videoEl)
-  })
+  const [shouldShowMoreControls, setShouldShowMoreControls] = useState(false)
+  const [position, setPosition] = useState(() => getControllerPosition(videoEl))
+  const [isClosed, setIsClosed] = useState(false)
 
   useEffect(() => {
     const onPlayPauseChange = () => {
       setIsPaused(videoEl.paused)
     }
     const updatePosition = () => {
-      setPosition(getElementPosition(videoEl))
+      setPosition(getControllerPosition(videoEl))
     }
     const onPictureInPictureChange = () => {
       setIsPictureInPicture(document.pictureInPictureElement == videoEl)
@@ -56,7 +56,7 @@ export const Controller = ({ videoEl }: Props) => {
     }
   }, [])
 
-  if (!isVideoInViewport) {
+  if (!isVideoInViewport || isClosed) {
     return null
   }
 
@@ -69,49 +69,66 @@ export const Controller = ({ videoEl }: Props) => {
   >
     <div className="underlay"></div>
     <div
-      className="option playback-rate"
-      title="Video speed"
-      onClick={() => {
-        setShouldShowOptions((shouldShow) => !shouldShow)
-      }}
+      className="controls"
     >
-      <span>{playbackRate}×</span>
+      <div
+        className="control playback-rate"
+        title="Video speed"
+        onClick={() => {
+          setShouldShowMoreControls((shouldShow) => !shouldShow)
+        }}
+      >
+        <span>{playbackRate.toFixed(2)}</span>
+      </div>
+      {!shouldShowMoreControls
+        ? null
+        : <>
+          <div
+            className="control"
+            title="Toggle play/pause"
+            onClick={(event) => {
+              event.stopPropagation()
+              if (isPaused) {
+                videoEl.play()
+              } else {
+                videoEl.pause()
+              }
+            }}>
+            {isPaused ? <PlayIcon/> : <PauseIcon/>}
+          </div>
+          <div
+            className="control"
+            title="Toggle picture-in-picture"
+            onClick={(event) => {
+              if (isPictureInPicture) {
+                document.exitPictureInPicture()
+              } else {
+                videoEl.disablePictureInPicture = false
+                videoEl.requestPictureInPicture()
+              }
+            }}>
+            <PictureInPictureIcon/>
+          </div>
+          <div
+            className="control"
+            title="Close for this video"
+            onClick={(event) => {
+              setIsClosed(true)
+            }}>
+            <RemoveIcon/>
+          </div>
+        </>
+      }
     </div>
-    {!shouldShowOptions
-      ? null
-      : <>
-        <button
-          className="option"
-          title="Toggle play/pause"
-          onClick={(event) => {
-            event.stopPropagation()
-            if (isPaused) {
-              videoEl.play()
-            } else {
-              videoEl.pause()
-            }
-          }}>
-          {isPaused ? "Play" : "Pause"}
-        </button>
-        <button
-          className="option"
-          title="Toggle picture-in-picture"
-          onClick={(event) => {
-            if (isPictureInPicture) {
-              document.exitPictureInPicture()
-            } else {
-              videoEl.disablePictureInPicture = false
-              videoEl.requestPictureInPicture()
-            }
-          }}>
-          pip
-        </button>
-      </>
-    }
   </div>
 }
 
-function getElementPosition (element: HTMLElement): { top: number, left: number } {
+function getControllerPosition (videoEl: HTMLVideoElement): { top: number, left: number } {
+  const { left, top } = getElementPositionFromTopOfPage(videoEl)
+  return { left: left + 5, top: top + 5 }
+}
+
+function getElementPositionFromTopOfPage (element: HTMLElement): { top: number, left: number } {
   const { x, y } = element.getBoundingClientRect()
   return {
     left: x + window.scrollX,

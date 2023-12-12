@@ -1,11 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap');
+
 .video-king-root-element {
-  --height: 2.5rem;
+  --height: 2.3rem;
 
   > * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     user-select: none;
+    font-family: 'Roboto Condensed', sans-serif;
   }
 
   position: absolute;
@@ -20,11 +23,8 @@
     // top: _; Set in component.
     // left: _; Set in component.
     display: flex;
-    background-color: rgb(128, 128, 128);
-    color: rgb(255, 255, 255);
-    border: 1px solid rgb(255, 255, 255);
-    opacity: 0.6;
-    transition: opacity 100ms ease-in-out;
+    opacity: 0.5;
+    transition: opacity 400ms ease-in;
     z-index: 2147483647; // max int
 
     .underlay {
@@ -34,31 +34,48 @@
       top: 50%;
       left: 50%;
       transform: translateX(-50%) translateY(-50%);
+      //background-color: red; // For debugging
       z-index: -1;
-      background-color: rgb(128, 128, 128, 0.05)
-    }
-
-    .option {
-      height: var(--height);
-      cursor: pointer;
-    }
-
-    .playback-rate {
-      min-width: var(--height);
-      padding: 0 0.5rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: calc(var(--height) * 0.65);
     }
 
     &:hover {
       opacity: 1;
-      background-color: rgb(128, 128, 0.8);
 
       .underlay {
         width: calc(100% + var(--height));
         height: calc(100% + var(--height));
+      }
+    }
+
+    .controls {
+      flex: 1 1 auto;
+      display: flex;
+      background-color: rgb(255, 219, 0);
+      color: #000000;
+      border: 1px solid #000000;
+      border-radius: 0.5rem;
+
+      .control {
+        height: var(--height);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 0.5rem;
+
+        > svg {
+          width: calc(var(--height) * 0.7);
+          height: calc(var(--height) * 0.7);
+          fill: #000000;
+        }
+      }
+
+      .playback-rate {
+        min-width: var(--height);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: calc(var(--height) * 0.65);
       }
     }
   }
