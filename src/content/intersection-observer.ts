@@ -2,7 +2,6 @@ function initIntersectionObservable () {
   const callbacksMap: Map<HTMLVideoElement, (fn: IntersectionObserverEntry) => void> = new Map()
   const stepsCount = 100
   const intersectionObserver = new IntersectionObserver((entries) => {
-    console.log("INTERSECTION ENTRIES", entries)
     entries.forEach(entry => {
       const callback = callbacksMap.get(entry.target as HTMLVideoElement)
       callback?.(entry)
