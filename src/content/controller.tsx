@@ -70,6 +70,7 @@ export const Controller = ({ videoEl }: Props) => {
     <div className="underlay"></div>
     <div
       className="option playback-rate"
+      title="Video speed"
       onClick={() => {
         setShouldShowOptions((shouldShow) => !shouldShow)
       }}
@@ -81,6 +82,7 @@ export const Controller = ({ videoEl }: Props) => {
       : <>
         <button
           className="option"
+          title="Toggle play/pause"
           onClick={(event) => {
             event.stopPropagation()
             if (isPaused) {
@@ -93,6 +95,7 @@ export const Controller = ({ videoEl }: Props) => {
         </button>
         <button
           className="option"
+          title="Toggle picture-in-picture"
           onClick={(event) => {
             if (isPictureInPicture) {
               document.exitPictureInPicture()
