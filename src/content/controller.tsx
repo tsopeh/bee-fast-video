@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks"
-import { PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon } from "../assets/img/control-icons"
+import { PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -85,7 +85,25 @@ export const Controller = ({ videoEl }: Props) => {
         : <>
           <div
             className="control"
-            title="Toggle play/pause"
+            title="Slow down"
+            onClick={(event) => {
+              event.stopPropagation()
+              videoEl.playbackRate -= 0.25
+            }}>
+            <SlowDownIcon/>
+          </div>
+          <div
+            className="control"
+            title="Speed up"
+            onClick={(event) => {
+              event.stopPropagation()
+              videoEl.playbackRate += 0.25
+            }}>
+            <SpeedUpIcon/>
+          </div>
+          <div
+            className="control"
+            title="Play/Pause"
             onClick={(event) => {
               event.stopPropagation()
               if (isPaused) {
@@ -98,7 +116,7 @@ export const Controller = ({ videoEl }: Props) => {
           </div>
           <div
             className="control"
-            title="Toggle picture-in-picture"
+            title="Picture-in-Picture"
             onClick={(event) => {
               if (isPictureInPicture) {
                 document.exitPictureInPicture()
@@ -111,7 +129,7 @@ export const Controller = ({ videoEl }: Props) => {
           </div>
           <div
             className="control"
-            title="Close for this video"
+            title="Close"
             onClick={(event) => {
               setIsClosed(true)
             }}>
