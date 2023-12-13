@@ -53,9 +53,9 @@
     .controls {
       flex: 1 1 auto;
       display: flex;
-      background-color: rgb(255, 219, 0);
+      background-color: #ffdb00;
       color: #000000;
-      border: 1px solid rgba(0, 0, 0, 0.6);
+      border: 1px solid #e9ab17;
       border-radius: calc(0.5 * var(--size));
 
       .control {
