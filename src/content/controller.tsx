@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks"
-import { BackwardIcon, ForwardIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
+import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -131,6 +131,23 @@ export const Controller = ({ videoEl }: Props) => {
               }
             }}>
             {isPaused ? <PlayIcon/> : <PauseIcon/>}
+          </div>
+          <div
+            className="control"
+            title="Repeat"
+            onClick={(event) => {
+              videoEl.loop = !videoEl.loop
+            }}>
+            <RepeatIcon/>
+          </div>
+          <div
+            className="control"
+            title="Enable native controls and bring to front"
+            onClick={(event) => {
+              videoEl.controls = true
+              videoEl.style.zIndex = `${2147483647 - 1}`
+            }}>
+            <NativeControlsIcon/>
           </div>
           <div
             className="control"

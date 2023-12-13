@@ -51,6 +51,14 @@ export const RepeatIcon = () => {
   </svg>
 }
 
+export const NativeControlsIcon = () => {
+  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <path
+      d="M0 416a32 32 0 0 0 32 32h54.7a79.8 79.8 0 0 0 146.6 0H480a32 32 0 1 0 0-64H233.3a79.8 79.8 0 0 0-146.6 0H32a32 32 0 0 0-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-32.8 0-61 19.7-73.3 48H32a32 32 0 1 0 0 64h246.7a79.8 79.8 0 0 0 146.6 0H480a32 32 0 1 0 0-64h-54.7a79.8 79.8 0 0 0-73.3-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73.3-64a79.8 79.8 0 0 0-146.6 0H32a32 32 0 1 0 0 64h86.7a79.8 79.8 0 0 0 146.6 0H480a32 32 0 1 0 0-64H265.3z"
+    />
+  </svg>
+}
+
 export const PictureInPictureIcon = () => {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
     <path
