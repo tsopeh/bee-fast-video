@@ -27,6 +27,22 @@ export const PauseIcon = () => {
   </svg>
 }
 
+export const BackwardIcon = () => {
+  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <path
+      d="M459.5 440.6A32 32 0 0 0 512 416V96a32 32 0 0 0-52.5-24.6L288 214.3v83.4l171.5 142.9zM256 352V96a32 32 0 0 0-52.5-24.6l-192 160a32 32 0 0 0 0 49.2l192 160A32 32 0 0 0 256 416v-64z"
+    />
+  </svg>
+}
+
+export const ForwardIcon = () => {
+  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <path
+      d="M52.5 440.6A32 32 0 0 1 0 416V96a32 32 0 0 1 52.5-24.6L224 214.3v83.4L52.5 440.6zM256 352V96a32 32 0 0 1 52.5-24.6l192 160a32 32 0 0 1 0 49.2l-192 160A32 32 0 0 1 256 416v-64z"
+    />
+  </svg>
+}
+
 export const RepeatIcon = () => {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
     <path

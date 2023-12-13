@@ -24,7 +24,7 @@
     // top: _; Set in component.
     // left: _; Set in component.
     display: flex;
-    opacity: 0.25;
+    opacity: 0.3;
     filter: grayscale(1);
     transition: opacity 200ms ease-out;
     z-index: 2147483647; // max int
@@ -41,7 +41,7 @@
     }
 
     &:hover {
-      opacity: 0.75;
+      opacity: 0.85;
       filter: grayscale(0);
 
       .underlay {

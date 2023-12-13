@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks"
-import { PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
+import { BackwardIcon, ForwardIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -100,6 +100,24 @@ export const Controller = ({ videoEl }: Props) => {
               videoEl.playbackRate += 0.25
             }}>
             <SpeedUpIcon/>
+          </div>
+          <div
+            className="control"
+            title="Backward 5 seconds"
+            onClick={(event) => {
+              event.stopPropagation()
+              videoEl.currentTime = Math.floor(videoEl.currentTime - 5)
+            }}>
+            <BackwardIcon/>
+          </div>
+          <div
+            className="control"
+            title="Forward 5 seconds"
+            onClick={(event) => {
+              event.stopPropagation()
+              videoEl.currentTime = Math.ceil(videoEl.currentTime + 5)
+            }}>
+            <ForwardIcon/>
           </div>
           <div
             className="control"
