@@ -1,7 +1,7 @@
 import { createPortal, useEffect, useMemo, useState } from "preact/compat"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { KeyboardKey, keyboardListener } from "../shortcuts"
-import cssRules from "./content.scss?inline" // read as transformed css string
+import cssRules from "./controller.scss?inline" // read as transformed css string
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -114,23 +114,26 @@ export const Controller = ({ videoEl }: Props) => {
       return
     }
     const listeners = [
-      keyboardListener.registerCallback(KeyboardKey.keyS, () => {
+      keyboardListener.registerCallback(KeyboardKey.keyZ, () => {
         userActions.slowDown()
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyD, () => {
+      keyboardListener.registerCallback(KeyboardKey.keyX, () => {
         userActions.speedUp()
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyZ, () => {
+      keyboardListener.registerCallback(KeyboardKey.keyA, () => {
         userActions.backward()
       }),
       keyboardListener.registerCallback(KeyboardKey.arrowLeft, () => {
         userActions.backward()
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyX, () => {
+      keyboardListener.registerCallback(KeyboardKey.keyD, () => {
         userActions.forward()
       }),
       keyboardListener.registerCallback(KeyboardKey.arrowRight, () => {
         userActions.forward()
+      }),
+      keyboardListener.registerCallback(KeyboardKey.keyS, () => {
+        userActions.togglePlayPause()
       }),
       // Number keys from 1 to 10
       ...Array.from({ length: 10 })
@@ -222,7 +225,7 @@ export const Controller = ({ videoEl }: Props) => {
             : <>
               <div
                 className="control"
-                title="Slow down (S)"
+                title="Slow down (Z)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.slowDown()
@@ -231,7 +234,7 @@ export const Controller = ({ videoEl }: Props) => {
               </div>
               <div
                 className="control"
-                title="Speed up (D)"
+                title="Speed up (X)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.speedUp()
@@ -239,7 +242,7 @@ export const Controller = ({ videoEl }: Props) => {
                 <SpeedUpIcon/>
               </div>
               <div
-                className="control (Z)"
+                className="control (A)"
                 title="Backward 5 seconds"
                 onClick={(event) => {
                   event.stopPropagation()
@@ -249,7 +252,7 @@ export const Controller = ({ videoEl }: Props) => {
               </div>
               <div
                 className="control"
-                title="Forward 5 seconds (X)"
+                title="Forward 5 seconds (D)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.forward()
@@ -258,7 +261,7 @@ export const Controller = ({ videoEl }: Props) => {
               </div>
               <div
                 className="control"
-                title="Play/Pause"
+                title="Play/Pause (S)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.togglePlayPause()
@@ -285,7 +288,7 @@ export const Controller = ({ videoEl }: Props) => {
               </div>
               <div
                 className="control"
-                title="Picture-in-Picture"
+                title="Picture-in-Picture (P)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.togglePictureInPicture()
