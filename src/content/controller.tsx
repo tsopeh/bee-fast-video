@@ -121,7 +121,13 @@ export const Controller = ({ videoEl }: Props) => {
       keyboardListener.registerCallback(KeyboardKey.keyZ, () => {
         userActions.backward()
       }),
+      keyboardListener.registerCallback(KeyboardKey.arrowLeft, () => {
+        userActions.backward()
+      }),
       keyboardListener.registerCallback(KeyboardKey.keyX, () => {
+        userActions.forward()
+      }),
+      keyboardListener.registerCallback(KeyboardKey.arrowRight, () => {
         userActions.forward()
       }),
       // Number keys from 1 to 10
