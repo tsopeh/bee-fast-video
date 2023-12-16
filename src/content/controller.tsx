@@ -1,5 +1,6 @@
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useMemo, useState } from "preact/hooks"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
+import { KeyboardKey, keyboardListener } from "../shortcuts"
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -15,30 +16,79 @@ export const Controller = ({ videoEl }: Props) => {
   const [position, setPosition] = useState(() => getControllerPosition(videoEl))
   const [isClosed, setIsClosed] = useState(false)
 
+  const userActions = useMemo(() => {
+    return {
+      slowDown: () => {
+        videoEl.playbackRate -= 0.25
+      },
+      speedUp: () => {
+        videoEl.playbackRate += 0.25
+      },
+      backward: () => {
+        videoEl.currentTime = Math.floor(videoEl.currentTime - 5)
+      },
+      forward: () => {
+        videoEl.currentTime = Math.floor(videoEl.currentTime + 5)
+      },
+      seekToNormalized: (normalized: number) => {
+        if (normalized >= 0 && normalized <= 1) {
+          videoEl.currentTime = Math.round(videoEl.duration * normalized)
+        }
+      },
+      togglePlayPause: () => {
+        if (isPaused) {
+          videoEl.play()
+        } else {
+          videoEl.pause()
+        }
+      },
+      toggleLoop: () => {
+        videoEl.loop = !videoEl.loop
+      },
+      toggleCinemaMode: () => {
+        videoEl.controls = true
+        videoEl.style.zIndex = `${2147483647 - 1}`
+      },
+      togglePictureInPicture: () => {
+        if (isPictureInPicture) {
+          document.exitPictureInPicture()
+        } else {
+          videoEl.disablePictureInPicture = false
+          videoEl.requestPictureInPicture()
+        }
+      },
+      toggleClose: () => {
+        setIsClosed((isClosed) => !isClosed)
+      },
+    }
+  }, [videoEl, isPictureInPicture, setIsClosed])
+
+  // React on video events
   useEffect(() => {
     const onPlayPauseChange = () => {
       setIsPaused(videoEl.paused)
     }
-    const updatePosition = () => {
-      setPosition(getControllerPosition(videoEl))
-    }
+    videoEl.addEventListener("play", onPlayPauseChange)
+    videoEl.addEventListener("pause", onPlayPauseChange)
+
     const onPictureInPictureChange = () => {
       setIsPictureInPicture(document.pictureInPictureElement == videoEl)
     }
+    videoEl.addEventListener("enterpictureinpicture", onPictureInPictureChange)
+    videoEl.addEventListener("leavepictureinpicture", onPictureInPictureChange)
+
     const onRateChange = () => {
       setPlaybackRate(videoEl.playbackRate)
     }
-    videoEl.addEventListener("play", onPlayPauseChange)
-    videoEl.addEventListener("pause", onPlayPauseChange)
-    videoEl.addEventListener("enterpictureinpicture", onPictureInPictureChange)
-    videoEl.addEventListener("leavepictureinpicture", onPictureInPictureChange)
     videoEl.addEventListener("ratechange", onRateChange)
 
+    const updatePosition = () => {
+      setPosition(getControllerPosition(videoEl))
+    }
     const unregister = viewportIntersection.register(videoEl, (entry) => {
       updatePosition()
       setIsVideoInViewport(entry.isIntersecting)
     })
-
     // Track position change
     const styleMutationObserver = new MutationObserver(() => {
       updatePosition()
@@ -54,7 +104,54 @@ export const Controller = ({ videoEl }: Props) => {
       unregister()
       styleMutationObserver.disconnect()
     }
-  }, [])
+  }, [videoEl])
+
+  // React on keyboard events
+  useEffect(() => {
+    if (!isVideoInViewport) {
+      return
+    }
+    const listeners = [
+      keyboardListener.registerCallback(KeyboardKey.keyS, () => {
+        userActions.slowDown()
+      }),
+      keyboardListener.registerCallback(KeyboardKey.keyD, () => {
+        userActions.speedUp()
+      }),
+      keyboardListener.registerCallback(KeyboardKey.keyZ, () => {
+        userActions.backward()
+      }),
+      keyboardListener.registerCallback(KeyboardKey.keyX, () => {
+        userActions.forward()
+      }),
+      // Number keys from 1 to 10
+      ...Array.from({ length: 10 })
+        .map((_, index) => index)
+        .reduce((acc, _, index) => {
+          const digitKey = `Digit${index}` as KeyboardKey
+          const numpadKey = `Numpad${index}` as KeyboardKey
+          const normalized = index / 10
+          acc.push(
+            keyboardListener.registerCallback(digitKey, () => {
+              userActions.seekToNormalized(normalized)
+            }),
+            keyboardListener.registerCallback(numpadKey, () => {
+              userActions.seekToNormalized(normalized)
+            }),
+          )
+          return acc
+        }, [] as Array<{ unregisterCallback: () => void }>),
+      keyboardListener.registerCallback(KeyboardKey.keyV, () => {
+        userActions.toggleClose()
+      }),
+      keyboardListener.registerCallback(KeyboardKey.keyP, () => {
+        userActions.togglePictureInPicture()
+      }),
+    ]
+    return () => {
+      listeners.forEach(l => l.unregisterCallback())
+    }
+  }, [userActions, isVideoInViewport])
 
   if (!isVideoInViewport || isClosed) {
     return null
@@ -74,7 +171,8 @@ export const Controller = ({ videoEl }: Props) => {
       <div
         className="control playback-rate"
         title="Video speed"
-        onClick={() => {
+        onClick={(event) => {
+          event.stopPropagation()
           setShouldShowMoreControls((shouldShow) => !shouldShow)
         }}
       >
@@ -85,37 +183,37 @@ export const Controller = ({ videoEl }: Props) => {
         : <>
           <div
             className="control"
-            title="Slow down"
+            title="Slow down (S)"
             onClick={(event) => {
               event.stopPropagation()
-              videoEl.playbackRate -= 0.25
+              userActions.slowDown()
             }}>
             <SlowDownIcon/>
           </div>
           <div
             className="control"
-            title="Speed up"
+            title="Speed up (D)"
             onClick={(event) => {
               event.stopPropagation()
-              videoEl.playbackRate += 0.25
+              userActions.speedUp()
             }}>
             <SpeedUpIcon/>
           </div>
           <div
-            className="control"
+            className="control (Z)"
             title="Backward 5 seconds"
             onClick={(event) => {
               event.stopPropagation()
-              videoEl.currentTime = Math.floor(videoEl.currentTime - 5)
+              userActions.backward()
             }}>
             <BackwardIcon/>
           </div>
           <div
             className="control"
-            title="Forward 5 seconds"
+            title="Forward 5 seconds (X)"
             onClick={(event) => {
               event.stopPropagation()
-              videoEl.currentTime = Math.ceil(videoEl.currentTime + 5)
+              userActions.forward()
             }}>
             <ForwardIcon/>
           </div>
@@ -124,11 +222,7 @@ export const Controller = ({ videoEl }: Props) => {
             title="Play/Pause"
             onClick={(event) => {
               event.stopPropagation()
-              if (isPaused) {
-                videoEl.play()
-              } else {
-                videoEl.pause()
-              }
+              userActions.togglePlayPause()
             }}>
             {isPaused ? <PlayIcon/> : <PauseIcon/>}
           </div>
@@ -136,7 +230,8 @@ export const Controller = ({ videoEl }: Props) => {
             className="control"
             title="Repeat"
             onClick={(event) => {
-              videoEl.loop = !videoEl.loop
+              event.stopPropagation()
+              userActions.toggleLoop()
             }}>
             <RepeatIcon/>
           </div>
@@ -144,8 +239,8 @@ export const Controller = ({ videoEl }: Props) => {
             className="control"
             title="Enable native controls and bring to front"
             onClick={(event) => {
-              videoEl.controls = true
-              videoEl.style.zIndex = `${2147483647 - 1}`
+              event.stopPropagation()
+              userActions.toggleCinemaMode()
             }}>
             <NativeControlsIcon/>
           </div>
@@ -153,12 +248,8 @@ export const Controller = ({ videoEl }: Props) => {
             className="control"
             title="Picture-in-Picture"
             onClick={(event) => {
-              if (isPictureInPicture) {
-                document.exitPictureInPicture()
-              } else {
-                videoEl.disablePictureInPicture = false
-                videoEl.requestPictureInPicture()
-              }
+              event.stopPropagation()
+              userActions.togglePictureInPicture()
             }}>
             <PictureInPictureIcon/>
           </div>
@@ -166,7 +257,8 @@ export const Controller = ({ videoEl }: Props) => {
             className="control"
             title="Close"
             onClick={(event) => {
-              setIsClosed(true)
+              event.stopPropagation()
+              userActions.toggleClose()
             }}>
             <RemoveIcon/>
           </div>
