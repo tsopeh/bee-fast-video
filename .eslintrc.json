@@ -4,11 +4,13 @@
     "es6": true,
     "node": true
   },
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "extends": [
     "preact",
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended"
+    "plugin:@typescript-eslint/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -18,21 +20,14 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": [
-    "@typescript-eslint"
-  ],
   "globals": {
     "chrome": "readonly"
   },
+  "settings": {
+    "jest": {
+      "version": "29.7.0"
+    }
+  },
   "rules": {
-    "prettier/prettier": [
-      "warn",
-      {
-        "singleQuote": true,
-        "jsxSingleQuote": true,
-        "trailingComma": "es5",
-        "arrowParens": "avoid"
-      }
-    ]
   }
 }

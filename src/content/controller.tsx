@@ -162,7 +162,7 @@ export const Controller = ({ videoEl }: Props) => {
     return () => {
       listeners.forEach(l => l.unregisterCallback())
     }
-  }, [userActions, isVideoInViewport])
+  }, [isVideoInViewport, userActions])
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -206,7 +206,7 @@ export const Controller = ({ videoEl }: Props) => {
           left: position.left,
         }}
       >
-        <div className="underlay"></div>
+        <div className="underlay" />
         <div
           className="controls"
         >
@@ -230,7 +230,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.slowDown()
                 }}>
-                <SlowDownIcon/>
+                <SlowDownIcon />
               </div>
               <div
                 className="control"
@@ -239,7 +239,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.speedUp()
                 }}>
-                <SpeedUpIcon/>
+                <SpeedUpIcon />
               </div>
               <div
                 className="control (A)"
@@ -248,7 +248,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.backward()
                 }}>
-                <BackwardIcon/>
+                <BackwardIcon />
               </div>
               <div
                 className="control"
@@ -257,7 +257,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.forward()
                 }}>
-                <ForwardIcon/>
+                <ForwardIcon />
               </div>
               <div
                 className="control"
@@ -266,7 +266,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.togglePlayPause()
                 }}>
-                {isPaused ? <PlayIcon/> : <PauseIcon/>}
+                {isPaused ? <PlayIcon /> : <PauseIcon />}
               </div>
               <div
                 className="control"
@@ -275,7 +275,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.toggleLoop()
                 }}>
-                <RepeatIcon/>
+                <RepeatIcon />
               </div>
               <div
                 className="control"
@@ -284,7 +284,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.toggleCinemaMode()
                 }}>
-                <NativeControlsIcon/>
+                <NativeControlsIcon />
               </div>
               <div
                 className="control"
@@ -293,7 +293,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.togglePictureInPicture()
                 }}>
-                <PictureInPictureIcon/>
+                <PictureInPictureIcon />
               </div>
               <div
                 className="control"
@@ -302,7 +302,7 @@ export const Controller = ({ videoEl }: Props) => {
                   event.stopPropagation()
                   userActions.toggleClose()
                 }}>
-                <RemoveIcon/>
+                <RemoveIcon />
               </div>
             </>
           }

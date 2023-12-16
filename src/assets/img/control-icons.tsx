@@ -3,19 +3,19 @@
 
 export const SpeedUpIcon = () => {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-    <path d="M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z"/>
+    <path d="M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z" />
   </svg>
 }
 
 export const SlowDownIcon = () => {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-    <path d="M432 256a32 32 0 0 1-32 32H48a32 32 0 1 1 0-64h352a32 32 0 0 1 32 32z"/>
+    <path d="M432 256a32 32 0 0 1-32 32H48a32 32 0 1 1 0-64h352a32 32 0 0 1 32 32z" />
   </svg>
 }
 
 export const PlayIcon = () => {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-    <path d="M73 39A48 48 0 0 0 0 80v352a48 48 0 0 0 73 41l288-176a48 48 0 0 0 0-82L73 39z"/>
+    <path d="M73 39A48 48 0 0 0 0 80v352a48 48 0 0 0 73 41l288-176a48 48 0 0 0 0-82L73 39z" />
   </svg>
 }
 

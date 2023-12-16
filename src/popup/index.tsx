@@ -10,4 +10,4 @@ export const initElement = (elem: JSX.Element) => {
   render(elem, appContainer)
 }
 
-initElement(<Popup/>)
+initElement(<Popup />)

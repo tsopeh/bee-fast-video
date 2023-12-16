@@ -3,7 +3,7 @@ import { Logo } from "../assets/img/logo"
 export const Popup = () => {
   return (
     <div class="w-full bg-[#673ab8] p-8 text-center text-lg">
-      <Logo/>
+      <Logo />
       <p class="text-white">Hello Vite + Preact!</p>
       <p class="text-white">
         <a
