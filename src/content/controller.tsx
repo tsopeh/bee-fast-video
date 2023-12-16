@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "preact/hooks"
+import { createPortal, useEffect, useMemo, useState } from "preact/compat"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { KeyboardKey, keyboardListener } from "../shortcuts"
+import cssRules from "./content.scss?inline" // read as transformed css string
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export const Controller = ({ videoEl }: Props) => {
+  const [parentElement, setParentElement] = useState<HTMLElement | null>(null)
   const [isPaused, setIsPaused] = useState(() => videoEl.paused)
   const [isVideoInViewport, setIsVideoInViewport] = useState(false)
   const [isPictureInPicture, setIsPictureInPicture] = useState(() => document.pictureInPictureElement == videoEl)
@@ -19,10 +21,10 @@ export const Controller = ({ videoEl }: Props) => {
   const userActions = useMemo(() => {
     return {
       slowDown: () => {
-        videoEl.playbackRate -= 0.25
+        videoEl.playbackRate = Math.max(0, videoEl.playbackRate - 0.25)
       },
       speedUp: () => {
-        videoEl.playbackRate += 0.25
+        videoEl.playbackRate = Math.max(0, videoEl.playbackRate + 0.25)
       },
       backward: () => {
         videoEl.currentTime = Math.floor(videoEl.currentTime - 5)
@@ -159,119 +161,157 @@ export const Controller = ({ videoEl }: Props) => {
     }
   }, [userActions, isVideoInViewport])
 
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      const fullscreenElement = document.fullscreenElement as HTMLElement | null
+      console.log("fullscreenElement", fullscreenElement)
+      const isOutOfFullScreen = fullscreenElement == null
+      const isHtmlInFullScreen = fullscreenElement == document.documentElement
+      const isBodyInFullScreen = fullscreenElement == document.body
+      const isVideoElementInFullScreen = fullscreenElement == videoEl
+      const isVideoElementParentInFullScreen = fullscreenElement?.contains(videoEl) ?? false
+      if (
+        isOutOfFullScreen
+        || isHtmlInFullScreen
+        || isBodyInFullScreen
+        || isVideoElementInFullScreen
+        || !isVideoElementParentInFullScreen
+      ) {
+        setParentElement(null)
+      } else {
+        setParentElement(fullscreenElement)
+      }
+
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange)
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange)
+    }
+  }, [videoEl])
+
   if (!isVideoInViewport || isClosed) {
     return null
   }
 
-  return <div
-    className="controller"
-    style={{
-      top: position.top,
-      left: position.left,
-    }}
-  >
-    <div className="underlay"></div>
-    <div
-      className="controls"
-    >
+  const ui = (
+    <>
+      <style>{cssRules}</style>
       <div
-        className="control playback-rate"
-        title="Video speed"
-        onClick={(event) => {
-          event.stopPropagation()
-          setShouldShowMoreControls((shouldShow) => !shouldShow)
+        className="controller"
+        style={{
+          top: position.top,
+          left: position.left,
         }}
       >
-        <span>{playbackRate.toFixed(2)}</span>
+        <div className="underlay"></div>
+        <div
+          className="controls"
+        >
+          <div
+            className="control playback-rate"
+            title="Video speed"
+            onClick={(event) => {
+              event.stopPropagation()
+              setShouldShowMoreControls((shouldShow) => !shouldShow)
+            }}
+          >
+            <span>{playbackRate.toFixed(2)}</span>
+          </div>
+          {!shouldShowMoreControls
+            ? null
+            : <>
+              <div
+                className="control"
+                title="Slow down (S)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.slowDown()
+                }}>
+                <SlowDownIcon/>
+              </div>
+              <div
+                className="control"
+                title="Speed up (D)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.speedUp()
+                }}>
+                <SpeedUpIcon/>
+              </div>
+              <div
+                className="control (Z)"
+                title="Backward 5 seconds"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.backward()
+                }}>
+                <BackwardIcon/>
+              </div>
+              <div
+                className="control"
+                title="Forward 5 seconds (X)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.forward()
+                }}>
+                <ForwardIcon/>
+              </div>
+              <div
+                className="control"
+                title="Play/Pause"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.togglePlayPause()
+                }}>
+                {isPaused ? <PlayIcon/> : <PauseIcon/>}
+              </div>
+              <div
+                className="control"
+                title="Repeat"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.toggleLoop()
+                }}>
+                <RepeatIcon/>
+              </div>
+              <div
+                className="control"
+                title="Enable native controls and bring to front"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.toggleCinemaMode()
+                }}>
+                <NativeControlsIcon/>
+              </div>
+              <div
+                className="control"
+                title="Picture-in-Picture"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.togglePictureInPicture()
+                }}>
+                <PictureInPictureIcon/>
+              </div>
+              <div
+                className="control"
+                title="Close"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.toggleClose()
+                }}>
+                <RemoveIcon/>
+              </div>
+            </>
+          }
+        </div>
       </div>
-      {!shouldShowMoreControls
-        ? null
-        : <>
-          <div
-            className="control"
-            title="Slow down (S)"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.slowDown()
-            }}>
-            <SlowDownIcon/>
-          </div>
-          <div
-            className="control"
-            title="Speed up (D)"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.speedUp()
-            }}>
-            <SpeedUpIcon/>
-          </div>
-          <div
-            className="control (Z)"
-            title="Backward 5 seconds"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.backward()
-            }}>
-            <BackwardIcon/>
-          </div>
-          <div
-            className="control"
-            title="Forward 5 seconds (X)"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.forward()
-            }}>
-            <ForwardIcon/>
-          </div>
-          <div
-            className="control"
-            title="Play/Pause"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.togglePlayPause()
-            }}>
-            {isPaused ? <PlayIcon/> : <PauseIcon/>}
-          </div>
-          <div
-            className="control"
-            title="Repeat"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.toggleLoop()
-            }}>
-            <RepeatIcon/>
-          </div>
-          <div
-            className="control"
-            title="Enable native controls and bring to front"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.toggleCinemaMode()
-            }}>
-            <NativeControlsIcon/>
-          </div>
-          <div
-            className="control"
-            title="Picture-in-Picture"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.togglePictureInPicture()
-            }}>
-            <PictureInPictureIcon/>
-          </div>
-          <div
-            className="control"
-            title="Close"
-            onClick={(event) => {
-              event.stopPropagation()
-              userActions.toggleClose()
-            }}>
-            <RemoveIcon/>
-          </div>
-        </>
-      }
-    </div>
-  </div>
+    </>
+
+  )
+
+  return parentElement != null
+    ? createPortal(ui, parentElement)
+    : ui
 }
 
 function getControllerPosition (videoEl: HTMLVideoElement): { top: number, left: number } {

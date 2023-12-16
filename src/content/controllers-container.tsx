@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useState } from "preact/compat"
 import { Controller } from "./controller"
 import { observeForVideoElements } from "./mutation-observer"
 import { computeNewState } from "./state"
@@ -27,7 +27,7 @@ export const ControllersContainer = () => {
 
   return <div>
     {
-      Array.from(videoElements).map((videoEl, index) => {
+      Array.from(videoElements).map((videoEl) => {
         return <Controller
           videoEl={videoEl}
         />

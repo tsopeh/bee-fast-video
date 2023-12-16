@@ -1,9 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap');
 
-.video-king-root-element {
-  --size: 9px;
-  --height: calc(var(--size) * 2.3);
-
+.controller {
   > * {
     margin: 0;
     padding: 0;
@@ -12,79 +9,74 @@
     font-family: 'Roboto Condensed', sans-serif;
   }
 
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 0;
+  --size: 9px;
+  --height: calc(var(--size) * 2.3);
 
-  .controller {
-    box-sizing: content-box;
+  position: absolute;
+  box-sizing: content-box;
+  // top: _; Set in component.
+  // left: _; Set in component.
+  display: flex;
+  opacity: 0.3;
+  filter: grayscale(1);
+  transition: opacity 200ms ease-out;
+  z-index: 2147483647 !important; // max int
+
+  .underlay {
+    width: 0;
+    height: 0;
     position: absolute;
-    // top: _; Set in component.
-    // left: _; Set in component.
-    display: flex;
-    opacity: 0.3;
-    filter: grayscale(1);
-    transition: opacity 200ms ease-out;
-    z-index: 2147483647 !important; // max int
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    //background-color: red; // For debugging
+    z-index: -1;
+  }
+
+  &:hover {
+    opacity: 0.9;
+    filter: grayscale(0);
 
     .underlay {
-      width: 0;
-      height: 0;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translateX(-50%) translateY(-50%);
-      //background-color: red; // For debugging
-      z-index: -1;
+      width: calc(100% + var(--height));
+      height: calc(100% + var(--height));
     }
+  }
 
-    &:hover {
-      opacity: 0.9;
-      filter: grayscale(0);
+  .controls {
+    flex: 1 1 auto;
+    display: flex;
+    background-color: #ffdb00;
+    color: #000000;
+    border: 1px solid #e9ab17;
+    border-radius: calc(0.5 * var(--size));
 
-      .underlay {
-        width: calc(100% + var(--height));
-        height: calc(100% + var(--height));
-      }
-    }
-
-    .controls {
-      flex: 1 1 auto;
+    .control {
+      height: var(--height);
+      cursor: pointer;
       display: flex;
-      background-color: #ffdb00;
-      color: #000000;
-      border: 1px solid #e9ab17;
+      justify-content: center;
+      align-items: center;
+      padding: 0 calc(0.5 * var(--size));
       border-radius: calc(0.5 * var(--size));
 
-      .control {
-        height: var(--height);
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 0 calc(0.5 * var(--size));
-        border-radius: calc(0.5 * var(--size));
-
-        > svg {
-          width: calc(0.7 * var(--height));
-          height: calc(0.7 * var(--height));
-          fill: #000000;
-        }
-
-        &:hover {
-          background-color: rgb(233, 171, 23, 0.6);
-        }
+      > svg {
+        width: calc(0.7 * var(--height));
+        height: calc(0.7 * var(--height));
+        fill: #000000;
       }
 
-      .playback-rate {
-        min-width: var(--height);
-        font-size: calc(0.65 * var(--height));
+      &:hover {
+        background-color: rgb(233, 171, 23, 0.6);
+      }
+    }
 
-        &:hover {
-          background-color: transparent;
-        }
+    .playback-rate {
+      min-width: var(--height);
+      font-size: calc(0.65 * var(--height));
+
+      &:hover {
+        background-color: transparent;
       }
     }
   }
