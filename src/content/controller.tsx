@@ -21,16 +21,16 @@ export const Controller = ({ videoEl }: Props) => {
   const userActions = useMemo(() => {
     return {
       slowDown: () => {
-        videoEl.playbackRate = Math.max(0, videoEl.playbackRate - 0.25)
+        videoEl.playbackRate = getValidPlaybackRate(videoEl.playbackRate, -0.25)
       },
       speedUp: () => {
-        videoEl.playbackRate = Math.max(0, videoEl.playbackRate + 0.25)
+        videoEl.playbackRate = getValidPlaybackRate(videoEl.playbackRate, +0.25)
       },
       backward: () => {
-        videoEl.currentTime = Math.floor(videoEl.currentTime - 5)
+        videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, -5)
       },
       forward: () => {
-        videoEl.currentTime = Math.floor(videoEl.currentTime + 5)
+        videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, +5)
       },
       seekToNormalized: (normalized: number) => {
         if (normalized >= 0 && normalized <= 1) {
@@ -63,7 +63,7 @@ export const Controller = ({ videoEl }: Props) => {
         setIsClosed((isClosed) => !isClosed)
       },
     }
-  }, [videoEl, isPictureInPicture, setIsClosed])
+  }, [videoEl, isPaused, isPictureInPicture, setIsClosed])
 
   // React on video events
   useEffect(() => {
@@ -328,4 +328,14 @@ function getElementPositionFromTopOfPage (element: HTMLElement): { top: number, 
     left: x + window.scrollX,
     top: y + window.scrollY,
   }
+}
+
+function getValidPlaybackRate (current: number, adjustment: number): number {
+  const chromeMinAllowedPlaybackRate = 0
+  const chromeMaxAllowedPlaybackRate = 16
+  return Math.min(chromeMaxAllowedPlaybackRate, Math.max(chromeMinAllowedPlaybackRate, current + adjustment))
+}
+
+function getValidSeekTime (totalDuration: number, currentTime: number, adjustment: number): number {
+  return Math.min(totalDuration, Math.max(0, currentTime + adjustment))
 }
