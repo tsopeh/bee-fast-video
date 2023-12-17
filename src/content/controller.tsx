@@ -252,21 +252,21 @@ export const Controller = ({ videoEl }: Props) => {
               </div>
               <div
                 className="control"
-                title="Forward 5 seconds (D)"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.forward()
-                }}>
-                <ForwardIcon />
-              </div>
-              <div
-                className="control"
                 title="Play/Pause (S)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.togglePlayPause()
                 }}>
                 {isPaused ? <PlayIcon /> : <PauseIcon />}
+              </div>
+              <div
+                className="control"
+                title="Forward 5 seconds (D)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  userActions.forward()
+                }}>
+                <ForwardIcon />
               </div>
               <div
                 className="control"
