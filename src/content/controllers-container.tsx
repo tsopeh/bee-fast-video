@@ -9,6 +9,8 @@ export const ControllersContainer = () => {
     return new Set(document.body.querySelectorAll("video"))
   })
 
+  const [shouldBringToFront, setShouldBringToFront] = useState(false)
+
   useEffect(() => {
     const { stopObserving } = observeForVideoElements({
       target: document.body,
@@ -30,6 +32,9 @@ export const ControllersContainer = () => {
       Array.from(videoElements).map((videoEl) => {
         return <Controller
           videoEl={videoEl}
+          key={videoEl.src}
+          shouldBringToFront={shouldBringToFront}
+          setShouldBringToFront={setShouldBringToFront}
         />
       })
     }

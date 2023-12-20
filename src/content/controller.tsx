@@ -1,4 +1,5 @@
 import { createPortal, useEffect, useMemo, useState } from "preact/compat"
+import { StateUpdater } from "preact/hooks"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { KeyboardKey, keyboardListener } from "../shortcuts"
 import cssRules from "./controller.scss?inline" // read as transformed css string
@@ -6,9 +7,11 @@ import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
   videoEl: HTMLVideoElement
+  shouldBringToFront: boolean
+  setShouldBringToFront: StateUpdater<boolean>
 }
 
-export const Controller = ({ videoEl }: Props) => {
+export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront }: Props) => {
   const [parentElement, setParentElement] = useState<HTMLElement | null>(null)
   const [isPaused, setIsPaused] = useState(() => videoEl.paused)
   const [isVideoInViewport, setIsVideoInViewport] = useState(false)
@@ -48,15 +51,7 @@ export const Controller = ({ videoEl }: Props) => {
         videoEl.loop = !videoEl.loop
       },
       enterCinemaMode: () => {
-        const shouldSetDifferentPosition =
-          videoEl.style.position == null
-          || videoEl.style.position == ""
-          || videoEl.style.position == "static"
-        if (shouldSetDifferentPosition) {
-          videoEl.style.position = "relative"
-        }
-        videoEl.style.zIndex = `${2147483647 - 10}`
-        videoEl.controls = true
+        setShouldBringToFront(true)
       },
       togglePictureInPicture: () => {
         if (isPictureInPicture) {
@@ -198,6 +193,20 @@ export const Controller = ({ videoEl }: Props) => {
       document.removeEventListener("fullscreenchange", onFullscreenChange)
     }
   }, [videoEl])
+
+  useEffect(() => {
+    if (shouldBringToFront) {
+      const shouldSetDifferentPosition =
+        videoEl.style.position == null
+        || videoEl.style.position == ""
+        || videoEl.style.position == "static"
+      if (shouldSetDifferentPosition) {
+        videoEl.style.position = "relative"
+      }
+      videoEl.style.zIndex = `${2147483647 - 10}`
+      videoEl.controls = true
+    }
+  }, [videoEl, shouldBringToFront])
 
   if (!isVideoInViewport || isClosed) {
     return null
