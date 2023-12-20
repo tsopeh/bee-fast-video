@@ -47,9 +47,16 @@ export const Controller = ({ videoEl }: Props) => {
       toggleLoop: () => {
         videoEl.loop = !videoEl.loop
       },
-      toggleCinemaMode: () => {
+      enterCinemaMode: () => {
+        const shouldSetDifferentPosition =
+          videoEl.style.position == null
+          || videoEl.style.position == ""
+          || videoEl.style.position == "static"
+        if (shouldSetDifferentPosition) {
+          videoEl.style.position = "relative"
+        }
+        videoEl.style.zIndex = `${2147483647 - 10}`
         videoEl.controls = true
-        videoEl.style.zIndex = `${2147483647 - 1}`
       },
       togglePictureInPicture: () => {
         if (isPictureInPicture) {
@@ -282,7 +289,7 @@ export const Controller = ({ videoEl }: Props) => {
                 title="Enable native controls and bring to front"
                 onClick={(event) => {
                   event.stopPropagation()
-                  userActions.toggleCinemaMode()
+                  userActions.enterCinemaMode()
                 }}>
                 <NativeControlsIcon />
               </div>
