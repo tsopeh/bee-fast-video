@@ -1,6 +1,6 @@
 import { createPortal, useEffect, useMemo, useState } from "preact/compat"
 import { StateUpdater } from "preact/hooks"
-import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
+import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlashIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { keyboardListener } from "../shortcuts"
 import cssRules from "./controller.scss?inline" // read as transformed css string
 import { viewportIntersection } from "./intersection-observer"
@@ -12,13 +12,14 @@ interface Props {
 }
 
 export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront }: Props) => {
-  const [parentElement, setParentElement] = useState<HTMLElement | null>(null)
-  const [isPaused, setIsPaused] = useState(() => videoEl.paused)
-  const [isVideoInViewport, setIsVideoInViewport] = useState(false)
-  const [isPictureInPicture, setIsPictureInPicture] = useState(() => document.pictureInPictureElement == videoEl)
-  const [playbackRate, setPlaybackRate] = useState(videoEl.playbackRate)
   const [shouldShowMoreControls, setShouldShowMoreControls] = useState(false)
+  const [parentElement, setParentElement] = useState<HTMLElement | null>(null)
+  const [isVideoInViewport, setIsVideoInViewport] = useState(false)
   const [position, setPosition] = useState(() => getControllerPosition(videoEl))
+  const [playbackRate, setPlaybackRate] = useState(videoEl.playbackRate)
+  const [isPaused, setIsPaused] = useState(() => videoEl.paused)
+  const [isLooped, setIsLooped] = useState(() => videoEl.loop)
+  const [isPictureInPicture, setIsPictureInPicture] = useState(() => document.pictureInPictureElement == videoEl)
   const [isClosed, setIsClosed] = useState(false)
 
   const userActions = useMemo(() => {
@@ -44,6 +45,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       },
       toggleLoop: () => {
         videoEl.loop = !videoEl.loop
+        setIsLooped(videoEl.loop)
       },
       enterCinemaMode: () => {
         setShouldBringToFront(true)
@@ -60,7 +62,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
         setIsClosed((isClosed) => !isClosed)
       },
     }
-  }, [videoEl, isPaused, isPictureInPicture, setIsClosed])
+  }, [videoEl, isPaused, setShouldBringToFront, isPictureInPicture])
 
   // React on video events
   useEffect(() => {
@@ -91,8 +93,13 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     // Track position change
     const styleMutationObserver = new MutationObserver(() => {
       updatePosition()
+      setIsLooped(videoEl.loop)
+      const shouldForceControls = shouldBringToFront && !videoEl.controls
+      if (shouldForceControls) {
+        videoEl.controls = true
+      }
     })
-    styleMutationObserver.observe(videoEl, { childList: false, attributes: true, attributeFilter: ["style"] })
+    styleMutationObserver.observe(videoEl, { childList: false, attributes: true, attributeFilter: ["style", "loop", "controls"] })
 
     return () => {
       videoEl.removeEventListener("play", onPlayPauseChange)
@@ -103,7 +110,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       unregister()
       styleMutationObserver.disconnect()
     }
-  }, [videoEl])
+  }, [shouldBringToFront, videoEl])
 
   // React on keyboard events
   useEffect(() => {
@@ -275,7 +282,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
               </div>
               <div
                 className="control"
-                title="Play/Pause (S)"
+                title={`${isPaused ? "Play" : "Pause"} (S)`}
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.togglePlayPause()
@@ -293,16 +300,27 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
               </div>
               <div
                 className="control"
-                title="Repeat"
+                title={isLooped ? "Disable loop" : "Loop"}
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.toggleLoop()
                 }}>
-                <RepeatIcon />
+                {
+                  isLooped ?
+                    <SlashIcon>
+                      <RepeatIcon />
+                    </SlashIcon>
+                    : <RepeatIcon />
+                }
+
               </div>
               <div
-                className="control"
-                title="Enable native controls and bring to front"
+                className={`control ${shouldBringToFront ? "locked" : ""}`}
+                title={
+                  shouldBringToFront
+                    ? "Reload the page to disable it!"
+                    : "Enable native controls and bring to front all videos on this page."
+                }
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.enterCinemaMode()
@@ -311,12 +329,17 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
               </div>
               <div
                 className="control"
-                title="Picture-in-Picture (P)"
+                title={`${isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`}
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.togglePictureInPicture()
-                }}>
-                <PictureInPictureIcon />
+                }}>{
+                isPictureInPicture
+                  ? <SlashIcon>
+                    <PictureInPictureIcon />
+                  </SlashIcon>
+                  : <PictureInPictureIcon />
+              }
               </div>
               <div
                 className="control"

@@ -1,5 +1,16 @@
-// Find more icons here: https://fontawesome.com/search
-// Optimize them here: https://jakearchibald.github.io/svgomg/
+// Find more SVG icons here: https://fontawesome.com/search
+// Optimize SVGs here: https://jakearchibald.github.io/svgomg/
+
+import { ReactNode } from "preact/compat"
+
+export const SlashIcon = ({ children }: { children?: ReactNode }) => {
+  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
+    <g>
+      {children}
+    </g>
+    <path fill="#ff0000" d="M5.1 9.2a24 24 0 0 1 33.7-4.1l592 464a24 24 0 0 1-29.6 37.8l-592-464A24 24 0 0 1 5.1 9.2z" />
+  </svg>
+}
 
 export const SpeedUpIcon = () => {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
@@ -79,4 +90,3 @@ export const RemoveIcon = () => {
     />
   </svg>
 }
-

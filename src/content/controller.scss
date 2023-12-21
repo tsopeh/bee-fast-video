@@ -58,6 +58,11 @@
         background-color: rgb(233, 171, 23, 0.6);
       }
 
+      &.locked {
+        cursor: not-allowed;
+        background-color: rgb(255, 248, 220);
+      }
+
       svg {
         width: calc(0.7 * var(--height));
         height: calc(0.7 * var(--height));
