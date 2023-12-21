@@ -3,7 +3,7 @@ import { ManifestType } from "./manifest-type"
 
 const manifest: ManifestType = {
   manifest_version: 3,
-  name: packageJson.name,
+  name: "Bee fast video",
   version: packageJson.version,
   description: packageJson.description,
   action: {

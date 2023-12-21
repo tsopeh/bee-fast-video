@@ -1,11 +1,11 @@
 {
-  "name": "video-king",
+  "name": "bee-fast-video",
   "version": "0.0.1",
   "description": "Control video speed, seeking, bring to top, native controls, picture in picture",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tsopeh/video-king.git"
+    "url": "https://github.com/tsopeh/bee-fast-video.git"
   },
   "scripts": {
     "build": "rm -rf dist && VITE_INPUT='content' vite build && VITE_INPUT='popup' vite build",

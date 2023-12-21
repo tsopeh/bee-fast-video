@@ -343,7 +343,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
               </div>
               <div
                 className="control"
-                title="Close"
+                title="Toggle close (v)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.toggleClose()

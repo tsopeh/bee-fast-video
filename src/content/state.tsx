@@ -13,7 +13,7 @@ export function computeNewState (oldState: Set<HTMLVideoElement>, mutations: Arr
   removedVideoElements.forEach(el => {
     const didRemove = newState.delete(el)
     if (!didRemove) {
-      console.error("video-king", "Didn't manage to remove a HtmlVideoElement", el)
+      console.error("bee-fast-video", "Didn't manage to remove a HtmlVideoElement", el)
     }
   })
 
