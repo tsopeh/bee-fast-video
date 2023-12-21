@@ -1,9 +1,9 @@
 // Keyboard event reference: https://w3c.github.io/uievents/tools/key-event-viewer.html
 
 function initKeyboardListener () {
-  const keyCallbackMap = new Map<KeyboardKey, Array<(event: KeyboardEvent) => void>>()
+  const keyCallbackMap = new Map<string, Array<(event: KeyboardEvent) => void>>()
 
-  const registerCallback = (key: KeyboardKey, callback: () => void) => {
+  const registerCallback = (key: string, callback: () => void) => {
     let callbacks = keyCallbackMap.get(key)
     if (callbacks != null) {
       callbacks.push(callback)
@@ -13,7 +13,7 @@ function initKeyboardListener () {
     keyCallbackMap.set(key, callbacks)
     return {
       unregisterCallback: () => {
-        let callbacks = keyCallbackMap.get(key)
+        const callbacks = keyCallbackMap.get(key)
         if (callbacks != null) {
           const callbackIndex = callbacks.findIndex((cb) => cb == callback)
           if (callbackIndex >= 0) {
@@ -32,7 +32,7 @@ function initKeyboardListener () {
     if (isInputFocused) {
       return
     }
-    const callbacks = keyCallbackMap.get(event.code as KeyboardKey)
+    const callbacks = keyCallbackMap.get(event.key)
     callbacks?.map((cb) => cb(event))
   }
 
@@ -44,41 +44,6 @@ function initKeyboardListener () {
       document.removeEventListener("keydown", onKeyboardEvent)
     },
   }
-}
-
-export enum KeyboardKey {
-  arrowLeft = "ArrowLeft",
-  arrowRight = "ArrowRight",
-
-  keyA = "KeyA",
-  keyS = "KeyS",
-  keyD = "KeyD",
-  keyZ = "KeyZ",
-  keyX = "KeyX",
-  keyV = "KeyV",
-  keyP = "KeyP",
-
-  digit0 = "Digit0",
-  digit1 = "Digit1",
-  digit2 = "Digit2",
-  digit3 = "Digit3",
-  digit4 = "Digit5",
-  digit5 = "Digit5",
-  digit6 = "Digit6",
-  digit7 = "Digit",
-  digit8 = "Digit8",
-  digit9 = "Digit9",
-
-  numpad0 = "Numpad0",
-  numpad1 = "Numpad1",
-  numpad2 = "Numpad2",
-  numpad3 = "Numpad3",
-  numpad4 = "Numpad5",
-  numpad5 = "Numpad5",
-  numpad6 = "Numpad6",
-  numpad7 = "Numpad",
-  numpad8 = "Numpad8",
-  numpad9 = "Numpad9",
 }
 
 export const keyboardListener = initKeyboardListener()

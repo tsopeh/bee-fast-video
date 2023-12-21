@@ -1,7 +1,7 @@
 import { createPortal, useEffect, useMemo, useState } from "preact/compat"
 import { StateUpdater } from "preact/hooks"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
-import { KeyboardKey, keyboardListener } from "../shortcuts"
+import { keyboardListener } from "../shortcuts"
 import cssRules from "./controller.scss?inline" // read as transformed css string
 import { viewportIntersection } from "./intersection-observer"
 
@@ -23,17 +23,12 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
 
   const userActions = useMemo(() => {
     return {
-      slowDown: () => {
-        videoEl.playbackRate = getValidPlaybackRate(videoEl.playbackRate, -0.25)
+      adjustPlaybackRate: (adjustment: number) => {
+        videoEl.playbackRate = getValidPlaybackRate(videoEl.playbackRate, adjustment)
       },
-      speedUp: () => {
-        videoEl.playbackRate = getValidPlaybackRate(videoEl.playbackRate, +0.25)
-      },
-      backward: () => {
-        videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, -5)
-      },
-      forward: () => {
-        videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, +5)
+      seekBy: (seekMs: number) => {
+        const seekSeconds = seekMs / 1000
+        videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, seekSeconds)
       },
       seekToNormalized: (normalized: number) => {
         if (normalized >= 0 && normalized <= 1) {
@@ -116,33 +111,45 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       return
     }
     const listeners = [
-      keyboardListener.registerCallback(KeyboardKey.keyZ, () => {
-        userActions.slowDown()
+      keyboardListener.registerCallback("z", () => {
+        userActions.adjustPlaybackRate(-0.5)
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyX, () => {
-        userActions.speedUp()
+      keyboardListener.registerCallback("Z", () => {
+        userActions.adjustPlaybackRate(-0.1)
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyA, () => {
-        userActions.backward()
+      keyboardListener.registerCallback("x", () => {
+        userActions.adjustPlaybackRate(+0.5)
       }),
-      keyboardListener.registerCallback(KeyboardKey.arrowLeft, () => {
-        userActions.backward()
+      keyboardListener.registerCallback("X", () => {
+        userActions.adjustPlaybackRate(+0.1)
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyD, () => {
-        userActions.forward()
+      keyboardListener.registerCallback("a", () => {
+        userActions.seekBy(-5_000)
       }),
-      keyboardListener.registerCallback(KeyboardKey.arrowRight, () => {
-        userActions.forward()
+      keyboardListener.registerCallback("A", () => {
+        userActions.seekBy(-20_000)
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyS, () => {
+      keyboardListener.registerCallback("ArrowLeft", () => {
+        userActions.seekBy(-5_000)
+      }),
+      keyboardListener.registerCallback("d", () => {
+        userActions.seekBy(+5_000)
+      }),
+      keyboardListener.registerCallback("D", () => {
+        userActions.seekBy(+20_000)
+      }),
+      keyboardListener.registerCallback("ArrowRight", () => {
+        userActions.seekBy(+5_000)
+      }),
+      keyboardListener.registerCallback("s", () => {
         userActions.togglePlayPause()
       }),
       // Number keys from 1 to 10
       ...Array.from({ length: 10 })
         .map((_, index) => index)
         .reduce((acc, _, index) => {
-          const digitKey = `Digit${index}` as KeyboardKey
-          const numpadKey = `Numpad${index}` as KeyboardKey
+          const digitKey = `Digit${index}`
+          const numpadKey = `Numpad${index}`
           const normalized = index / 10
           acc.push(
             keyboardListener.registerCallback(digitKey, () => {
@@ -154,10 +161,10 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
           )
           return acc
         }, [] as Array<{ unregisterCallback: () => void }>),
-      keyboardListener.registerCallback(KeyboardKey.keyV, () => {
+      keyboardListener.registerCallback("v", () => {
         userActions.toggleClose()
       }),
-      keyboardListener.registerCallback(KeyboardKey.keyP, () => {
+      keyboardListener.registerCallback("p", () => {
         userActions.togglePictureInPicture()
       }),
     ]
@@ -203,7 +210,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       if (shouldSetDifferentPosition) {
         videoEl.style.position = "relative"
       }
-      videoEl.style.zIndex = `${2147483647 - 10}`
+      videoEl.style.zIndex = `${2147483647 - 10}` // max_int - 10
       videoEl.controls = true
     }
   }, [videoEl, shouldBringToFront])
@@ -244,7 +251,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
                 title="Slow down (Z)"
                 onClick={(event) => {
                   event.stopPropagation()
-                  userActions.slowDown()
+                  userActions.adjustPlaybackRate(-0.25)
                 }}>
                 <SlowDownIcon />
               </div>
@@ -253,7 +260,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
                 title="Speed up (X)"
                 onClick={(event) => {
                   event.stopPropagation()
-                  userActions.speedUp()
+                  userActions.adjustPlaybackRate(+0.25)
                 }}>
                 <SpeedUpIcon />
               </div>
@@ -262,7 +269,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
                 title="Backward 5 seconds"
                 onClick={(event) => {
                   event.stopPropagation()
-                  userActions.backward()
+                  userActions.seekBy(-5_000)
                 }}>
                 <BackwardIcon />
               </div>
@@ -280,7 +287,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
                 title="Forward 5 seconds (D)"
                 onClick={(event) => {
                   event.stopPropagation()
-                  userActions.forward()
+                  userActions.seekBy(+5_000)
                 }}>
                 <ForwardIcon />
               </div>
