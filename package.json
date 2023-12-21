@@ -1,7 +1,7 @@
 {
   "name": "bee-fast-video",
   "version": "0.0.1",
-  "description": "Control video speed, seeking, bring to top, native controls, picture in picture",
+  "description": "Control video speed, seek, loop, bring to top, native controls and picture in picture.",
   "license": "MIT",
   "repository": {
     "type": "git",
