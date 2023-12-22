@@ -119,13 +119,13 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     }
     const listeners = [
       keyboardListener.registerCallback("z", () => {
-        userActions.adjustPlaybackRate(-0.5)
+        userActions.adjustPlaybackRate(-0.25)
       }),
       keyboardListener.registerCallback("Z", () => {
         userActions.adjustPlaybackRate(-0.1)
       }),
       keyboardListener.registerCallback("x", () => {
-        userActions.adjustPlaybackRate(+0.5)
+        userActions.adjustPlaybackRate(+0.25)
       }),
       keyboardListener.registerCallback("X", () => {
         userActions.adjustPlaybackRate(+0.1)
@@ -136,17 +136,11 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       keyboardListener.registerCallback("A", () => {
         userActions.seekBy(-20_000)
       }),
-      keyboardListener.registerCallback("ArrowLeft", () => {
-        userActions.seekBy(-5_000)
-      }),
       keyboardListener.registerCallback("d", () => {
         userActions.seekBy(+5_000)
       }),
       keyboardListener.registerCallback("D", () => {
         userActions.seekBy(+20_000)
-      }),
-      keyboardListener.registerCallback("ArrowRight", () => {
-        userActions.seekBy(+5_000)
       }),
       keyboardListener.registerCallback("s", () => {
         userActions.togglePlayPause()
