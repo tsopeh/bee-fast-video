@@ -1,4 +1,4 @@
-import { createPortal, useEffect, useMemo, useState } from "preact/compat"
+import { useEffect, useMemo, useState } from "preact/compat"
 import { StateUpdater } from "preact/hooks"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlashIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { keyboardListener } from "../shortcuts"
@@ -13,7 +13,6 @@ interface Props {
 
 export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront }: Props) => {
   const [shouldShowMoreControls, setShouldShowMoreControls] = useState(false)
-  const [parentElement, setParentElement] = useState<HTMLElement | null>(null)
   const [isVideoInViewport, setIsVideoInViewport] = useState(false)
   const [position, setPosition] = useState(() => getControllerPosition(videoEl))
   const [playbackRate, setPlaybackRate] = useState(videoEl.playbackRate)
@@ -186,12 +185,6 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
   }, [isVideoInViewport, userActions])
 
   useEffect(() => {
-    const videoParent = videoEl.parentElement!
-    videoParent.style.zIndex = "auto"
-    setParentElement(videoParent)
-  }, [videoEl])
-
-  useEffect(() => {
     if (shouldBringToFront) {
       const shouldSetDifferentPosition =
         videoEl.style.position == null
@@ -209,7 +202,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     return null
   }
 
-  const ui = (
+  return (
     <>
       <style>{cssRules}</style>
       <div
@@ -351,16 +344,11 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
         </div>
       </div>
     </>
-
   )
-
-  return parentElement != null
-    ? createPortal(ui, parentElement)
-    : ui
 }
 
 function getControllerPosition (videoEl: HTMLVideoElement): { top: number, left: number } {
-  const { left, top } = getElementPositionFromParent(videoEl)
+  const { left, top } = getElementPositionFromTopOfPage(videoEl)
   return { left: left + 5, top: top + 5 }
 }
 
@@ -369,15 +357,6 @@ function getElementPositionFromTopOfPage (element: HTMLElement): { top: number, 
   return {
     left: x + window.scrollX,
     top: y + window.scrollY,
-  }
-}
-
-function getElementPositionFromParent (element: HTMLElement): { top: number, left: number } {
-  const { x: elementX, y: elementY } = element.getBoundingClientRect()
-  const { x: parentX, y: parentY } = element.parentElement!.getBoundingClientRect()
-  return {
-    left: elementX - parentX,
-    top: elementY - parentY,
   }
 }
 
