@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "preact/compat"
 import { StateUpdater } from "preact/hooks"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlashIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
 import { keyboardListener } from "../shortcuts"
-import cssRules from "./controller.scss?inline" // read as transformed css string
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
@@ -226,7 +225,6 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
 
   return (
     <>
-      <style>{cssRules}</style>
       <div
         className="controller"
         style={{

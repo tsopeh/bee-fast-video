@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap');
+
+.bee-fast-video-root-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+
+  .controller {
+    > * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      font-family: 'Roboto Condensed', sans-serif;
+      line-height: 100%;
+    }
+
+    --size: 9px;
+    --height: calc(var(--size) * 2.3);
+    --ease-style: ease-out;
+
+    position: absolute;
+    box-sizing: content-box;
+    // top: _; Set in component.
+    // left: _; Set in component.
+    display: flex;
+    opacity: 0.4;
+    transition: opacity 200ms var(--ease-style);
+    z-index: calc(2147483647 - 5) !important; // max_int - 5
+
+    .underlay {
+      width: 0;
+      height: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      //background-color: red; // For debugging
+      z-index: -1;
+    }
+
+    .controls {
+      flex: 1 1 auto;
+      display: flex;
+      background-color: rgba(96, 96, 96, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0);
+      color: #ffffff;
+      border-radius: calc(0.5 * var(--size));
+      transition: background-color 200ms var(--ease-style),
+      border 200ms var(--ease-style),
+      color 200ms var(--ease-style);
+
+      .control {
+        height: var(--height);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 calc(0.5 * var(--size));
+        border-radius: calc(0.5 * var(--size));
+
+        &:hover {
+          background-color: rgb(233, 171, 23, 0.6);
+        }
+
+        &.locked {
+          cursor: not-allowed;
+          background-color: rgb(255, 248, 220);
+        }
+
+        svg {
+          width: calc(0.7 * var(--height));
+          height: calc(0.7 * var(--height));
+          fill: #ffffff;
+          transition: fill 200ms var(--ease-style);
+        }
+      }
+
+      .playback-rate {
+        min-width: var(--height);
+        font-size: calc(0.65 * var(--height));
+
+        &:hover {
+          background-color: transparent;
+        }
+      }
+    }
+
+    &:hover {
+      opacity: 0.95;
+
+      .underlay {
+        width: calc(100% + var(--height));
+        height: calc(100% + var(--height));
+      }
+
+      .controls {
+        background-color: #ffdb00;
+        border: 1px solid #e9ab17;
+        color: #000000;
+
+        svg {
+          fill: #000000;
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "preact/compat"
+import contentCss from "./content.scss?inline" // read as transformed css string
 import { Controller } from "./controller"
 import { observeForVideoElements } from "./mutation-observer"
 import { computeNewState } from "./state"
@@ -26,6 +27,7 @@ export const ControllersContainer = () => {
   }, [])
 
   return <div>
+    <style>{contentCss}</style>
     {
       Array.from(videoElements).map((videoEl) => {
         return <Controller
