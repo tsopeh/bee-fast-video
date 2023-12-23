@@ -3,7 +3,6 @@ import { resolve } from "path"
 import * as process from "process"
 import { defineConfig } from "vite"
 import checker from "vite-plugin-checker"
-import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js"
 import makeManifest from "./src/make-manifest"
 
 const src = resolve(__dirname, "src")
@@ -31,9 +30,6 @@ export default defineConfig({
     makeManifest(),
     preact(),
     checker({ typescript: true }),
-    cssInjectedByJsPlugin({
-      relativeCSSInjection: true,
-    }),
   ],
   publicDir,
   build: {
