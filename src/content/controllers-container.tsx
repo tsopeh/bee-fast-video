@@ -16,9 +16,7 @@ export const ControllersContainer = () => {
       target: document.body,
       onMutation: (mutations) => {
         setVideoElements((prevState) => {
-          const newState = computeNewState(prevState, mutations)
-          // console.log("LATEST STATE", newState)
-          return newState
+          return computeNewState(prevState, mutations)
         })
       },
     })

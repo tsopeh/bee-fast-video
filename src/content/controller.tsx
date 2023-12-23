@@ -21,6 +21,8 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
   const [isPictureInPicture, setIsPictureInPicture] = useState(() => document.pictureInPictureElement == videoEl)
   const [isClosed, setIsClosed] = useState(false)
 
+  const isDisabled = isClosed || !isVideoInViewport
+
   const userActions = useMemo(() => {
     return {
       adjustPlaybackRate: (adjustment: number) => {
@@ -37,7 +39,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       },
       togglePlayPause: () => {
         if (isPaused) {
-          videoEl.play()
+          videoEl.play().catch(() => console.log("bee-fast-video:", "Could not play the video", videoEl))
         } else {
           videoEl.pause()
         }
@@ -51,10 +53,10 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       },
       togglePictureInPicture: () => {
         if (isPictureInPicture) {
-          document.exitPictureInPicture()
+          document.exitPictureInPicture().catch(() => console.log("bee-fast-video:", "Could not exit from the picture-in-picture mode for video", videoEl))
         } else {
           videoEl.disablePictureInPicture = false
-          videoEl.requestPictureInPicture()
+          videoEl.requestPictureInPicture().catch(() => console.log("bee-fast-video:", "Could not enter the picture-in-picture mode for video", videoEl))
         }
       },
       toggleClose: () => {
@@ -63,8 +65,30 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     }
   }, [videoEl, isPaused, setShouldBringToFront, isPictureInPicture])
 
+  // Handle viewport visibility change and toggle close
+  useEffect(() => {
+    const { unregister } = viewportIntersection.register(videoEl, (entry) => {
+      setIsVideoInViewport(entry.isIntersecting)
+    })
+    const unregisterKeyboardFns = [
+      keyboardListener.registerCallback("b", () => {
+        userActions.toggleClose()
+      }),
+      keyboardListener.registerCallback("B", () => {
+        userActions.toggleClose()
+      }),
+    ]
+    return () => {
+      unregister()
+      unregisterKeyboardFns.forEach(({ unregisterCallback }) => {unregisterCallback()})
+    }
+  }, [userActions, videoEl])
+
   // React on video events
   useEffect(() => {
+    if (isDisabled) {
+      return
+    }
     const onPlayPauseChange = () => {
       setIsPaused(videoEl.paused)
     }
@@ -91,10 +115,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
           : prevPosition
       })
     }
-    const unregister = viewportIntersection.register(videoEl, (entry) => {
-      updatePosition()
-      setIsVideoInViewport(entry.isIntersecting)
-    })
+
     // Track position change
     const styleMutationObserver = new MutationObserver(() => {
       updatePosition()
@@ -110,21 +131,22 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       updatePosition()
     }, 1000)
 
+    updatePosition()
+
     return () => {
       videoEl.removeEventListener("play", onPlayPauseChange)
       videoEl.removeEventListener("pause", onPlayPauseChange)
       videoEl.removeEventListener("enterpictureinpicture", onPictureInPictureChange)
       videoEl.removeEventListener("leavepictureinpicture", onPictureInPictureChange)
       videoEl.removeEventListener("ratechange", onRateChange)
-      unregister()
       styleMutationObserver.disconnect()
       clearInterval(intervalId)
     }
-  }, [shouldBringToFront, videoEl])
+  }, [isDisabled, shouldBringToFront, videoEl])
 
   // React on keyboard events
   useEffect(() => {
-    if (!isVideoInViewport) {
+    if (isDisabled) {
       return
     }
     const listeners = [
@@ -172,17 +194,17 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
           )
           return acc
         }, [] as Array<{ unregisterCallback: () => void }>),
-      keyboardListener.registerCallback("v", () => {
-        userActions.toggleClose()
-      }),
       keyboardListener.registerCallback("p", () => {
+        userActions.togglePictureInPicture()
+      }),
+      keyboardListener.registerCallback("P", () => {
         userActions.togglePictureInPicture()
       }),
     ]
     return () => {
       listeners.forEach(l => l.unregisterCallback())
     }
-  }, [isVideoInViewport, userActions])
+  }, [isDisabled, userActions])
 
   useEffect(() => {
     if (shouldBringToFront) {
@@ -198,7 +220,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     }
   }, [videoEl, shouldBringToFront])
 
-  if (!isVideoInViewport || isClosed) {
+  if (isDisabled) {
     return null
   }
 
@@ -332,7 +354,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
               </div>
               <div
                 className="control"
-                title="Toggle close (v)"
+                title="Toggle disable (B)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.toggleClose()
@@ -361,7 +383,7 @@ function getElementPositionFromTopOfPage (element: HTMLElement): { top: number, 
 }
 
 function getValidPlaybackRate (current: number, adjustment: number): number {
-  const chromeMinAllowedPlaybackRate = 0
+  const chromeMinAllowedPlaybackRate = 0.1
   const chromeMaxAllowedPlaybackRate = 16
   return Math.min(chromeMaxAllowedPlaybackRate, Math.max(chromeMinAllowedPlaybackRate, current + adjustment))
 }

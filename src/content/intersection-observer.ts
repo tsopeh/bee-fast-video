@@ -1,6 +1,5 @@
 function initIntersectionObservable () {
   const callbacksMap: Map<HTMLVideoElement, (fn: IntersectionObserverEntry) => void> = new Map()
-  const stepsCount = 100
   const intersectionObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const callback = callbacksMap.get(entry.target as HTMLVideoElement)
@@ -24,7 +23,9 @@ function initIntersectionObservable () {
         intersectionObserver.unobserve(videoEl)
         callbacksMap.delete(videoEl)
       }
-      return unregisterHandler
+      return {
+        unregister: unregisterHandler,
+      }
     },
   }
 }
