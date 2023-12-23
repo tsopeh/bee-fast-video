@@ -84,7 +84,13 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     videoEl.addEventListener("ratechange", onRateChange)
 
     const updatePosition = () => {
-      setPosition(getControllerPosition(videoEl))
+      const newPosition = getControllerPosition(videoEl)
+      setPosition((prevPosition) => {
+        const didPositionChange = prevPosition.left != newPosition.left || prevPosition.top != newPosition.top
+        return didPositionChange
+          ? newPosition
+          : prevPosition
+      })
     }
     const unregister = viewportIntersection.register(videoEl, (entry) => {
       updatePosition()
@@ -101,6 +107,10 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     })
     styleMutationObserver.observe(videoEl, { childList: false, attributes: true, attributeFilter: ["style", "loop", "controls"] })
 
+    const intervalId = setInterval(() => {
+      updatePosition()
+    }, 1000)
+
     return () => {
       videoEl.removeEventListener("play", onPlayPauseChange)
       videoEl.removeEventListener("pause", onPlayPauseChange)
@@ -109,6 +119,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       videoEl.removeEventListener("ratechange", onRateChange)
       unregister()
       styleMutationObserver.disconnect()
+      clearInterval(intervalId)
     }
   }, [shouldBringToFront, videoEl])
 
@@ -175,31 +186,9 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
   }, [isVideoInViewport, userActions])
 
   useEffect(() => {
-    const onFullscreenChange = () => {
-      const fullscreenElement = document.fullscreenElement as HTMLElement | null
-      console.log("fullscreenElement", fullscreenElement)
-      const isOutOfFullScreen = fullscreenElement == null
-      const isHtmlInFullScreen = fullscreenElement == document.documentElement
-      const isBodyInFullScreen = fullscreenElement == document.body
-      const isVideoElementInFullScreen = fullscreenElement == videoEl
-      const isVideoElementParentInFullScreen = fullscreenElement?.contains(videoEl) ?? false
-      if (
-        isOutOfFullScreen
-        || isHtmlInFullScreen
-        || isBodyInFullScreen
-        || isVideoElementInFullScreen
-        || !isVideoElementParentInFullScreen
-      ) {
-        setParentElement(null)
-      } else {
-        setParentElement(fullscreenElement)
-      }
-
-    }
-    document.addEventListener("fullscreenchange", onFullscreenChange)
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange)
-    }
+    const videoParent = videoEl.parentElement!
+    videoParent.style.zIndex = "auto"
+    setParentElement(videoParent)
   }, [videoEl])
 
   useEffect(() => {
@@ -228,6 +217,19 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
         style={{
           top: position.top,
           left: position.left,
+        }}
+        ref={(ref) => {
+          if (ref == null) {
+            return
+          }
+          ref.onclick = (event) => {
+            event.stopPropagation()
+            event.preventDefault()
+          }
+          ref.ondblclick = (event) => {
+            event.stopPropagation()
+            event.preventDefault()
+          }
         }}
       >
         <div className="underlay" />
@@ -358,7 +360,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
 }
 
 function getControllerPosition (videoEl: HTMLVideoElement): { top: number, left: number } {
-  const { left, top } = getElementPositionFromTopOfPage(videoEl)
+  const { left, top } = getElementPositionFromParent(videoEl)
   return { left: left + 5, top: top + 5 }
 }
 
@@ -367,6 +369,15 @@ function getElementPositionFromTopOfPage (element: HTMLElement): { top: number, 
   return {
     left: x + window.scrollX,
     top: y + window.scrollY,
+  }
+}
+
+function getElementPositionFromParent (element: HTMLElement): { top: number, left: number } {
+  const { x: elementX, y: elementY } = element.getBoundingClientRect()
+  const { x: parentX, y: parentY } = element.parentElement!.getBoundingClientRect()
+  return {
+    left: elementX - parentX,
+    top: elementY - parentY,
   }
 }
 
