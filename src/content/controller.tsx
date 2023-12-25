@@ -227,6 +227,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
     <>
       <div
         className="controller"
+        tabindex={-1}
         style={{
           top: position.top,
           left: position.left,

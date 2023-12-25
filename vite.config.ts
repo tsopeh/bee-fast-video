@@ -25,21 +25,24 @@ const rollupInput: Record<string, string> = rawInput == "content"
   ? { content: resolve(src, "content", "index.ts") }
   : { popup: resolve(src, "popup", "index.html") }
 
-export default defineConfig({
-  plugins: [
-    makeManifest(),
-    preact(),
-    checker({ typescript: true }),
-  ],
-  publicDir,
-  build: {
-    outDir,
-    rollupOptions: {
-      input: rollupInput,
-      output: {
-        entryFileNames: chunk => `src/${chunk.name}/index.js`,
+export default defineConfig(({ mode }) => {
+  return {
+    plugins: [
+      makeManifest(),
+      preact(),
+      checker({ typescript: true }),
+    ],
+    publicDir,
+    build: {
+      outDir,
+      rollupOptions: {
+        input: rollupInput,
+        output: {
+          entryFileNames: chunk => `src/${chunk.name}/index.js`,
+        },
       },
+      sourcemap: mode == "development" ? "inline" : undefined,
+      emptyOutDir: false,
     },
-    emptyOutDir: false,
-  },
+  }
 })

@@ -8,5 +8,5 @@
   "ignore": [
     "src/**/*.spec.ts"
   ],
-  "exec": "rm -rf dist && VITE_INPUT='content' vite build && VITE_INPUT='popup' vite build"
+  "exec": "rm -rf dist && VITE_INPUT='content' vite build --mode development && VITE_INPUT='popup' vite build --mode development"
 }
