@@ -32,7 +32,7 @@ export const ControllersContainer = () => {
       Array.from(videoElements).map((videoEl) => {
         return <Controller
           videoEl={videoEl}
-          key={videoEl.src}
+          key={videoEl}
           shouldBringToFront={shouldBringToFront}
           setShouldBringToFront={setShouldBringToFront}
         />

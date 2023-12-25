@@ -124,7 +124,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
         videoEl.controls = true
       }
     })
-    styleMutationObserver.observe(videoEl, { childList: false, attributes: true, attributeFilter: ["style", "loop", "controls"] })
+    styleMutationObserver.observe(videoEl, { childList: false, attributes: true })
 
     const intervalId = setInterval(() => {
       updatePosition()
@@ -179,20 +179,12 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
       // Number keys from 1 to 10
       ...Array.from({ length: 10 })
         .map((_, index) => index)
-        .reduce((acc, _, index) => {
-          const digitKey = `Digit${index}`
-          const numpadKey = `Numpad${index}`
+        .map((_, index) => {
           const normalized = index / 10
-          acc.push(
-            keyboardListener.registerCallback(digitKey, () => {
-              userActions.seekToNormalized(normalized)
-            }),
-            keyboardListener.registerCallback(numpadKey, () => {
-              userActions.seekToNormalized(normalized)
-            }),
-          )
-          return acc
-        }, [] as Array<{ unregisterCallback: () => void }>),
+          return keyboardListener.registerCallback(index.toString(), () => {
+            userActions.seekToNormalized(normalized)
+          })
+        }),
       keyboardListener.registerCallback("p", () => {
         userActions.togglePictureInPicture()
       }),
@@ -206,17 +198,28 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
   }, [isDisabled, userActions])
 
   useEffect(() => {
-    if (shouldBringToFront) {
-      const shouldSetDifferentPosition =
-        videoEl.style.position == null
-        || videoEl.style.position == ""
-        || videoEl.style.position == "static"
-      if (shouldSetDifferentPosition) {
-        videoEl.style.position = "relative"
-      }
-      videoEl.style.zIndex = `${2147483647 - 10}` // max_int - 10
-      videoEl.controls = true
+    if (!shouldBringToFront) {
+      return
     }
+    const videoPosition = getElementPositionFromTopOfPage(videoEl)
+    const { width, height } = videoEl.getBoundingClientRect()
+    videoEl.remove()
+    const shouldSetDifferentPosition =
+      videoEl.style.position == null
+      || videoEl.style.position == ""
+      || videoEl.style.position == "static"
+    if (shouldSetDifferentPosition) {
+      videoEl.style.position = "absolute"
+    }
+    videoEl.style.left = `${videoPosition.left}px`
+    videoEl.style.top = `${videoPosition.top}px`
+    videoEl.style.width = `${width}px`
+    videoEl.style.height = `${height}px`
+    videoEl.style.zIndex = `${2147483647 - 10}`
+    videoEl.controls = true
+    videoEl.style.outline = "2px solid rgb(233, 171, 23, 0.6)"
+    videoEl.style.backgroundColor = "#000000"
+    document.body.appendChild(videoEl)
   }, [videoEl, shouldBringToFront])
 
   if (isDisabled) {
@@ -328,7 +331,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
                 className={`control ${shouldBringToFront ? "locked" : ""}`}
                 title={
                   shouldBringToFront
-                    ? "Reload the page to disable it!"
+                    ? "Reload the page to disable this."
                     : "Enable native controls and bring to front all videos on this page."
                 }
                 onClick={(event) => {
