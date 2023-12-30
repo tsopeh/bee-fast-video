@@ -26,10 +26,12 @@ function initKeyboardListener () {
   }
 
   const onKeyboardEvent = (event: KeyboardEvent) => {
-    const isInputFocused = (event.target as HTMLElement).tagName
+    const isTypingInInput = (event.target as HTMLElement).tagName
       .toLowerCase()
       .includes("input")
-    if (isInputFocused) {
+    const isTypingInContentEditableElement = (event.target as HTMLElement).isContentEditable
+    const shouldSkipKeyboardEvent = isTypingInInput || isTypingInContentEditableElement
+    if (shouldSkipKeyboardEvent) {
       return
     }
     const callbacks = keyCallbackMap.get(event.key)
