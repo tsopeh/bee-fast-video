@@ -26,13 +26,16 @@ function initKeyboardListener () {
   }
 
   const onKeyboardEvent = (event: KeyboardEvent) => {
-    const isTypingInInput = (event.target as HTMLElement).tagName
-      .toLowerCase()
-      .includes("input")
-    const isTypingInContentEditableElement = (event.target as HTMLElement).isContentEditable
-    const shouldSkipKeyboardEvent = isTypingInInput || isTypingInContentEditableElement
-    if (shouldSkipKeyboardEvent) {
-      return
+    const element = event.target
+    if (element != null && element instanceof HTMLElement) {
+      const isTypingInInput = element.tagName
+        .toLowerCase()
+        .includes("input")
+      const isTypingInContentEditableElement = element.isContentEditable
+      const shouldSkipKeyboardEvent = isTypingInInput || isTypingInContentEditableElement
+      if (shouldSkipKeyboardEvent) {
+        return
+      }
     }
     const callbacks = keyCallbackMap.get(event.key)
     callbacks?.map((cb) => cb(event))
