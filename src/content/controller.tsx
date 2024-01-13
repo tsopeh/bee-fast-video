@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "preact/compat"
 import { StateUpdater } from "preact/hooks"
-import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlashIcon, SlowDownIcon, SpeedUpIcon } from "../assets/img/control-icons"
+import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlashIcon, SlowDownIcon, SpeedUpIcon } from "../assets/control-icons"
 import { keyboardListener } from "../shortcuts"
 import { viewportIntersection } from "./intersection-observer"
 
@@ -285,8 +285,8 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
                 <SpeedUpIcon />
               </div>
               <div
-                className="control (A)"
-                title="Backward 5 seconds"
+                className="control"
+                title="Backward 5 seconds (A)"
                 onClick={(event) => {
                   event.stopPropagation()
                   userActions.seekBy(-5_000)
