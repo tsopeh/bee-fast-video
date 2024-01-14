@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: rollupInput,
         output: {
-          entryFileNames: chunk => `src/${chunk.name}/index.js`,
+          entryFileNames: (chunk) => `src/${chunk.name}/index.js`,
         },
       },
       sourcemap: mode == "development" ? "inline" : undefined,
