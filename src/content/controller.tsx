@@ -1,16 +1,22 @@
 import { useEffect, useMemo, useState } from "preact/compat"
 import { StateUpdater } from "preact/hooks"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlashIcon, SlowDownIcon, SpeedUpIcon } from "../assets/control-icons"
-import { keyboardListener } from "../shortcuts"
+import { keyboardListener } from "./shortcuts"
 import { viewportIntersection } from "./intersection-observer"
 
 interface Props {
   videoEl: HTMLVideoElement
+  isGloballyDisabled: boolean
   shouldBringToFront: boolean
   setShouldBringToFront: StateUpdater<boolean>
 }
 
-export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront }: Props) => {
+export const Controller = ({
+  videoEl,
+  isGloballyDisabled,
+  shouldBringToFront,
+  setShouldBringToFront,
+}: Props) => {
   const [shouldShowMoreControls, setShouldShowMoreControls] = useState(false)
   const [isVideoInViewport, setIsVideoInViewport] = useState(false)
   const [position, setPosition] = useState(() => getControllerPosition(videoEl))
@@ -20,7 +26,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
   const [isPictureInPicture, setIsPictureInPicture] = useState(() => document.pictureInPictureElement == videoEl)
   const [isClosed, setIsClosed] = useState(false)
 
-  const isDisabled = isClosed || !isVideoInViewport
+  const isDisabled = isGloballyDisabled || isClosed || !isVideoInViewport
 
   const userActions = useMemo(() => {
     return {
@@ -58,30 +64,30 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
           videoEl.requestPictureInPicture().catch(() => console.log("bee-fast-video:", "Could not enter the picture-in-picture mode for video", videoEl))
         }
       },
-      toggleClose: () => {
-        setIsClosed((isClosed) => !isClosed)
+      close: () => {
+        setIsClosed(true)
       },
     }
   }, [videoEl, isPaused, setShouldBringToFront, isPictureInPicture])
 
-  // Handle viewport visibility change and toggle close
+  // Handle viewport visibility change
   useEffect(() => {
     const { unregister } = viewportIntersection.register(videoEl, (entry) => {
       setIsVideoInViewport(entry.isIntersecting)
     })
-    const unregisterKeyboardFns = [
-      keyboardListener.registerCallback("b", () => {
-        userActions.toggleClose()
-      }),
-      keyboardListener.registerCallback("B", () => {
-        userActions.toggleClose()
-      }),
-    ]
     return () => {
       unregister()
-      unregisterKeyboardFns.forEach(({ unregisterCallback }) => {unregisterCallback()})
     }
-  }, [userActions, videoEl])
+  }, [videoEl])
+
+  // Handle `isGloballyDisabled` changes.
+  useEffect(() => {
+    // When `isGloballyDisabled` becomes `false`, we cancel `isClosed`
+    const shouldCancelIsClosed = !isGloballyDisabled
+    if (shouldCancelIsClosed) {
+      setIsClosed(false)
+    }
+  }, [isGloballyDisabled])
 
   // React on video events
   useEffect(() => {
@@ -359,7 +365,7 @@ export const Controller = ({ videoEl, shouldBringToFront, setShouldBringToFront 
                 title="Toggle disable (B)"
                 onClick={(event) => {
                   event.stopPropagation()
-                  userActions.toggleClose()
+                  userActions.close()
                 }}>
                 <RemoveIcon />
               </div>

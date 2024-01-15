@@ -11,9 +11,10 @@
 - speed up (`X`) and slow down any video (`Z`)
 - seek forward (`D`) and backward (`A`) through any video
 - play and pause (`S`) any video
-- bring to front and enable native video controls for any video
+- bring to front and enable native video controls for all videos on the page (reload the page to turn off)
 - toggle loop for any video
 - toggle Picture-in-Picture (`P`) for any video
+- toggle disabled (`B`) for all videos on the page video
 
 ## Development notes
 
