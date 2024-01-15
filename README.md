@@ -17,9 +17,11 @@
 
 ## Development notes
 
-The extension was made based on a [preact template](https://github.com/fell-lucas/chrome-extension-template-preact-vite), with most of the _extra_ stuff removed. The extension consists of the content script and a popup. These to components do not communicate in any way.
+The extension was made based on a [preact template](https://github.com/fell-lucas/chrome-extension-template-preact-vite), with most of the _extra_ stuff removed. The extension consists of the content script and a popup. These two components do not communicate in any way.
 
 ### Content script
+
+**ControllersContainer**
 
 Most of the important bits are located within the content script. The execution starts from `src/content/index.ts`. There, the `ControllersContainer` rendered. `ControllersContainer` initially queries all available videos, after which it keeps track of newly added/removed videos via `observeForVideoElements` mutation observer. For every video we render a `Controller` component, which receives the reference to that video element. `ControllersContainer` is intentionally rendered as an absolutely positioned, zero width and height element, in the top left corner of the page; Its purpose is to _house_ the `Controller` components, which are absolutely positioned over the top left corner of the video in respect to the `ControllersContainer`.
 
@@ -33,7 +35,7 @@ The `Controller` both updates the video element based on the user actions, and k
 
 The popup is there to present functionality and shortcuts to the user. It must be manually kept in sync if either the functionality or shortcuts change.
 
-**Styles**
+### Styles
 
 Styles are written in SCSS and are imported as transformed CSS `text`. This text is then used as content for the `<style>...</style>` tag. 
 
