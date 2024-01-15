@@ -1,5 +1,7 @@
 # Bee fast video
 
+Install [here](https://chromewebstore.google.com/detail/bee-fast-video/lljkgbedmbiipekmphnhapdpfmkgbjbd)! 🐝.
+
 <img src="docs/intro.png" alt="Bee fast video banner" width=640>
 
 **Bee fast video** is a browser extension that offers greater control over videos on all websites.
