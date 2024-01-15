@@ -12,6 +12,7 @@ Install [here](https://chromewebstore.google.com/detail/bee-fast-video/lljkgbedm
 
 - speed up (`X`) and slow down any video (`Z`)
 - seek forward (`D`) and backward (`A`) through any video
+- seek video to % on any video (`0 – 9`)
 - play and pause (`S`) any video
 - bring to front and enable native video controls for all videos on the page (reload the page to turn off)
 - toggle loop for any video
