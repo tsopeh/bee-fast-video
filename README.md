@@ -10,14 +10,14 @@ Install [here](https://chromewebstore.google.com/detail/bee-fast-video/lljkgbedm
 
 <img src="docs/popup.png" alt="Controls" width=350>
 
-- speed up (`X`) and slow down any video (`Z`)
-- seek forward (`D`) and backward (`A`) through any video
-- seek video to % on any video (`0 – 9`)
-- play and pause (`S`) any video
-- bring to front and enable native video controls for all videos on the page (reload the page to turn off)
-- toggle loop for any video
-- toggle Picture-in-Picture (`P`) for any video
-- toggle disabled (`B`) for all videos on the page video
+- ✅ speed up (`X`) and slow down any video (`Z`)
+- ✅ seek forward (`D`) and backward (`A`) through any video
+- ✅ seek video to % on any video (like on YouTube) (`0 – 9`)
+- ✅ play and pause (`S`) any video
+- ✅ bring to front and enable native video controls for all videos on the page (reload the page to turn off)
+- ✅ toggle loop for any video
+- ✅ toggle Picture-in-Picture (`P`) for any video
+- ✅ disable (`B`)
 
 ## Development notes
 
@@ -44,7 +44,7 @@ The popup is there to present functionality and shortcuts to the user. It must b
 Styles are written in SCSS and are imported as transformed CSS `text`. This text is then used as content for the `<style>...</style>` tag. 
 
 ```typescript jsx
-import cssText from "./some.scss";
+import cssText from "./some.scss?inline";
 
 <style>{cssText}</style>
 ```
