@@ -9,6 +9,11 @@ export interface ManifestType {
   default_locale?: string | undefined;
   description?: string | undefined;
   icons?: chrome.runtime.ManifestIcons | undefined;
+  browser_specific_settings?: {
+    gecko?: {
+      id: string;
+    }
+  };
   action?: chrome.runtime.ManifestAction | undefined;
   author?: string | undefined;
   background?:
