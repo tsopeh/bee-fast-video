@@ -1,12 +1,5 @@
-import { JSX, render } from "preact"
+import { render } from "solid-js/web"
 import { Popup } from "./Popup"
 
-export const initElement = (elem: JSX.Element) => {
-  const appContainer = document.querySelector("#app-container")
-  if (!appContainer) {
-    throw new Error("Can not find AppContainer")
-  }
-  render(elem, appContainer)
-}
-
-initElement(<Popup />)
+const appContainer = document.getElementById("root")!
+render(() => <Popup />, appContainer)
