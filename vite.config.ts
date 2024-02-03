@@ -1,12 +1,11 @@
-import preact from "@preact/preset-vite"
 import { resolve } from "path"
 import * as process from "process"
 import { defineConfig } from "vite"
 import checker from "vite-plugin-checker"
+import solidPlugin from "vite-plugin-solid"
 import makeManifest from "./src/make-manifest"
 
 const src = resolve(__dirname, "src")
-const assetsDir = resolve(src, "assets")
 const outDir = resolve(__dirname, "dist")
 const publicDir = resolve(__dirname, "public")
 
@@ -22,14 +21,14 @@ if (!isValidEnvVariable) {
 }
 
 const rollupInput: Record<string, string> = rawInput == "content"
-  ? { content: resolve(src, "content", "index.ts") }
+  ? { content: resolve(src, "content", "index.tsx") }
   : { popup: resolve(src, "popup", "index.html") }
 
 export default defineConfig(({ mode }) => {
   return {
     plugins: [
       makeManifest(),
-      preact(),
+      solidPlugin(),
       checker({ typescript: true }),
     ],
     publicDir,

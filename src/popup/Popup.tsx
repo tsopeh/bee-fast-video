@@ -2,16 +2,16 @@ import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPict
 import iconLarge from "../assets/icon-large.png"
 import popupCss from "./popup.scss?inline"
 
-export const Popup = () => {
+export function Popup () {
   return (
     <>
       <style>{popupCss}</style>
       <main>
         <img
-          className="logo"
+          class="logo"
           src={iconLarge}
           alt="Bee holding a red play-video button." />
-        <div className="title">Bee Fast Video</div>
+        <div class="title">Bee Fast Video</div>
         <table>
           <thead>
           <tr>
@@ -29,125 +29,125 @@ export const Popup = () => {
           <tbody>
           <tr>
             <td>
-              <div className="icon"><SlowDownIcon /></div>
+              <div class="icon"><SlowDownIcon /></div>
             </td>
             <td>
-              <div className="action">Slow down</div>
+              <div class="action">Slow down</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 <KeyboardKey keyboardKey="Z" />
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><SpeedUpIcon /></div>
+              <div class="icon"><SpeedUpIcon /></div>
             </td>
             <td>
-              <div className="action">Speed up</div>
+              <div class="action">Speed up</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 <KeyboardKey keyboardKey="X" />
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><BackwardIcon /></div>
+              <div class="icon"><BackwardIcon /></div>
             </td>
             <td>
-              <div className="action">Backward</div>
+              <div class="action">Backward</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 <KeyboardKey keyboardKey="A" />
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><PlayIcon /><span className="separator">|</span><PauseIcon /></div>
+              <div class="icon"><PlayIcon /><span class="separator">|</span><PauseIcon /></div>
             </td>
             <td>
-              <div className="action">Play | Pause</div>
+              <div class="action">Play | Pause</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 <KeyboardKey keyboardKey="S" />
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><ForwardIcon /></div>
+              <div class="icon"><ForwardIcon /></div>
             </td>
             <td>
-              <div className="action">Forward</div>
+              <div class="action">Forward</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 <KeyboardKey keyboardKey="D" />
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><RepeatIcon /></div>
+              <div class="icon"><RepeatIcon /></div>
             </td>
             <td>
-              <div className="action">Loop</div>
+              <div class="action">Loop</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 /
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><NativeControlsIcon /></div>
+              <div class="icon"><NativeControlsIcon /></div>
             </td>
             <td>
-              <div className="action">Native controls</div>
+              <div class="action">Native controls</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 /
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><PictureInPictureIcon /></div>
+              <div class="icon"><PictureInPictureIcon /></div>
             </td>
             <td>
-              <div className="action">Picture-in-Picture</div>
+              <div class="action">Picture-in-Picture</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 <KeyboardKey keyboardKey="P" />
               </div>
             </td>
           </tr>
-          <tr className="row-gap" />
+          <tr class="row-gap" />
           <tr>
             <td>
-              <div className="icon"><RemoveIcon /></div>
+              <div class="icon"><RemoveIcon /></div>
             </td>
             <td>
-              <div className="action">Disable</div>
+              <div class="action">Disable</div>
             </td>
             <td>
-              <div className="key-wrapper">
+              <div class="key-wrapper">
                 <KeyboardKey keyboardKey="B" />
               </div>
             </td>
@@ -159,6 +159,6 @@ export const Popup = () => {
   )
 }
 
-const KeyboardKey = ({ keyboardKey }: { keyboardKey: string }) => {
-  return <div className="keyboard-key">{keyboardKey}</div>
+function KeyboardKey (props: { keyboardKey: string }) {
+  return <div class="keyboard-key">{props.keyboardKey}</div>
 }

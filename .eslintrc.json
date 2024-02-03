@@ -4,13 +4,17 @@
     "es6": true,
     "node": true
   },
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**"
+  ],
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "solid"
   ],
   "extends": [
-    "preact",
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:solid/typescript"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
