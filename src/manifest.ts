@@ -13,11 +13,11 @@ const manifest: ManifestType = {
   icons: {
     "128": "icon-128.png",
   },
-  browser_specific_settings: {
-    gecko: {
-      id: "bee.fast.video@tsopeh.github.com",
-    },
-  },
+  // browser_specific_settings: {
+  //   gecko: {
+  //     id: "bee.fast.videFo@tsopeh.github.com",
+  //   },
+  // },
   content_scripts: [
     {
       matches: ["http://*/*", "https://*/*", "<all_urls>"],

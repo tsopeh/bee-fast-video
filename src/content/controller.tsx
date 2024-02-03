@@ -1,131 +1,99 @@
-import { useEffect, useMemo, useState } from "preact/compat"
-import { StateUpdater } from "preact/hooks"
+import { Accessor, createEffect, onCleanup, Setter, Show } from "solid-js"
+import { createStore, produce } from "solid-js/store"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlashIcon, SlowDownIcon, SpeedUpIcon } from "../assets/control-icons"
-import { keyboardListener } from "./shortcuts"
 import { viewportIntersection } from "./intersection-observer"
+import { keyboardListener } from "./shortcuts"
+import { adjustPlaybackRate, seekBy, seekToNormalized, toggleLoop, togglePictureInPicture, togglePlayPause } from "./video-mutators"
 
 interface Props {
-  videoEl: HTMLVideoElement
-  isGloballyDisabled: boolean
-  shouldBringToFront: boolean
-  setShouldBringToFront: StateUpdater<boolean>
+  videoEl: Accessor<HTMLVideoElement>
+  isGloballyDisabled: Accessor<boolean>
+  shouldBringToFront: Accessor<boolean>
+  setShouldBringToFront: Setter<boolean>
 }
 
-export const Controller = ({
-  videoEl,
-  isGloballyDisabled,
-  shouldBringToFront,
-  setShouldBringToFront,
-}: Props) => {
-  const [shouldShowMoreControls, setShouldShowMoreControls] = useState(false)
-  const [isVideoInViewport, setIsVideoInViewport] = useState(false)
-  const [position, setPosition] = useState(() => getControllerPosition(videoEl))
-  const [playbackRate, setPlaybackRate] = useState(videoEl.playbackRate)
-  const [isPaused, setIsPaused] = useState(() => videoEl.paused)
-  const [isLooped, setIsLooped] = useState(() => videoEl.loop)
-  const [isPictureInPicture, setIsPictureInPicture] = useState(() => document.pictureInPictureElement == videoEl)
-  const [isClosed, setIsClosed] = useState(false)
+export const Controller = (props: Props) => {
 
-  const isDisabled = isGloballyDisabled || isClosed || !isVideoInViewport
+  const [state, setState] = createStore({
+    videoEl: props.videoEl(),
+    shouldShowMoreControls: false,
+    isVideoInViewport: false,
+    position: getControllerPosition(props.videoEl()),
+    isPaused: props.videoEl().paused,
+    playbackRate: props.videoEl().playbackRate,
+    isLooped: props.videoEl().loop,
+    isPictureInPicture: props.videoEl().ownerDocument.pictureInPictureElement == props.videoEl(),
+    isClosed: false,
+  })
 
-  const userActions = useMemo(() => {
-    return {
-      adjustPlaybackRate: (adjustment: number) => {
-        videoEl.playbackRate = getValidPlaybackRate(videoEl.playbackRate, adjustment)
-      },
-      seekBy: (seekMs: number) => {
-        const seekSeconds = seekMs / 1000
-        videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, seekSeconds)
-      },
-      seekToNormalized: (normalized: number) => {
-        if (normalized >= 0 && normalized <= 1) {
-          videoEl.currentTime = Math.round(videoEl.duration * normalized)
-        }
-      },
-      togglePlayPause: () => {
-        if (isPaused) {
-          videoEl.play().catch(() => console.log("bee-fast-video:", "Could not play the video", videoEl))
-        } else {
-          videoEl.pause()
-        }
-      },
-      toggleLoop: () => {
-        videoEl.loop = !videoEl.loop
-        setIsLooped(videoEl.loop)
-      },
-      enterCinemaMode: () => {
-        setShouldBringToFront(true)
-      },
-      togglePictureInPicture: () => {
-        if (isPictureInPicture) {
-          document.exitPictureInPicture().catch(() => console.log("bee-fast-video:", "Could not exit from the picture-in-picture mode for video", videoEl))
-        } else {
-          videoEl.disablePictureInPicture = false
-          videoEl.requestPictureInPicture().catch(() => console.log("bee-fast-video:", "Could not enter the picture-in-picture mode for video", videoEl))
-        }
-      },
-      close: () => {
-        setIsClosed(true)
-      },
-    }
-  }, [videoEl, isPaused, setShouldBringToFront, isPictureInPicture])
+  const isDisabled = () => props.isGloballyDisabled() || state.isClosed || !state.isVideoInViewport
 
   // Handle viewport visibility change
-  useEffect(() => {
-    const { unregister } = viewportIntersection.register(videoEl, (entry) => {
-      setIsVideoInViewport(entry.isIntersecting)
+  createEffect(() => {
+    const { unregister } = viewportIntersection.register(state.videoEl, (entry) => {
+      setState(produce(state => { state.isVideoInViewport = entry.isIntersecting }))
     })
-    return () => {
+    onCleanup(() => {
       unregister()
-    }
-  }, [videoEl])
+    })
+  })
 
   // Handle `isGloballyDisabled` changes.
-  useEffect(() => {
+  createEffect(() => {
     // When `isGloballyDisabled` becomes `false`, we cancel `isClosed`
-    const shouldCancelIsClosed = !isGloballyDisabled
+    const shouldCancelIsClosed = !props.isGloballyDisabled()
     if (shouldCancelIsClosed) {
-      setIsClosed(false)
+      setState(produce(state => {
+        state.isClosed = false
+      }))
     }
-  }, [isGloballyDisabled])
+  })
 
   // React on video events
-  useEffect(() => {
-    if (isDisabled) {
+  createEffect(() => {
+    if (isDisabled()) {
       return
     }
+    const videoEl = state.videoEl
     const onPlayPauseChange = () => {
-      setIsPaused(videoEl.paused)
+      setState(produce(state => {state.isPaused = videoEl.paused}))
     }
     videoEl.addEventListener("play", onPlayPauseChange)
     videoEl.addEventListener("pause", onPlayPauseChange)
 
     const onPictureInPictureChange = () => {
-      setIsPictureInPicture(document.pictureInPictureElement == videoEl)
+      setState(produce(state => {
+        state.isPictureInPicture = videoEl.ownerDocument.pictureInPictureElement == videoEl
+      }))
     }
     videoEl.addEventListener("enterpictureinpicture", onPictureInPictureChange)
     videoEl.addEventListener("leavepictureinpicture", onPictureInPictureChange)
 
     const onRateChange = () => {
-      setPlaybackRate(videoEl.playbackRate)
+      setState(produce(state => {
+        state.playbackRate = videoEl.playbackRate
+      }))
     }
     videoEl.addEventListener("ratechange", onRateChange)
 
     const updatePosition = () => {
       const newPosition = getControllerPosition(videoEl)
-      setPosition((prevPosition) => {
-        const didPositionChange = prevPosition.left != newPosition.left || prevPosition.top != newPosition.top
-        return didPositionChange
-          ? newPosition
-          : prevPosition
-      })
+      setState(produce(state => {
+        const didPositionChange = state.position.left != newPosition.left || state.position.top != newPosition.top
+        if (didPositionChange) {
+          state.position.left = newPosition.left
+          state.position.top = newPosition.top
+        }
+      }))
     }
 
     // Track position change
     const styleMutationObserver = new MutationObserver(() => {
       updatePosition()
-      setIsLooped(videoEl.loop)
-      const shouldForceControls = shouldBringToFront && !videoEl.controls
+      setState(produce(state => {
+        state.isLooped = videoEl.loop
+      }))
+      const shouldForceControls = props.shouldBringToFront() && !videoEl.controls
       if (shouldForceControls) {
         videoEl.controls = true
       }
@@ -138,49 +106,51 @@ export const Controller = ({
 
     updatePosition()
 
-    return () => {
-      videoEl.removeEventListener("play", onPlayPauseChange)
-      videoEl.removeEventListener("pause", onPlayPauseChange)
-      videoEl.removeEventListener("enterpictureinpicture", onPictureInPictureChange)
-      videoEl.removeEventListener("leavepictureinpicture", onPictureInPictureChange)
-      videoEl.removeEventListener("ratechange", onRateChange)
-      styleMutationObserver.disconnect()
-      clearInterval(intervalId)
-    }
-  }, [isDisabled, shouldBringToFront, videoEl])
+    onCleanup(() => {
+        videoEl.removeEventListener("play", onPlayPauseChange)
+        videoEl.removeEventListener("pause", onPlayPauseChange)
+        videoEl.removeEventListener("enterpictureinpicture", onPictureInPictureChange)
+        videoEl.removeEventListener("leavepictureinpicture", onPictureInPictureChange)
+        videoEl.removeEventListener("ratechange", onRateChange)
+        styleMutationObserver.disconnect()
+        clearInterval(intervalId)
+      },
+    )
+  })
 
   // React on keyboard events
-  useEffect(() => {
-    if (isDisabled) {
+  createEffect(() => {
+    if (isDisabled()) {
       return
     }
+    const videoEl = state.videoEl
     const listeners = [
       keyboardListener.registerCallback("z", () => {
-        userActions.adjustPlaybackRate(-0.25)
+        adjustPlaybackRate(videoEl, -0.25)
       }),
       keyboardListener.registerCallback("Z", () => {
-        userActions.adjustPlaybackRate(-0.1)
+        adjustPlaybackRate(videoEl, -0.1)
       }),
       keyboardListener.registerCallback("x", () => {
-        userActions.adjustPlaybackRate(+0.25)
+        adjustPlaybackRate(videoEl, +0.25)
       }),
       keyboardListener.registerCallback("X", () => {
-        userActions.adjustPlaybackRate(+0.1)
+        adjustPlaybackRate(videoEl, +0.1)
       }),
       keyboardListener.registerCallback("a", () => {
-        userActions.seekBy(-5_000)
+        seekBy(videoEl, -5_000)
       }),
       keyboardListener.registerCallback("A", () => {
-        userActions.seekBy(-20_000)
+        seekBy(videoEl, -20_000)
       }),
       keyboardListener.registerCallback("d", () => {
-        userActions.seekBy(+5_000)
+        seekBy(videoEl, +5_000)
       }),
       keyboardListener.registerCallback("D", () => {
-        userActions.seekBy(+20_000)
+        seekBy(videoEl, +20_000)
       }),
       keyboardListener.registerCallback("s", () => {
-        userActions.togglePlayPause()
+        togglePlayPause(videoEl)
       }),
       // Number keys from 1 to 10
       ...Array.from({ length: 10 })
@@ -188,25 +158,27 @@ export const Controller = ({
         .map((_, index) => {
           const normalized = index / 10
           return keyboardListener.registerCallback(index.toString(), () => {
-            userActions.seekToNormalized(normalized)
+            seekToNormalized(videoEl, normalized)
           })
         }),
       keyboardListener.registerCallback("p", () => {
-        userActions.togglePictureInPicture()
+        togglePictureInPicture(videoEl)
       }),
       keyboardListener.registerCallback("P", () => {
-        userActions.togglePictureInPicture()
+        togglePictureInPicture(videoEl)
       }),
     ]
-    return () => {
+    onCleanup(() => {
       listeners.forEach(l => l.unregisterCallback())
-    }
-  }, [isDisabled, userActions])
+    })
+  })
 
-  useEffect(() => {
-    if (!shouldBringToFront) {
+  // React on `shouldBringToFront`
+  createEffect(() => {
+    if (!props.shouldBringToFront()) {
       return
     }
+    const videoEl = state.videoEl
     const videoPosition = getElementPositionFromTopOfPage(videoEl)
     const { width, height } = videoEl.getBoundingClientRect()
     videoEl.remove()
@@ -220,161 +192,150 @@ export const Controller = ({
     videoEl.style.left = `${videoPosition.left}px`
     videoEl.style.top = `${videoPosition.top}px`
     videoEl.style.width = `${width}px`
-    videoEl.style.height = `${height}px`
+    videoEl.style.height = `min(85vh, ${height}px)`
     videoEl.style.zIndex = `${2147483647 - 10}`
     videoEl.controls = true
     videoEl.style.outline = "2px solid rgb(233, 171, 23, 0.6)"
     videoEl.style.backgroundColor = "#000000"
-    document.body.appendChild(videoEl)
-  }, [videoEl, shouldBringToFront])
+    videoEl.ownerDocument.body.appendChild(videoEl)
+  })
 
-  if (isDisabled) {
-    return null
-  }
-
-  return (
-    <>
+  return <Show when={!isDisabled()}>
+    <div
+      class="controller"
+      tabIndex={-1}
+      style={{
+        left: `${state.position.left}px`,
+        top: `${state.position.top}px`,
+      }}
+      onClick={(event) => {
+        event.stopPropagation()
+        event.preventDefault()
+      }}
+      onDblClick={(event) => {
+        event.stopPropagation()
+        event.preventDefault()
+      }}
+    >
+      <div class="underlay" />
       <div
-        className="controller"
-        tabindex={-1}
-        style={{
-          top: position.top,
-          left: position.left,
-        }}
-        ref={(ref) => {
-          if (ref == null) {
-            return
-          }
-          ref.onclick = (event) => {
-            event.stopPropagation()
-            event.preventDefault()
-          }
-          ref.ondblclick = (event) => {
-            event.stopPropagation()
-            event.preventDefault()
-          }
-        }}
+        class="controls"
       >
-        <div className="underlay" />
         <div
-          className="controls"
+          class="control playback-rate"
+          title="Video speed"
+          onClick={(event) => {
+            event.stopPropagation()
+            setState(produce(state => {
+              state.shouldShowMoreControls = !state.shouldShowMoreControls
+            }))
+          }}
         >
+          <span>{state.playbackRate.toFixed(2)}</span>
+        </div>
+        <Show when={state.shouldShowMoreControls}>
           <div
-            className="control playback-rate"
-            title="Video speed"
+            class="control"
+            title="Slow down (Z)"
             onClick={(event) => {
               event.stopPropagation()
-              setShouldShowMoreControls((shouldShow) => !shouldShow)
-            }}
-          >
-            <span>{playbackRate.toFixed(2)}</span>
+              adjustPlaybackRate(state.videoEl, -0.25)
+            }}>
+            <SlowDownIcon />
           </div>
-          {!shouldShowMoreControls
-            ? null
-            : <>
-              <div
-                className="control"
-                title="Slow down (Z)"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.adjustPlaybackRate(-0.25)
-                }}>
-                <SlowDownIcon />
-              </div>
-              <div
-                className="control"
-                title="Speed up (X)"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.adjustPlaybackRate(+0.25)
-                }}>
-                <SpeedUpIcon />
-              </div>
-              <div
-                className="control"
-                title="Backward 5 seconds (A)"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.seekBy(-5_000)
-                }}>
-                <BackwardIcon />
-              </div>
-              <div
-                className="control"
-                title={`${isPaused ? "Play" : "Pause"} (S)`}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.togglePlayPause()
-                }}>
-                {isPaused ? <PlayIcon /> : <PauseIcon />}
-              </div>
-              <div
-                className="control"
-                title="Forward 5 seconds (D)"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.seekBy(+5_000)
-                }}>
-                <ForwardIcon />
-              </div>
-              <div
-                className="control"
-                title={isLooped ? "Disable loop" : "Loop"}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.toggleLoop()
-                }}>
-                {
-                  isLooped ?
-                    <SlashIcon>
-                      <RepeatIcon />
-                    </SlashIcon>
-                    : <RepeatIcon />
-                }
-
-              </div>
-              <div
-                className={`control ${shouldBringToFront ? "locked" : ""}`}
-                title={
-                  shouldBringToFront
-                    ? "Reload the page to disable this."
-                    : "Enable native controls and bring to front all videos on this page."
-                }
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.enterCinemaMode()
-                }}>
-                <NativeControlsIcon />
-              </div>
-              <div
-                className="control"
-                title={`${isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.togglePictureInPicture()
-                }}>{
-                isPictureInPicture
-                  ? <SlashIcon>
-                    <PictureInPictureIcon />
-                  </SlashIcon>
-                  : <PictureInPictureIcon />
-              }
-              </div>
-              <div
-                className="control"
-                title="Toggle disable (B)"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  userActions.close()
-                }}>
-                <RemoveIcon />
-              </div>
-            </>
-          }
-        </div>
+          <div
+            class="control"
+            title="Speed up (X)"
+            onClick={(event) => {
+              event.stopPropagation()
+              adjustPlaybackRate(state.videoEl, +0.25)
+            }}>
+            <SpeedUpIcon />
+          </div>
+          <div
+            class="control"
+            title="Backward 5 seconds (A)"
+            onClick={(event) => {
+              event.stopPropagation()
+              seekBy(state.videoEl, -5_000)
+            }}>
+            <BackwardIcon />
+          </div>
+          <div
+            class="control"
+            title={`${state.isPaused ? "Play" : "Pause"} (S)`}
+            onClick={(event) => {
+              event.stopPropagation()
+              togglePlayPause(state.videoEl)
+            }}>
+            {state.isPaused ? <PlayIcon /> : <PauseIcon />}
+          </div>
+          <div
+            class="control"
+            title="Forward 5 seconds (D)"
+            onClick={(event) => {
+              event.stopPropagation()
+              seekBy(state.videoEl, +5_000)
+            }}>
+            <ForwardIcon />
+          </div>
+          <div
+            class="control"
+            title={state.isLooped ? "Disable loop" : "Loop"}
+            onClick={(event) => {
+              event.stopPropagation()
+              toggleLoop(state.videoEl)
+              setState(produce((state) => {
+                state.isLooped = state.videoEl.loop
+              }))
+            }}>
+            <Show when={state.isLooped} fallback={<RepeatIcon />}>
+              <SlashIcon>
+                <RepeatIcon />
+              </SlashIcon>
+            </Show>
+          </div>
+          <div
+            class={`control ${props.shouldBringToFront() ? "locked" : ""}`}
+            title={
+              props.shouldBringToFront()
+                ? "Reload the page to disable this."
+                : "Enable native controls and bring to front all videos on this page."
+            }
+            onClick={(event) => {
+              event.stopPropagation()
+              props.setShouldBringToFront(true)
+            }}>
+            <NativeControlsIcon />
+          </div>
+          <div
+            class="control"
+            title={`${state.isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`}
+            onClick={(event) => {
+              event.stopPropagation()
+              togglePictureInPicture(state.videoEl)
+            }}>
+            <Show when={state.isPictureInPicture} fallback={<PictureInPictureIcon />}>
+              <SlashIcon>
+                <PictureInPictureIcon />
+              </SlashIcon>
+            </Show>
+          </div>
+          <div
+            class="control"
+            title="Toggle disable (B)"
+            onClick={(event) => {
+              event.stopPropagation()
+              setState(produce((store) => {
+                store.isClosed = true
+              }))
+            }}>
+            <RemoveIcon />
+          </div>
+        </Show>
       </div>
-    </>
-  )
+    </div>
+  </Show>
 }
 
 function getControllerPosition (videoEl: HTMLVideoElement): { top: number, left: number } {
@@ -388,14 +349,4 @@ function getElementPositionFromTopOfPage (element: HTMLElement): { top: number, 
     left: x + window.scrollX,
     top: y + window.scrollY,
   }
-}
-
-function getValidPlaybackRate (current: number, adjustment: number): number {
-  const chromeMinAllowedPlaybackRate = 0.1
-  const chromeMaxAllowedPlaybackRate = 16
-  return Math.min(chromeMaxAllowedPlaybackRate, Math.max(chromeMinAllowedPlaybackRate, current + adjustment))
-}
-
-function getValidSeekTime (totalDuration: number, currentTime: number, adjustment: number): number {
-  return Math.min(totalDuration, Math.max(0, currentTime + adjustment))
 }

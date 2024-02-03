@@ -32,7 +32,8 @@ function initKeyboardListener () {
         .toLowerCase()
         .includes("input")
       const isTypingInContentEditableElement = element.isContentEditable
-      const shouldSkipKeyboardEvent = isTypingInInput || isTypingInContentEditableElement
+      const isModifierPressed = event.altKey || event.ctrlKey || event.metaKey
+      const shouldSkipKeyboardEvent = isTypingInInput || isTypingInContentEditableElement || isModifierPressed
       if (shouldSkipKeyboardEvent) {
         return
       }
