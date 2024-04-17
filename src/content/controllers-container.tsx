@@ -1,28 +1,15 @@
 import { createEffect, createSignal, For, onCleanup } from "solid-js"
+import { useSettings } from "../settings"
 import contentCss from "./content.scss?inline" // read as transformed css string
 import { Controller } from "./controller"
 import { observeForVideoElements } from "./mutation-observer"
-import { keyboardListener } from "./shortcuts"
 import { computeNewState } from "./state"
 
 export function ControllersContainer () {
 
-  const [videoElements, setVideoElements] = createSignal(new Set(document.body.querySelectorAll("video")))
+  const settings = useSettings()
 
-  const [isGloballyDisabled, setIsGloballyDisabled] = createSignal(false)
-  createEffect(() => {
-    const unregisterKeyboardFns = [
-      keyboardListener.registerCallback("b", () => {
-        setIsGloballyDisabled((prevState) => !prevState)
-      }),
-      keyboardListener.registerCallback("B", () => {
-        setIsGloballyDisabled((prevState) => !prevState)
-      }),
-    ]
-    onCleanup(() => {
-      unregisterKeyboardFns.forEach(({ unregisterCallback }) => {unregisterCallback()})
-    })
-  })
+  const [videoElements, setVideoElements] = createSignal(new Set(document.body.querySelectorAll("video")))
 
   const [shouldBringToFront, setShouldBringToFront] = createSignal(false)
   createEffect(() => {
@@ -50,7 +37,7 @@ export function ControllersContainer () {
       {(videoEl) => {
         return <Controller
           videoEl={() => videoEl}
-          isGloballyDisabled={isGloballyDisabled}
+          isGloballyDisabled={settings.isDisabledOnThisDomain}
           shouldBringToFront={shouldBringToFront}
           setShouldBringToFront={setShouldBringToFront}
         />

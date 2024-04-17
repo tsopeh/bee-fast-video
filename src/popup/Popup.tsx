@@ -1,8 +1,13 @@
+import { Show } from "solid-js"
 import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/control-icons"
 import iconLarge from "../assets/icon-large.png"
+import { useSettings } from "../settings"
 import popupCss from "./popup.scss?inline"
 
 export function Popup () {
+
+  const { currentHostname, isDisabledOnThisDomain, toggleBlacklistHostName } = useSettings()
+
   return (
     <>
       <style>{popupCss}</style>
@@ -12,6 +17,14 @@ export function Popup () {
           src={iconLarge}
           alt="Bee holding a red play-video button." />
         <div class="title">Bee Fast Video</div>
+        <div
+          class={`toggle ${isDisabledOnThisDomain() ? "disabled" : "enabled"}`}
+          onClick={() => {
+            toggleBlacklistHostName()
+          }}>
+          <Show when={isDisabledOnThisDomain()} fallback={"Enabled"}>Disabled</Show>{" for"}
+          <span class="hostname">&nbsp{currentHostname()}</span>
+        </div>
         <table>
           <thead>
           <tr>
@@ -148,7 +161,7 @@ export function Popup () {
             </td>
             <td>
               <div class="key-wrapper">
-                <KeyboardKey keyboardKey="B" />
+                /
               </div>
             </td>
           </tr>

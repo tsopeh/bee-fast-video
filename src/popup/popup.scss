@@ -1,12 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&family=Salsa&display=swap');
 
+:root {
+  --border-radius: 4px;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   user-select: none;
   font-family: 'Salsa', 'Roboto Condensed', sans-serif;
-  line-height: 100%;
+  line-height: 1;
   min-width: 0;
 }
 
@@ -18,9 +22,11 @@ html, body {
 main {
   display: grid;
   grid-template-areas:
-  "logo title"
-  "table table";
+  "logo       title"
+  "toggle     toggle"
+  "table      table";
   padding: 16px;
+  row-gap: 24px;
 
   .logo {
     grid-area: logo;
@@ -37,8 +43,41 @@ main {
     margin-left: 10px;
   }
 
+  .toggle {
+    grid-area: toggle;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+
+
+    &.disabled {
+      background-color: #db7093;
+      color: #ffffff;
+    }
+
+    &.enabled {
+      background-color: #98fb98;
+      color: #000000;
+    }
+
+    &:hover {
+      filter: brightness(105%);
+    }
+
+    .hostname {
+      font-size: 14px;
+      font-family: monospace;
+    }
+  }
+
   table {
-    margin-top: 10px;
     grid-area: table;
 
     th {
@@ -62,7 +101,7 @@ main {
         padding: 2px;
         background-color: #ffdb00;
         border: 1px solid #e9ab17;
-        border-radius: 4px;
+        border-radius: var(--border-radius);
       }
 
       .separator {
