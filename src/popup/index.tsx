@@ -1,5 +1,6 @@
 import { render } from "solid-js/web"
 import { Popup } from "./Popup"
 
-const appContainer = document.getElementById("root")!
-render(() => <Popup />, appContainer)
+const rootEl = document.createElement("div")
+document.body.appendChild(rootEl)
+render(() => <Popup />, rootEl)

@@ -6,6 +6,7 @@ const manifest: ManifestType = {
   name: "Bee fast video",
   version: packageJson.version,
   description: packageJson.description,
+  permissions: ["tabs", "storage"],
   action: {
     default_popup: "src/popup/index.html",
     default_icon: "icon-34.png",

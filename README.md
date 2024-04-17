@@ -17,13 +17,13 @@ Install 🐝 on **[Chrome](https://chromewebstore.google.com/detail/bee-fast-vid
 - ✅ bring to front and enable native video controls for all videos on the page (reload the page to turn off)
 - ✅ toggle loop for any video
 - ✅ toggle Picture-in-Picture (`P`) for any video
-- ✅ disable (`B`)
+- ✅ enable/disable controls on any website; useful for video conferencing
 
 ## Development notes
 
 The extension was initially made based on a [Preact template](https://github.com/fell-lucas/chrome-extension-template-preact-vite), with most of the _extra_ stuff removed. The Preact was later replaced by [Solid](https://github.com/solidjs/solid) from version `v2.x.x`.
 
-The extension consists of the content script and a popup. These two components do not communicate in any way.
+The extension consists of the content script and a popup. These two components via `browserContext` and settings.
 
 ### Content script
 
