@@ -62,12 +62,20 @@ export function togglePictureInPicture(videoEl: HTMLVideoElement) {
   }
 }
 
+// Adjustments (rate, seek, volume) are relative to the current value and never snap to a grid (e.g. multiples of 5 s),
+// so going back and forth while the video plays doesn't get stuck in the same window, and stepping up then down returns
+// to the starting value. Rates are only rounded to hundredths to remove floating point noise (1 + 0.1 + 0.1 + 0.1 is
+// 1.3000000000000003).
+
 function getValidPlaybackRate(current: number, adjustment: number): number {
   const chromeMinAllowedPlaybackRate = 0.1
   const chromeMaxAllowedPlaybackRate = 16
-  return Math.min(chromeMaxAllowedPlaybackRate, Math.max(chromeMinAllowedPlaybackRate, current + adjustment))
+  const rate = Math.round((current + adjustment) * 100) / 100
+  return Math.min(chromeMaxAllowedPlaybackRate, Math.max(chromeMinAllowedPlaybackRate, rate))
 }
 
 function getValidSeekTime(totalDuration: number, currentTime: number, adjustment: number): number {
-  return Math.min(totalDuration, Math.max(0, currentTime + adjustment))
+  const time = Math.max(0, currentTime + adjustment)
+  // Unknown duration (`NaN`, e.g. before metadata loads) would make the time `NaN`, which the video rejects.
+  return Number.isNaN(totalDuration) ? time : Math.min(totalDuration, time)
 }
