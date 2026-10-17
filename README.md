@@ -36,7 +36,7 @@ Most of the important bits are located within the content script. The execution 
 
 **Which videos get a controller**
 
-A controller is shown only for videos that are in the viewport, visible (`checkVisibility`: not hidden by `display`, `visibility` or `opacity` on the video or its ancestors) and at least 50×50 px, and only after staying so for a second (`utils/video-visibility.ts`, `controller.tsx`). Pages often keep hidden, tiny or short-lived videos in the DOM (preloaded players, hover previews), and controllers for those only get in the way. The collapsed controller also lets the pointer pass through until the pointer rests on it for a moment, so it doesn't steal hover from the page.
+A controller is shown only for videos that are in the viewport, visible (`checkVisibility`: not hidden by `display`, `visibility` or `opacity` on the video or its ancestors) and at least 50×50 px (`utils/video-visibility.ts`, `controller.tsx`). Pages often keep hidden or tiny videos in the DOM (e.g. preloaded players), and controllers for those only get in the way.
 
 **Controller**
 
