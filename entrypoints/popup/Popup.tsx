@@ -1,48 +1,53 @@
 import { Show } from "solid-js"
-import { BackwardIcon, ForwardIcon, NativeControlsIcon, PauseIcon, PictureInPictureIcon, PlayIcon, RemoveIcon, RepeatIcon, SlowDownIcon, SpeedUpIcon } from "../assets/control-icons"
-import iconLarge from "../assets/icon-large.png"
-import { useSettings } from "../settings"
-import popupCss from "./popup.scss?inline"
+import {
+  BackwardIcon,
+  ForwardIcon,
+  NativeControlsIcon,
+  PauseIcon,
+  PictureInPictureIcon,
+  PlayIcon,
+  RemoveIcon,
+  RepeatIcon,
+  SlowDownIcon,
+  SpeedUpIcon,
+} from "@/assets/control-icons"
+import iconLarge from "@/assets/icon-large.png"
+import { useSettings } from "@/utils/settings"
 
-export function Popup () {
-
+export function Popup() {
   const { currentHostname, isDisabledOnThisDomain, toggleBlacklistHostName } = useSettings()
 
   return (
-    <>
-      <style>{popupCss}</style>
-      <main>
-        <img
-          class="logo"
-          src={iconLarge}
-          alt="Bee holding a red play-video button." />
-        <div class="title">Bee Fast Video</div>
-        <div
-          class={`toggle ${isDisabledOnThisDomain() ? "disabled" : "enabled"}`}
-          onClick={() => {
-            toggleBlacklistHostName()
-          }}>
-          <Show when={isDisabledOnThisDomain()} fallback={"Enabled"}>Disabled</Show>{" for"}
-          <span class="hostname">&nbsp{currentHostname()}</span>
-        </div>
-        <table>
-          <thead>
+    <main>
+      <img class="logo" src={iconLarge} alt="Bee holding a red play-video button." />
+      <div class="title">Bee Fast Video</div>
+      <button
+        type="button"
+        class={`toggle ${isDisabledOnThisDomain() ? "disabled" : "enabled"}`}
+        onClick={() => {
+          toggleBlacklistHostName()
+        }}
+      >
+        <Show when={isDisabledOnThisDomain()} fallback={"Enabled"}>
+          Disabled
+        </Show>
+        {" for"}
+        <span class="hostname">&nbsp{currentHostname()}</span>
+      </button>
+      <table>
+        <thead>
           <tr>
-            <th>
-              Button
-            </th>
-            <th>
-              What it does
-            </th>
-            <th>
-              Shortcut
-            </th>
+            <th>Button</th>
+            <th>What it does</th>
+            <th>Shortcut</th>
           </tr>
-          </thead>
-          <tbody>
+        </thead>
+        <tbody>
           <tr>
             <td>
-              <div class="icon"><SlowDownIcon /></div>
+              <div class="icon">
+                <SlowDownIcon />
+              </div>
             </td>
             <td>
               <div class="action">Slow down</div>
@@ -56,7 +61,9 @@ export function Popup () {
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><SpeedUpIcon /></div>
+              <div class="icon">
+                <SpeedUpIcon />
+              </div>
             </td>
             <td>
               <div class="action">Speed up</div>
@@ -70,7 +77,9 @@ export function Popup () {
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><BackwardIcon /></div>
+              <div class="icon">
+                <BackwardIcon />
+              </div>
             </td>
             <td>
               <div class="action">Backward</div>
@@ -84,7 +93,11 @@ export function Popup () {
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><PlayIcon /><span class="separator">|</span><PauseIcon /></div>
+              <div class="icon">
+                <PlayIcon />
+                <span class="separator">|</span>
+                <PauseIcon />
+              </div>
             </td>
             <td>
               <div class="action">Play | Pause</div>
@@ -98,7 +111,9 @@ export function Popup () {
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><ForwardIcon /></div>
+              <div class="icon">
+                <ForwardIcon />
+              </div>
             </td>
             <td>
               <div class="action">Forward</div>
@@ -112,35 +127,37 @@ export function Popup () {
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><RepeatIcon /></div>
+              <div class="icon">
+                <RepeatIcon />
+              </div>
             </td>
             <td>
               <div class="action">Loop</div>
             </td>
             <td>
-              <div class="key-wrapper">
-                /
-              </div>
+              <div class="key-wrapper">/</div>
             </td>
           </tr>
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><NativeControlsIcon /></div>
+              <div class="icon">
+                <NativeControlsIcon />
+              </div>
             </td>
             <td>
               <div class="action">Native controls</div>
             </td>
             <td>
-              <div class="key-wrapper">
-                /
-              </div>
+              <div class="key-wrapper">/</div>
             </td>
           </tr>
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><PictureInPictureIcon /></div>
+              <div class="icon">
+                <PictureInPictureIcon />
+              </div>
             </td>
             <td>
               <div class="action">Picture-in-Picture</div>
@@ -154,24 +171,23 @@ export function Popup () {
           <tr class="row-gap" />
           <tr>
             <td>
-              <div class="icon"><RemoveIcon /></div>
+              <div class="icon">
+                <RemoveIcon />
+              </div>
             </td>
             <td>
               <div class="action">Disable</div>
             </td>
             <td>
-              <div class="key-wrapper">
-                /
-              </div>
+              <div class="key-wrapper">/</div>
             </td>
           </tr>
-          </tbody>
-        </table>
-      </main>
-    </>
+        </tbody>
+      </table>
+    </main>
   )
 }
 
-function KeyboardKey (props: { keyboardKey: string }) {
+function KeyboardKey(props: { keyboardKey: string }) {
   return <div class="keyboard-key">{props.keyboardKey}</div>
 }

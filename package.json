@@ -1,32 +1,35 @@
 {
   "name": "bee-fast-video",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "Bee fast video 🐝 - Speed up or slow down videos, seek forward and backward, loop, native controls and Picture-in-picture.",
+  "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/tsopeh/bee-fast-video.git"
   },
-  "scripts": {
-    "build": "rm -rf dist && VITE_INPUT='content' vite build && VITE_INPUT='popup' vite build",
-    "dev": "nodemon",
-    "lint": "eslint ."
-  },
   "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "check": "tsc --noEmit && biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "solid-js": "^1.9.17"
+  },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/chrome": "^0.3.5",
-    "@types/node": "^26.6.5",
-    "eslint": "^10.13.0",
-    "eslint-plugin-solid": "^0.18.1",
-    "globals": "^17.13.0",
-    "nodemon": "^3.1.14",
-    "sass": "^1.105.2",
-    "solid-js": "^1.9.17",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.71.2",
+    "@biomejs/biome": "^2.5.15",
+    "@wxt-dev/module-solid": "^1.1.4",
+    "typescript": "^7.0.2",
     "vite": "^8.3.4",
-    "vite-plugin-checker": "^0.14.5",
-    "vite-plugin-solid": "^2.11.14"
+    "vitest": "^5.0.5",
+    "wxt": "^0.21.4"
   }
 }

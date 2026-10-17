@@ -1,11 +1,10 @@
 import { createEffect, createSignal, For, onCleanup } from "solid-js"
-import { useSettings } from "../settings"
+import { useSettings } from "@/utils/settings"
+import { computeNewState } from "@/utils/video-set"
 import { Controller } from "./controller"
 import { observeForVideoElements } from "./mutation-observer"
-import { computeNewState } from "./state"
 
-export function ControllersContainer () {
-
+export function ControllersContainer() {
   const settings = useSettings()
 
   const [videoElements, setVideoElements] = createSignal(new Set(document.body.querySelectorAll("video")))
@@ -30,16 +29,18 @@ export function ControllersContainer () {
     return Array.from(videoElements()) as Array<HTMLVideoElement>
   }
 
-  return <>
+  return (
     <For each={videosArray()}>
       {(videoEl) => {
-        return <Controller
-          videoEl={() => videoEl}
-          isGloballyDisabled={settings.isDisabledOnThisDomain}
-          shouldBringToFront={shouldBringToFront}
-          setShouldBringToFront={setShouldBringToFront}
-        />
+        return (
+          <Controller
+            videoEl={() => videoEl}
+            isGloballyDisabled={settings.isDisabledOnThisDomain}
+            shouldBringToFront={shouldBringToFront}
+            setShouldBringToFront={setShouldBringToFront}
+          />
+        )
       }}
     </For>
-  </>
+  )
 }

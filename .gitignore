@@ -1,7 +1,8 @@
-/node_modules
-/dist
+node_modules
+.output
+.wxt
+stats.html
 .DS_Store
 .env.local
 .idea
 .vscode
-public/manifest.json

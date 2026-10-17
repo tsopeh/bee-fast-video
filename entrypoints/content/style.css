@@ -1,9 +1,10 @@
-// Styles are rendered inside the shadow root of the `bee-fast-video-root` host element.
-// The font is loaded at the document level in `index.tsx`, since `@font-face` doesn't work inside a shadow root.
+/* Rendered inside the shadow root of the `bee-fast-video-root` host element (see `index.tsx`). */
 
-// `!important` within `:host` wins over any (even `!important`) page styles targeting the host.
+/*
+  Zero-size host in the top left corner of the page; controllers are positioned in page coordinates relative to it.
+  `!important` within `:host` wins over any (even `!important`) page styles targeting the host.
+*/
 :host {
-  all: initial !important;
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
@@ -17,7 +18,7 @@
   padding: 0;
   box-sizing: border-box;
   user-select: none;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif;
   line-height: 100%;
   min-width: 0;
 
@@ -30,6 +31,15 @@
   }
 }
 
+/* Strip native button styling; controls are styled via `.control`. */
+button {
+  appearance: none;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
 .controller {
   --size: 9px;
   --height: calc(var(--size) * 2.3);
@@ -37,12 +47,12 @@
 
   position: absolute;
   box-sizing: content-box;
-  // top: _; Set in component.
-  // left: _; Set in component.
+  /* top: _; Set in component. */
+  /* left: _; Set in component. */
   display: flex;
   opacity: 0.4;
   transition: opacity 200ms var(--ease-style);
-  z-index: calc(2147483647 - 5) !important; // max_int - 5
+  z-index: calc(2147483647 - 5) !important; /* max_int - 5 */
 
   .underlay {
     width: 0;
@@ -51,7 +61,7 @@
     top: 50%;
     left: 50%;
     transform: translateX(-50%) translateY(-50%);
-    //background-color: red; // For debugging
+    /* background-color: red; For debugging */
     z-index: -1;
   }
 
@@ -62,9 +72,10 @@
     border: 1px solid rgba(0, 0, 0, 0);
     color: #ffffff;
     border-radius: calc(0.5 * var(--size));
-    transition: background-color 200ms var(--ease-style),
-    border 200ms var(--ease-style),
-    color 200ms var(--ease-style);
+    transition:
+      background-color 200ms var(--ease-style),
+      border 200ms var(--ease-style),
+      color 200ms var(--ease-style);
 
     .control {
       height: var(--height);

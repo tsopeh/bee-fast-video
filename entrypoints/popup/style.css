@@ -1,4 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&family=Salsa&display=swap');
+/* Bundled fonts (latin subset, SIL Open Font License; see `assets/fonts/OFL-*.txt`). */
+@font-face {
+  font-family: "Roboto Condensed";
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/roboto-condensed-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Salsa";
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/salsa-latin.woff2") format("woff2");
+}
 
 :root {
   --border-radius: 4px;
@@ -9,22 +22,23 @@
   padding: 0;
   box-sizing: border-box;
   user-select: none;
-  font-family: 'Salsa', 'Roboto Condensed', sans-serif;
+  font-family: "Salsa", "Roboto Condensed", sans-serif;
   line-height: 1;
   min-width: 0;
 }
 
-html, body {
+html,
+body {
   width: 320px;
-  background-color: #F2E1D6;
+  background-color: #f2e1d6;
 }
 
 main {
   display: grid;
   grid-template-areas:
-  "logo       title"
-  "toggle     toggle"
-  "table      table";
+    "logo       title"
+    "toggle     toggle"
+    "table      table";
   padding: 16px;
   row-gap: 24px;
 
@@ -52,10 +66,10 @@ main {
     gap: 5px;
     font-size: 18px;
     padding: 8px;
+    border: none;
     border-radius: var(--border-radius);
     box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.5);
     cursor: pointer;
-
 
     &.disabled {
       background-color: #db7093;
@@ -114,7 +128,7 @@ main {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Salsa', cursive;
+      font-family: "Salsa", cursive;
       font-size: 15px;
     }
 

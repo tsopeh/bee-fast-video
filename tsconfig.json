@@ -1,19 +1,7 @@
 {
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "types": ["vite/client", "node", "chrome"],
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js"
-  },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
+  }
 }

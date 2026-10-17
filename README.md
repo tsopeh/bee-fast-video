@@ -21,15 +21,15 @@ Install 🐝 on **[Chrome](https://chromewebstore.google.com/detail/bee-fast-vid
 
 ## Development notes
 
-The extension was initially made based on a [Preact template](https://github.com/fell-lucas/chrome-extension-template-preact-vite), with most of the _extra_ stuff removed. The Preact was later replaced by [Solid](https://github.com/solidjs/solid) from version `v1.2.0`.
+The extension was initially made based on a [Preact template](https://github.com/fell-lucas/chrome-extension-template-preact-vite), with most of the _extra_ stuff removed. The Preact was later replaced by [Solid](https://github.com/solidjs/solid) from version `v1.2.0`. Since `v2.0.0` the extension is built with [WXT](https://wxt.dev), which builds, generates the manifest and zips the extension for both Chrome and Firefox.
 
-The extension consists of the content script and a popup. These two components via `browserContext` and settings.
+The extension consists of the content script (`entrypoints/content/`) and a popup (`entrypoints/popup/`). These two communicate only via settings in extension storage (`utils/settings.ts`).
 
 ### Content script
 
 **ControllersContainer**
 
-Most of the important bits are located within the content script. The execution starts from `src/content/index.tsx`. There, the `ControllersContainer` rendered. `ControllersContainer` initially queries all available videos, after which it keeps track of newly added/removed videos via `observeForVideoElements` mutation observer. For every video we render a `Controller` component, which receives the reference to that video element. `ControllersContainer` is intentionally rendered as an absolutely positioned, zero width and height element, in the top left corner of the page; Its purpose is to _house_ the `Controller` components, which are absolutely positioned over the top left corner of the video in respect to the `ControllersContainer`.
+Most of the important bits are located within the content script. The execution starts from `entrypoints/content/index.tsx`, where the `ControllersContainer` is rendered into a shadow root (see [Styles](#styles)). `ControllersContainer` initially queries all available videos, after which it keeps track of newly added/removed videos via `observeForVideoElements` mutation observer. For every video we render a `Controller` component, which receives the reference to that video element. The shadow root's host element is intentionally an absolutely positioned, zero width and height element, in the top left corner of the page; Its purpose is to _house_ the `Controller` components, which are absolutely positioned over the top left corner of the video in respect to the host.
 
 **Note**: The only _setting_ that the `ControllersContainer` is keeping track of is _bring-to-top and enable the native controls_. Once turned on, this setting will be applied to all videos, while being a bit _destructive_. It yanks the video from its parent and appends it to the body while trying to maintain its original position. It also forces the video controls to be turned on. The `Controller` will observe if some other actor (e.g. YouTube page) tries to turn off the native controls and turn them on as soon as this happens.
 
@@ -43,29 +43,20 @@ The popup is there to present functionality and shortcuts to the user. It must b
 
 ### Styles
 
-Styles are written in SCSS and are imported as transformed CSS `text`. This text is then used as content for the `<style>...</style>` tag.
+Styles are plain CSS (with native nesting), imported from the entrypoint (`import "./style.css"`).
 
-```typescript jsx
-import cssText from "./some.scss?inline";
-
-<style>{cssText}</style>
-```
-
-The content script renders everything inside a shadow root attached to a `<bee-fast-video-root>` host element (see `src/content/index.tsx`), so the page's CSS can't affect the controls. The content styles therefore use `:host` instead of a root class. Since `@font-face` rules are ignored inside a shadow root, the font stylesheet is added to the document's `<head>` instead.
-
-This setup circumvents issues related to processing and bundling of the styles. We want to keep the styles completely separate for the content script and the popup. Another benefit of this setup is that we don't have to declare each `.css` file in the extension manifest for the [content script](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts).
+The content script UI is rendered inside a shadow root attached to a `<bee-fast-video-root>` host element, using WXT's `createShadowRootUi` with `cssInjectionMode: "ui"`, so the page's CSS can't affect the controls. WXT injects the imported CSS into the shadow root and resets inherited styles with `all: initial`. The content styles therefore use `:host` instead of a root class.
 
 ### Commands
 
-- Dev build `npm run dev`
-    - auto reload popup content on file save. You still have to manually reload the extension to observe the changes in the content script
-    - enabled inlined source maps
-- Prod build `npm run build`
-- Lint `npm run lint` (ESLint flat config in `eslint.config.js`)
+- `npm run dev` / `npm run dev:firefox` - dev build with auto-reload. Load `.output/chrome-mv3-dev` (or `.output/firefox-mv3-dev`) as an unpacked/temporary extension once; WXT reloads it on changes.
+- `npm run build` / `npm run build:firefox` - production build into `.output/chrome-mv3` / `.output/firefox-mv3`.
+- `npm run zip` / `npm run zip:firefox` - store-ready zips in `.output/` (Firefox also gets the sources zip that AMO asks for).
+- `npm run check` - type-check (`tsc`) and lint/format check ([Biome](https://biomejs.dev)).
+- `npm run format` - apply Biome formatting and safe fixes.
+- `npm test` - unit tests ([Vitest](https://vitest.dev)).
 
-**Note**: Both builds are effectively split in two parts, due to vite/rollup's) [limitation](https://github.com/rollup/rollup/issues/2756). Read more on this in `vite.config.ts`.
-
-**Note**: TypeScript is intentionally kept on `6.x`. TypeScript 7 (the native Go port) doesn't ship the JS API that `vite-plugin-checker` and `typescript-eslint` depend on. Solid is kept on `1.x`.
+**Note**: Both browsers get a Manifest V3 build. The Firefox manifest additionally contains `browser_specific_settings` (add-on ID and data collection declaration); see `wxt.config.ts`.
 
 <p align=center>
   <img align=center src="docs/logo.png" alt="Be fast video logo" width=200>
