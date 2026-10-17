@@ -1,7 +1,7 @@
 {
   "name": "bee-fast-video",
   "version": "2.0.0",
-  "description": "Bee fast video 🐝 - Speed up or slow down videos, seek forward and backward, loop, native controls and Picture-in-picture.",
+  "description": "Bee fast video 🐝 - Speed up or slow down videos, seek, loop, volume, fullscreen, resize and Picture-in-picture on any website.",
   "private": true,
   "license": "MIT",
   "repository": {

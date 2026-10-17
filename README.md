@@ -48,9 +48,9 @@ The popup is there to present functionality and shortcuts to the user. It must b
 
 ### Styles
 
-Styles are plain CSS (with native nesting), imported from the entrypoint (`import "./style.css"`).
+Styles are plain CSS (with native nesting). The popup imports its stylesheet normally (`import "./style.css"`).
 
-The content script UI is rendered inside a shadow root attached to a `<bee-fast-video-root>` host element, using WXT's `createShadowRootUi` with `cssInjectionMode: "ui"`, so the page's CSS can't affect the controls. WXT injects the imported CSS into the shadow root and resets inherited styles with `all: initial`. The content styles therefore use `:host` instead of a root class.
+The content script UI is rendered inside a shadow root attached to a `<bee-fast-video-root>` host element, using WXT's `createShadowRootUi`, so the page's CSS can't affect the controls. Its stylesheet is imported as a string (`import css from "./style.css?inline"`) and passed to `createShadowRootUi`, which puts it into the shadow root and resets inherited styles with `all: initial`. The content styles therefore use `:host` instead of a root class. Bundling the CSS this way (`cssInjectionMode: "manual"`) avoids WXT's default of fetching a separate CSS file at runtime, which requires a web-accessible resource that pages can detect and which failed on some pages.
 
 ### Commands
 
