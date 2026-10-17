@@ -1,55 +1,101 @@
 // Keyboard event reference: https://w3c.github.io/uievents/tools/key-event-viewer.html
 
-function initKeyboardListener() {
-  const keyCallbackMap = new Map<string, Array<(event: KeyboardEvent) => void>>()
+import { pickTargetVideo } from "@/utils/target-video"
+import {
+  adjustPlaybackRate,
+  seekBy,
+  seekToNormalized,
+  togglePictureInPicture,
+  togglePlayPause,
+} from "@/utils/video-mutators"
 
-  const registerCallback = (key: string, callback: () => void) => {
-    let callbacks = keyCallbackMap.get(key)
-    if (callbacks != null) {
-      callbacks.push(callback)
-    } else {
-      callbacks = [callback]
+type VideoAction = (videoEl: HTMLVideoElement) => void
+
+const keyActions = new Map<string, VideoAction>([
+  ["z", (v) => adjustPlaybackRate(v, -0.25)],
+  ["Z", (v) => adjustPlaybackRate(v, -0.1)],
+  ["x", (v) => adjustPlaybackRate(v, +0.25)],
+  ["X", (v) => adjustPlaybackRate(v, +0.1)],
+  ["a", (v) => seekBy(v, -5_000)],
+  ["A", (v) => seekBy(v, -20_000)],
+  ["d", (v) => seekBy(v, +5_000)],
+  ["D", (v) => seekBy(v, +20_000)],
+  ["s", (v) => togglePlayPause(v)],
+  ["p", (v) => togglePictureInPicture(v)],
+  ["P", (v) => togglePictureInPicture(v)],
+  // Number keys 0-9 seek to 0%-90%
+  ...Array.from({ length: 10 }, (_, index): [string, VideoAction] => [
+    index.toString(),
+    (v) => seekToNormalized(v, index / 10),
+  ]),
+])
+
+function initKeyboardShortcuts() {
+  // Videos whose controller is currently shown; only these can be controlled via shortcuts.
+  const registeredVideos = new Set<HTMLVideoElement>()
+  let lastInteractedVideo: HTMLVideoElement | undefined
+
+  const markInteracted = (videoEl: HTMLVideoElement) => {
+    lastInteractedVideo = videoEl
+  }
+
+  // Track the video under the pointer. Videos are often covered by the site's overlay elements, so the event target
+  // is rarely the video itself; `elementsFromPoint` sees through them. Throttled, since it runs on `pointermove`.
+  let lastPointerCheck = Number.NEGATIVE_INFINITY
+  const onPointer = (event: PointerEvent) => {
+    const now = event.timeStamp
+    if (event.type === "pointermove" && now - lastPointerCheck < 150) {
+      return
     }
-    keyCallbackMap.set(key, callbacks)
-    return {
-      unregisterCallback: () => {
-        const callbacks = keyCallbackMap.get(key)
-        if (callbacks != null) {
-          const callbackIndex = callbacks.indexOf(callback)
-          if (callbackIndex >= 0) {
-            callbacks.splice(callbackIndex, 1)
-            keyCallbackMap.set(key, callbacks)
-          }
-        }
-      },
+    lastPointerCheck = now
+    const videoUnderPointer = document
+      .elementsFromPoint(event.clientX, event.clientY)
+      .find((el): el is HTMLVideoElement => registeredVideos.has(el as HTMLVideoElement))
+    if (videoUnderPointer != null) {
+      markInteracted(videoUnderPointer)
     }
   }
 
-  const onKeyboardEvent = (event: KeyboardEvent) => {
-    const element = event.target
-    if (element != null && element instanceof HTMLElement) {
-      const isTypingInInput = element.tagName.toLowerCase().includes("input")
-      const isTypingInContentEditableElement = element.isContentEditable
-      const isModifierPressed = event.altKey || event.ctrlKey || event.metaKey
-      const shouldSkipKeyboardEvent = isTypingInInput || isTypingInContentEditableElement || isModifierPressed
-      if (shouldSkipKeyboardEvent) {
-        return
-      }
+  const onKeyDown = (event: KeyboardEvent) => {
+    const action = keyActions.get(event.key)
+    if (action == null || event.altKey || event.ctrlKey || event.metaKey || isTyping(event)) {
+      return
     }
-    const callbacks = keyCallbackMap.get(event.key)
-    for (const cb of callbacks ?? []) {
-      cb(event)
+    const target = pickTargetVideo(registeredVideos, lastInteractedVideo, (videoEl) => {
+      const { width, height } = videoEl.getBoundingClientRect()
+      return { area: width * height, isPlaying: !videoEl.paused && !videoEl.ended }
+    })
+    if (target != null) {
+      // The page still receives the key; swallowing it would break the site's own shortcuts.
+      action(target)
     }
   }
 
-  document.addEventListener("keydown", onKeyboardEvent)
+  // Capture phase on `window` runs before any handler on the page's elements, so a video player calling
+  // `stopPropagation()` on key events can't block our shortcuts.
+  window.addEventListener("keydown", onKeyDown, { capture: true })
+  window.addEventListener("pointermove", onPointer, { capture: true, passive: true })
+  window.addEventListener("pointerdown", onPointer, { capture: true, passive: true })
 
   return {
-    registerCallback,
-    destroyKeyboardListener: () => {
-      document.removeEventListener("keydown", onKeyboardEvent)
+    registerVideo: (videoEl: HTMLVideoElement) => {
+      registeredVideos.add(videoEl)
+      return () => {
+        registeredVideos.delete(videoEl)
+      }
     },
+    markInteracted,
   }
 }
 
-export const keyboardListener = initKeyboardListener()
+function isTyping(event: KeyboardEvent): boolean {
+  // `composedPath()[0]` is the real target, also inside (open) shadow roots, where `event.target` is the shadow host.
+  const element = event.composedPath()[0]
+  if (!(element instanceof HTMLElement)) {
+    return false
+  }
+  const tagName = element.tagName.toLowerCase()
+  return tagName === "input" || tagName === "textarea" || tagName === "select" || element.isContentEditable
+}
+
+export const keyboardShortcuts = initKeyboardShortcuts()

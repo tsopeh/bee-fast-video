@@ -17,13 +17,12 @@ import {
   adjustPlaybackRate,
   getPictureInPictureAvailability,
   seekBy,
-  seekToNormalized,
   toggleLoop,
   togglePictureInPicture,
   togglePlayPause,
 } from "@/utils/video-mutators"
 import { viewportIntersection } from "./intersection-observer"
-import { keyboardListener } from "./shortcuts"
+import { keyboardShortcuts } from "./shortcuts"
 
 interface Props {
   videoEl: Accessor<HTMLVideoElement>
@@ -157,61 +156,12 @@ export const Controller = (props: Props) => {
     })
   })
 
-  // React on keyboard events
+  // Make the video controllable via keyboard shortcuts while its controller is shown.
   createEffect(() => {
     if (isDisabled()) {
       return
     }
-    const videoEl = state.videoEl
-    const listeners = [
-      keyboardListener.registerCallback("z", () => {
-        adjustPlaybackRate(videoEl, -0.25)
-      }),
-      keyboardListener.registerCallback("Z", () => {
-        adjustPlaybackRate(videoEl, -0.1)
-      }),
-      keyboardListener.registerCallback("x", () => {
-        adjustPlaybackRate(videoEl, +0.25)
-      }),
-      keyboardListener.registerCallback("X", () => {
-        adjustPlaybackRate(videoEl, +0.1)
-      }),
-      keyboardListener.registerCallback("a", () => {
-        seekBy(videoEl, -5_000)
-      }),
-      keyboardListener.registerCallback("A", () => {
-        seekBy(videoEl, -20_000)
-      }),
-      keyboardListener.registerCallback("d", () => {
-        seekBy(videoEl, +5_000)
-      }),
-      keyboardListener.registerCallback("D", () => {
-        seekBy(videoEl, +20_000)
-      }),
-      keyboardListener.registerCallback("s", () => {
-        togglePlayPause(videoEl)
-      }),
-      // Number keys from 1 to 10
-      ...Array.from({ length: 10 })
-        .map((_, index) => index)
-        .map((_, index) => {
-          const normalized = index / 10
-          return keyboardListener.registerCallback(index.toString(), () => {
-            seekToNormalized(videoEl, normalized)
-          })
-        }),
-      keyboardListener.registerCallback("p", () => {
-        togglePictureInPicture(videoEl)
-      }),
-      keyboardListener.registerCallback("P", () => {
-        togglePictureInPicture(videoEl)
-      }),
-    ]
-    onCleanup(() => {
-      for (const listener of listeners) {
-        listener.unregisterCallback()
-      }
-    })
+    onCleanup(keyboardShortcuts.registerVideo(state.videoEl))
   })
 
   // React on `shouldBringToFront`
@@ -244,6 +194,8 @@ export const Controller = (props: Props) => {
       <div
         class="controller"
         tabIndex={-1}
+        // The widget can sit outside its video, so pointer tracking alone may not attribute it to this video.
+        onPointerDown={() => keyboardShortcuts.markInteracted(state.videoEl)}
         style={{
           left: `${state.position.left}px`,
           top: `${state.position.top}px`,

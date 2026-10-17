@@ -35,7 +35,7 @@ Most of the important bits are located within the content script. The execution 
 
 **Controller**
 
-The `Controller` both updates the video element based on the user actions, and keeps track of changes related to the video element. It will update its state based on these changes. It will try to adjust its position to be on top of its video immediately (if it's possible to detect) and periodically (to cover the cases where it's not possible to easily detect such changes). The `Controller` will register listeners for keyboard shortcuts using the `keyboardListener`. It will keep track if the extension is considered _disabled_ and unregister all listeners.
+The `Controller` both updates the video element based on the user actions, and keeps track of changes related to the video element. It will update its state based on these changes. It will try to adjust its position to be on top of its video immediately (if it's possible to detect) and periodically (to cover the cases where it's not possible to easily detect such changes). While shown, the `Controller` registers its video with `keyboardShortcuts` (`shortcuts.ts`), and unregisters it when the extension is considered _disabled_. Shortcuts are handled in the capture phase on `window`, so video players that stop key event propagation can't block them, and they control a single video: the one last hovered or interacted with, otherwise the largest visible one, preferring a playing one (`utils/target-video.ts`).
 
 ### Popup
 
