@@ -3,14 +3,14 @@ import * as process from "process"
 import { defineConfig } from "vite"
 import checker from "vite-plugin-checker"
 import solidPlugin from "vite-plugin-solid"
-import makeManifest from "./src/make-manifest"
+import makeManifest from "./src/make-manifest.ts"
 
-const src = resolve(__dirname, "src")
-const outDir = resolve(__dirname, "dist")
-const publicDir = resolve(__dirname, "public")
+const src = resolve(import.meta.dirname, "src")
+const outDir = resolve(import.meta.dirname, "dist")
+const publicDir = resolve(import.meta.dirname, "public")
 
 // https://github.com/rollup/rollup/issues/2756
-// Rollup automatically chunks common code for multiple inputs, and cannot
+// Rollup (and Rolldown, since Vite 8) automatically chunks common code for multiple inputs, and cannot
 // build completely independent outputs. This is why we run build multiple
 // times with different input. God, I hate this!
 
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
     publicDir,
     build: {
       outDir,
-      rollupOptions: {
+      rolldownOptions: {
         input: rollupInput,
         output: {
           entryFileNames: (chunk) => `src/${chunk.name}/index.js`,

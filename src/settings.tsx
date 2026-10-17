@@ -42,7 +42,7 @@ export function useSettings () {
     }
 
     // Initial
-    browserContext.storage.sync.get(({ blacklistedHostnames }) => {
+    browserContext.storage.sync.get<Partial<BeeFastVideoSettings>>(({ blacklistedHostnames }) => {
       setSettings(() => {
         return {
           blacklistedHostnames: blacklistedHostnames ?? [],
@@ -52,9 +52,13 @@ export function useSettings () {
 
     // On change update settings
     const handleSettingsChange: StorageEventHandler = (changes) => {
+      const blacklistedHostnamesChange = changes.blacklistedHostnames
+      if (blacklistedHostnamesChange == null) {
+        return
+      }
       setSettings(() => {
         return {
-          blacklistedHostnames: changes.blacklistedHostnames.newValue,
+          blacklistedHostnames: (blacklistedHostnamesChange.newValue as Array<string> | undefined) ?? [],
         }
       })
     }

@@ -1,10 +1,10 @@
 import * as fs from "fs"
 import * as path from "path"
-import manifest from "./manifest"
+import manifest from "./manifest.ts"
 
 const { resolve } = path
 
-const outDir = resolve(__dirname, "..", "public")
+const outDir = resolve(import.meta.dirname, "..", "public")
 
 export default function makeManifest () {
   return {

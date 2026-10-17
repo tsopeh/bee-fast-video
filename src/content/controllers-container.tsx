@@ -1,6 +1,5 @@
 import { createEffect, createSignal, For, onCleanup } from "solid-js"
 import { useSettings } from "../settings"
-import contentCss from "./content.scss?inline" // read as transformed css string
 import { Controller } from "./controller"
 import { observeForVideoElements } from "./mutation-observer"
 import { computeNewState } from "./state"
@@ -31,8 +30,7 @@ export function ControllersContainer () {
     return Array.from(videoElements()) as Array<HTMLVideoElement>
   }
 
-  return <div>
-    <style>{contentCss}</style>
+  return <>
     <For each={videosArray()}>
       {(videoEl) => {
         return <Controller
@@ -43,5 +41,5 @@ export function ControllersContainer () {
         />
       }}
     </For>
-  </div>
+  </>
 }

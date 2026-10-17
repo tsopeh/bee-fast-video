@@ -10,22 +10,23 @@
   "scripts": {
     "build": "rm -rf dist && VITE_INPUT='content' vite build && VITE_INPUT='popup' vite build",
     "dev": "nodemon",
-    "lint": "npx eslint ./**/*.tsx"
+    "lint": "eslint ."
   },
   "type": "module",
   "devDependencies": {
-    "@types/chrome": "^0.0.260",
-    "@types/node": "^20.10.4",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "eslint": "^8.56.0",
-    "eslint-plugin-jest": "^27.6.0",
-    "eslint-plugin-solid": "^0.13.1",
-    "nodemon": "^3.0.2",
-    "sass": "^1.69.5",
-    "solid-js": "^1.8.12",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.12",
-    "vite-plugin-checker": "^0.6.2",
-    "vite-plugin-solid": "^2.9.1"
+    "@eslint/js": "^10.0.1",
+    "@types/chrome": "^0.3.5",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.13.0",
+    "eslint-plugin-solid": "^0.18.1",
+    "globals": "^17.13.0",
+    "nodemon": "^3.1.14",
+    "sass": "^1.105.2",
+    "solid-js": "^1.9.17",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vite": "^8.3.4",
+    "vite-plugin-checker": "^0.14.5",
+    "vite-plugin-solid": "^2.11.14"
   }
 }

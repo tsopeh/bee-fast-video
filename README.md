@@ -51,6 +51,8 @@ import cssText from "./some.scss?inline";
 <style>{cssText}</style>
 ```
 
+The content script renders everything inside a shadow root attached to a `<bee-fast-video-root>` host element (see `src/content/index.tsx`), so the page's CSS can't affect the controls. The content styles therefore use `:host` instead of a root class. Since `@font-face` rules are ignored inside a shadow root, the font stylesheet is added to the document's `<head>` instead.
+
 This setup circumvents issues related to processing and bundling of the styles. We want to keep the styles completely separate for the content script and the popup. Another benefit of this setup is that we don't have to declare each `.css` file in the extension manifest for the [content script](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts).
 
 ### Commands
@@ -59,8 +61,11 @@ This setup circumvents issues related to processing and bundling of the styles. 
     - auto reload popup content on file save. You still have to manually reload the extension to observe the changes in the content script
     - enabled inlined source maps
 - Prod build `npm run build`
+- Lint `npm run lint` (ESLint flat config in `eslint.config.js`)
 
 **Note**: Both builds are effectively split in two parts, due to vite/rollup's) [limitation](https://github.com/rollup/rollup/issues/2756). Read more on this in `vite.config.ts`.
+
+**Note**: TypeScript is intentionally kept on `6.x`. TypeScript 7 (the native Go port) doesn't ship the JS API that `vite-plugin-checker` and `typescript-eslint` depend on. Solid is kept on `1.x`.
 
 <p align=center>
   <img align=center src="docs/logo.png" alt="Be fast video logo" width=200>

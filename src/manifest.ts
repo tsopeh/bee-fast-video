@@ -1,5 +1,5 @@
-import * as packageJson from "../package.json"
-import { ManifestType } from "./manifest-type"
+import packageJson from "../package.json" with { type: "json" }
+import type { ManifestType } from "./manifest-type.ts"
 
 const manifest: ManifestType = {
   manifest_version: 3,
