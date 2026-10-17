@@ -38,6 +38,7 @@ main {
   grid-template-areas:
     "logo       title"
     "toggle     toggle"
+    "fit        fit"
     "table      table";
   padding: 16px;
   row-gap: 24px;
@@ -88,6 +89,22 @@ main {
     .hostname {
       font-size: 14px;
       font-family: monospace;
+    }
+  }
+
+  .fit-videos {
+    grid-area: fit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: -12px;
+    font-size: 15px;
+    cursor: pointer;
+
+    input {
+      accent-color: #fc9e64;
+      cursor: pointer;
     }
   }
 

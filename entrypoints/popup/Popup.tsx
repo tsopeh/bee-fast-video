@@ -9,6 +9,7 @@ import {
   PlayIcon,
   RemoveIcon,
   RepeatIcon,
+  ResizeIcon,
   SlowDownIcon,
   SpeedUpIcon,
   VolumeIcon,
@@ -17,7 +18,13 @@ import iconLarge from "@/assets/icon-large.png"
 import { useSettings } from "@/utils/settings"
 
 export function Popup() {
-  const { currentHostname, isDisabledOnThisDomain, toggleBlacklistHostName } = useSettings()
+  const {
+    currentHostname,
+    isDisabledOnThisDomain,
+    toggleBlacklistHostName,
+    isFitVideosOnThisDomain,
+    toggleFitVideosOnThisDomain,
+  } = useSettings()
 
   return (
     <main>
@@ -36,6 +43,13 @@ export function Popup() {
         {" for"}
         <span class="hostname">&nbsp{currentHostname()}</span>
       </button>
+      <label
+        class="fit-videos"
+        title="Limits all videos on this site to the screen size. May affect some page layouts."
+      >
+        <input type="checkbox" checked={isFitVideosOnThisDomain()} onChange={() => toggleFitVideosOnThisDomain()} />
+        Fit videos to screen on this site
+      </label>
       <table>
         <thead>
           <tr>
@@ -163,6 +177,20 @@ export function Popup() {
             </td>
             <td>
               <div class="action">Fullscreen</div>
+            </td>
+            <td>
+              <div class="key-wrapper">/</div>
+            </td>
+          </tr>
+          <tr class="row-gap" />
+          <tr>
+            <td>
+              <div class="icon">
+                <ResizeIcon />
+              </div>
+            </td>
+            <td>
+              <div class="action">Resize video</div>
             </td>
             <td>
               <div class="key-wrapper">/</div>

@@ -16,6 +16,8 @@ Install 🐝 on **[Chrome](https://chromewebstore.google.com/detail/bee-fast-vid
 - ✅ play and pause (`S`) any video
 - ✅ seek with a seek bar, see the time and duration, change volume, mute and go fullscreen, even when the site covers its video with elements that block the native controls
 - ✅ drag the controls anywhere on the page (they snap back once the video leaves the viewport)
+- ✅ resize any video in place by dragging its corner
+- ✅ fit all videos on a site to the screen (per-site option in the popup), for sites whose videos don't fit the viewport
 - ✅ toggle loop for any video
 - ✅ toggle Picture-in-Picture (`P`) for any video (disabled, with an explanation, where the site or browser doesn't allow it)
 - ✅ enable/disable controls on any website; useful for video conferencing

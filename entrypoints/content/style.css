@@ -96,6 +96,10 @@ button {
         background-color: rgb(233, 171, 23, 0.6);
       }
 
+      &.active {
+        background-color: rgb(233, 171, 23, 0.6);
+      }
+
       &:disabled {
         cursor: not-allowed;
         opacity: 0.4;
@@ -191,4 +195,18 @@ button {
       }
     }
   }
+}
+
+.resize-handle {
+  /* Keep the size in sync with `RESIZE_HANDLE_SIZE_PX` in `controller.tsx`. */
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: #ffdb00;
+  border: 1px solid #e9ab17;
+  border-radius: 2px;
+  cursor: nwse-resize;
+  /* Lets pointer capture resize the video on touch screens instead of scrolling the page. */
+  touch-action: none;
+  z-index: calc(2147483647 - 5) !important;
 }

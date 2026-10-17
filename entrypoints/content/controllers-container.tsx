@@ -31,7 +31,13 @@ export function ControllersContainer() {
   return (
     <For each={videosArray()}>
       {(videoEl) => {
-        return <Controller videoEl={() => videoEl} isGloballyDisabled={settings.isDisabledOnThisDomain} />
+        return (
+          <Controller
+            videoEl={() => videoEl}
+            isGloballyDisabled={settings.isDisabledOnThisDomain}
+            fitVideos={settings.isFitVideosOnThisDomain}
+          />
+        )
       }}
     </For>
   )

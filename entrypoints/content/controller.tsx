@@ -12,6 +12,7 @@ import {
   PlayIcon,
   RemoveIcon,
   RepeatIcon,
+  ResizeIcon,
   SlashIcon,
   SlowDownIcon,
   SpeedUpIcon,
@@ -26,18 +27,25 @@ import {
   togglePictureInPicture,
   togglePlayPause,
 } from "@/utils/video-mutators"
+import { FIT_TO_VIEWPORT_STYLES, setImportantStyles } from "@/utils/video-styles"
 import { isVideoVisibleEnough } from "@/utils/video-visibility"
 import { viewportIntersection } from "./intersection-observer"
 import { keyboardShortcuts } from "./shortcuts"
 
 /** How long a video must stay visible before its controller appears. */
 const SETTLE_DELAY_MS = 1000
+/** Size of the resize handle (keep in sync with `.resize-handle` in `style.css`). */
+const RESIZE_HANDLE_SIZE_PX = 12
+/** Smallest size a video can be resized to. */
+const MIN_RESIZE_PX = 100
 /** How long the pointer must rest on the collapsed widget before it reacts to the pointer. */
 const HOVER_ARM_DELAY_MS = 300
 
 interface Props {
   videoEl: Accessor<HTMLVideoElement>
   isGloballyDisabled: Accessor<boolean>
+  /** Per-site setting: constrain all videos to the viewport. */
+  fitVideos: Accessor<boolean>
 }
 
 export const Controller = (props: Props) => {
@@ -64,6 +72,9 @@ export const Controller = (props: Props) => {
     isFullscreen: false,
     // Offset of the widget from its default position (the video's top-left corner), set by dragging the grip.
     dragOffset: { x: 0, y: 0 },
+    isResizing: false,
+    // Page coordinates of the resize handle, at the video's bottom-right corner.
+    handlePosition: { left: 0, top: 0 },
     isClosed: false,
   })
 
@@ -263,6 +274,74 @@ export const Controller = (props: Props) => {
     })
   })
 
+  // Constrain the video to the viewport when enabled for this site. Applies to every video on the page, also those
+  // without a shown controller.
+  createEffect(() => {
+    if (props.isGloballyDisabled() || !props.fitVideos()) {
+      return
+    }
+    onCleanup(setImportantStyles(state.videoEl, FIT_TO_VIEWPORT_STYLES))
+  })
+
+  // Resize mode: a handle at the video's bottom-right corner resizes the video in place. Turning resize mode off (or
+  // the controller being hidden) restores the original size. Note that this resizes the `<video>`, not the site's
+  // player around it.
+  let restoreSize: (() => void) | undefined
+  const resetSize = () => {
+    restoreSize?.()
+    restoreSize = undefined
+  }
+  createEffect(() => {
+    if (isDisabled() || !state.isResizing) {
+      return
+    }
+    const videoEl = state.videoEl
+    // Keep the handle on the video's corner while the page scrolls, reflows or the video gets resized.
+    let frame = 0
+    const followCorner = () => {
+      const rect = videoEl.getBoundingClientRect()
+      setState("handlePosition", {
+        left: rect.right + window.scrollX - RESIZE_HANDLE_SIZE_PX,
+        top: rect.bottom + window.scrollY - RESIZE_HANDLE_SIZE_PX,
+      })
+      frame = requestAnimationFrame(followCorner)
+    }
+    followCorner()
+    onCleanup(() => {
+      cancelAnimationFrame(frame)
+      resetSize()
+    })
+  })
+
+  const startResize = (event: PointerEvent & { currentTarget: HTMLButtonElement }) => {
+    event.preventDefault()
+    const handle = event.currentTarget
+    const videoEl = state.videoEl
+    handle.setPointerCapture(event.pointerId)
+    const { width, height } = videoEl.getBoundingClientRect()
+    const start = { x: event.clientX, y: event.clientY, width, height }
+    const onMove = (moveEvent: PointerEvent) => {
+      const size = {
+        width: `${Math.max(MIN_RESIZE_PX, start.width + moveEvent.clientX - start.x)}px`,
+        height: `${Math.max(MIN_RESIZE_PX, start.height + moveEvent.clientY - start.y)}px`,
+      }
+      if (restoreSize == null) {
+        restoreSize = setImportantStyles(videoEl, size)
+      } else {
+        videoEl.style.setProperty("width", size.width, "important")
+        videoEl.style.setProperty("height", size.height, "important")
+      }
+    }
+    const onEnd = () => {
+      handle.removeEventListener("pointermove", onMove)
+      handle.removeEventListener("pointerup", onEnd)
+      handle.removeEventListener("pointercancel", onEnd)
+    }
+    handle.addEventListener("pointermove", onMove)
+    handle.addEventListener("pointerup", onEnd)
+    handle.addEventListener("pointercancel", onEnd)
+  }
+
   // Make the video controllable via keyboard shortcuts while its controller is shown.
   createEffect(() => {
     if (isDisabled()) {
@@ -410,6 +489,18 @@ export const Controller = (props: Props) => {
               <button
                 type="button"
                 class="control"
+                classList={{ active: state.isResizing }}
+                title={state.isResizing ? "Stop resizing (restores the original size)" : "Resize video"}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setState("isResizing", !state.isResizing)
+                }}
+              >
+                <ResizeIcon />
+              </button>
+              <button
+                type="button"
+                class="control"
                 disabled={pictureInPictureAvailability !== "available"}
                 title={
                   {
@@ -503,6 +594,16 @@ export const Controller = (props: Props) => {
           </Show>
         </div>
       </div>
+      <Show when={state.isResizing}>
+        <button
+          type="button"
+          class="resize-handle"
+          title="Drag to resize, double-click to reset"
+          style={{ left: `${state.handlePosition.left}px`, top: `${state.handlePosition.top}px` }}
+          onPointerDown={startResize}
+          onDblClick={resetSize}
+        />
+      </Show>
     </Show>
   )
 }
