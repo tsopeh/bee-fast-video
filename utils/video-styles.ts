@@ -1,10 +1,10 @@
 /**
- * Constrains a video to the viewport while keeping its whole frame visible. Used for sites whose videos can be taller
- * or wider than the viewport.
+ * Constrains a video to 80% of the viewport's width and height while keeping its whole frame visible. Used for sites
+ * whose videos can be taller or wider than the viewport.
  */
 export const FIT_TO_VIEWPORT_STYLES = {
-  "max-width": "100vw",
-  "max-height": "100vh",
+  "max-width": "80vw",
+  "max-height": "80vh",
   "object-fit": "contain",
 }
 

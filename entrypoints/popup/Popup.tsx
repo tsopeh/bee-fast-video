@@ -45,7 +45,7 @@ export function Popup() {
       </button>
       <label
         class="fit-videos"
-        title="Limits all videos on this site to the screen size. May affect some page layouts."
+        title="Limits all videos on this site to 80% of the window size. May affect some page layouts."
       >
         <input type="checkbox" checked={isFitVideosOnThisDomain()} onChange={() => toggleFitVideosOnThisDomain()} />
         Fit videos to screen on this site
