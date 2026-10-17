@@ -66,7 +66,7 @@ export function Popup() {
               </div>
             </td>
             <td>
-              <div class="action">Slow down</div>
+              <div class="action">Slow down (or scroll on the speed)</div>
             </td>
             <td>
               <div class="key-wrapper">
@@ -82,7 +82,7 @@ export function Popup() {
               </div>
             </td>
             <td>
-              <div class="action">Speed up</div>
+              <div class="action">Speed up (or scroll on the speed)</div>
             </td>
             <td>
               <div class="key-wrapper">
@@ -162,7 +162,7 @@ export function Popup() {
               </div>
             </td>
             <td>
-              <div class="action">Mute | Volume</div>
+              <div class="action">Mute | Volume (scroll to adjust)</div>
             </td>
             <td>
               <div class="key-wrapper">/</div>

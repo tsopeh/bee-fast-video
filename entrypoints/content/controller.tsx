@@ -15,10 +15,11 @@ import {
   ResizeIcon,
   SlashIcon,
   SlowDownIcon,
+  SpeedIcon,
   SpeedUpIcon,
   VolumeIcon,
 } from "@/assets/control-icons"
-import { formatTime } from "@/utils/format-time"
+import { formatPlaybackRate, formatTime } from "@/utils/format-time"
 import {
   adjustPlaybackRate,
   getPictureInPictureAvailability,
@@ -29,6 +30,7 @@ import {
 } from "@/utils/video-mutators"
 import { FIT_TO_VIEWPORT_STYLES, setImportantStyles } from "@/utils/video-styles"
 import { isVideoVisibleEnough } from "@/utils/video-visibility"
+import { createWheelStepper } from "@/utils/wheel-stepper"
 import { viewportIntersection } from "./intersection-observer"
 import { keyboardShortcuts } from "./shortcuts"
 
@@ -36,6 +38,19 @@ import { keyboardShortcuts } from "./shortcuts"
 const RESIZE_HANDLE_SIZE_PX = 12
 /** Smallest size a video can be resized to. */
 const MIN_RESIZE_PX = 100
+/** Playback rate change per mouse wheel step on the speed label (same as the slow down / speed up buttons). */
+const WHEEL_RATE_STEP = 0.25
+/** Seek per mouse wheel step on the seek bar (same as the backward / forward buttons). */
+const WHEEL_SEEK_STEP_MS = 5_000
+/**
+ * Minimum time between speed and seek steps while scrolling: a continuous scroll takes about 1 s from speed 1.0 to 2.5,
+ * or seeks about 30 s.
+ */
+const WHEEL_RATE_INTERVAL_MS = 175
+/** Volume change per mouse wheel step on the volume slider. */
+const WHEEL_VOLUME_STEP = 0.05
+/** Minimum time between volume steps while scrolling: a continuous scroll changes the volume about 55% in 1 s. */
+const WHEEL_VOLUME_INTERVAL_MS = 80
 
 interface Props {
   videoEl: Accessor<HTMLVideoElement>
@@ -61,6 +76,8 @@ export const Controller = (props: Props) => {
     seekableEnd: 0,
     volume: props.videoEl().volume,
     isMuted: props.videoEl().muted,
+    // Whether the time label shows the time until the end instead of the elapsed time.
+    showRemainingTime: false,
     isFullscreen: false,
     // Offset of the widget from its default position (the video's top-left corner), set by dragging the grip.
     dragOffset: { x: 0, y: 0 },
@@ -97,10 +114,10 @@ export const Controller = (props: Props) => {
     })
   })
 
-  // A dragged widget returns to its default position once the video leaves the viewport.
+  // The widget returns to its default position, collapsed, once the video leaves the viewport.
   createEffect(() => {
     if (!isEligible()) {
-      setState("dragOffset", { x: 0, y: 0 })
+      setState({ dragOffset: { x: 0, y: 0 }, shouldShowMoreControls: false })
     }
   })
 
@@ -234,6 +251,10 @@ export const Controller = (props: Props) => {
   // Resize mode: a handle at the video's bottom-right corner resizes the video in place. Turning resize mode off (or
   // the controller being hidden) restores the original size. Note that this resizes the `<video>`, not the site's
   // player around it.
+  const stepSpeedWheel = createWheelStepper(WHEEL_RATE_INTERVAL_MS)
+  const stepVolumeWheel = createWheelStepper(WHEEL_VOLUME_INTERVAL_MS)
+  const stepSeekWheel = createWheelStepper(WHEEL_RATE_INTERVAL_MS)
+
   let restoreSize: (() => void) | undefined
   const resetSize = () => {
     restoreSize?.()
@@ -325,6 +346,7 @@ export const Controller = (props: Props) => {
     <Show when={!isDisabled()}>
       <div
         class="controller"
+        classList={{ expanded: state.shouldShowMoreControls }}
         tabIndex={-1}
         // The widget can sit outside its video, so pointer tracking alone may not attribute it to this video.
         onPointerDown={() => keyboardShortcuts.markInteracted(state.videoEl)}
@@ -340,23 +362,6 @@ export const Controller = (props: Props) => {
               <div class="grip" title="Drag to move" onPointerDown={startDrag}>
                 <GripIcon />
               </div>
-            </Show>
-            <button
-              type="button"
-              class="control playback-rate"
-              title="Video speed"
-              onClick={(event) => {
-                event.stopPropagation()
-                setState(
-                  produce((state) => {
-                    state.shouldShowMoreControls = !state.shouldShowMoreControls
-                  }),
-                )
-              }}
-            >
-              <span>{state.playbackRate.toFixed(2)}</span>
-            </button>
-            <Show when={state.shouldShowMoreControls}>
               <button
                 type="button"
                 class="control"
@@ -368,6 +373,36 @@ export const Controller = (props: Props) => {
               >
                 <SlowDownIcon />
               </button>
+            </Show>
+            <button
+              type="button"
+              class="control playback-rate"
+              title={`Speed ${formatPlaybackRate(state.playbackRate)}×. Click to ${state.shouldShowMoreControls ? "hide" : "show"} controls, scroll to change speed, right-click to reset to 1.00.`}
+              onClick={(event) => {
+                event.stopPropagation()
+                setState(
+                  produce((state) => {
+                    state.shouldShowMoreControls = !state.shouldShowMoreControls
+                  }),
+                )
+              }}
+              onContextMenu={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                state.videoEl.playbackRate = 1
+              }}
+              onWheel={(event) => {
+                event.preventDefault()
+                const step = stepSpeedWheel(event.deltaY)
+                if (step !== 0) {
+                  adjustPlaybackRate(state.videoEl, step * WHEEL_RATE_STEP)
+                }
+              }}
+            >
+              <SpeedIcon />
+              <span>{formatPlaybackRate(state.playbackRate)}</span>
+            </button>
+            <Show when={state.shouldShowMoreControls}>
               <button
                 type="button"
                 class="control"
@@ -379,6 +414,7 @@ export const Controller = (props: Props) => {
               >
                 <SpeedUpIcon />
               </button>
+              <span class="divider" />
               <button
                 type="button"
                 class="control"
@@ -412,6 +448,7 @@ export const Controller = (props: Props) => {
               >
                 <ForwardIcon />
               </button>
+              <span class="divider" />
               <button
                 type="button"
                 class="control"
@@ -467,6 +504,7 @@ export const Controller = (props: Props) => {
                   </SlashIcon>
                 </Show>
               </button>
+              <span class="divider" />
               <button
                 type="button"
                 class="control"
@@ -489,7 +527,7 @@ export const Controller = (props: Props) => {
               <input
                 class="seek"
                 type="range"
-                title="Seek"
+                title="Seek (scroll to seek 5 seconds)"
                 min={0}
                 max={Number.isFinite(state.duration) ? state.duration : state.seekableEnd}
                 step="any"
@@ -497,14 +535,31 @@ export const Controller = (props: Props) => {
                 onInput={(event) => {
                   state.videoEl.currentTime = event.currentTarget.valueAsNumber
                 }}
+                onWheel={(event) => {
+                  event.preventDefault()
+                  const step = stepSeekWheel(event.deltaY)
+                  if (step !== 0) {
+                    seekBy(state.videoEl, step * WHEEL_SEEK_STEP_MS)
+                  }
+                }}
               />
-              <span class="time">
+              <button
+                type="button"
+                class="control time"
+                disabled={!Number.isFinite(state.duration)}
+                title={
+                  state.showRemainingTime
+                    ? "Time until the end. Click to show the elapsed time."
+                    : "Elapsed time. Click to show the time until the end."
+                }
+                onClick={() => setState("showRemainingTime", !state.showRemainingTime)}
+              >
                 {Number.isFinite(state.duration)
-                  ? `${formatTime(state.currentTime)} / ${formatTime(state.duration)}`
+                  ? formatTime(state.showRemainingTime ? state.duration - state.currentTime : state.currentTime)
                   : state.duration === Number.POSITIVE_INFINITY
                     ? "LIVE"
                     : formatTime(state.currentTime)}
-              </span>
+              </button>
               <button
                 type="button"
                 class="control"
@@ -525,6 +580,17 @@ export const Controller = (props: Props) => {
                 value={state.isMuted ? 0 : state.volume}
                 onInput={(event) => {
                   state.videoEl.volume = event.currentTarget.valueAsNumber
+                  state.videoEl.muted = false
+                }}
+                onWheel={(event) => {
+                  event.preventDefault()
+                  const step = stepVolumeWheel(event.deltaY)
+                  if (step === 0) {
+                    return
+                  }
+                  const current = state.videoEl.muted ? 0 : state.videoEl.volume
+                  const volume = current + step * WHEEL_VOLUME_STEP
+                  state.videoEl.volume = Math.min(1, Math.max(0, Math.round(volume * 100) / 100))
                   state.videoEl.muted = false
                 }}
               />

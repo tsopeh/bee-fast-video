@@ -26,8 +26,10 @@
     outline: none;
   }
 
+  /* Keyboard focus only; `currentColor` keeps it visible on both the idle (white) and hovered (black) colors. */
   &:focus-visible {
-    outline: none;
+    outline: 1px solid currentColor;
+    outline-offset: -2px;
   }
 }
 
@@ -44,6 +46,7 @@ button {
   --size: 9px;
   --height: calc(var(--size) * 2.3);
   --ease-style: ease-out;
+  --gap: calc(0.35 * var(--size));
 
   position: absolute;
   box-sizing: content-box;
@@ -84,7 +87,8 @@ button {
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 0 calc(0.5 * var(--size));
+      /* Together with the dividers' margin, icons are evenly spaced, also across dividers. */
+      padding: 0 var(--gap);
       border-radius: calc(0.5 * var(--size));
 
       &:hover {
@@ -110,12 +114,27 @@ button {
     }
 
     .playback-rate {
-      min-width: var(--height);
+      gap: 1px;
       font-size: calc(0.65 * var(--height));
+      font-variant-numeric: tabular-nums;
+
+      svg {
+        width: calc(0.6 * var(--height));
+        height: calc(0.6 * var(--height));
+      }
 
       &:hover {
         background-color: transparent;
       }
+    }
+
+    .divider {
+      flex: none;
+      width: 1px;
+      height: calc(0.6 * var(--height));
+      margin: 0 var(--gap);
+      background-color: currentColor;
+      opacity: 0.35;
     }
 
     .row {
@@ -169,7 +188,18 @@ button {
       font-size: calc(0.55 * var(--height));
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
+
+      /* Unknown duration or live: nothing to toggle, but keep the label readable. */
+      &:disabled {
+        opacity: 1;
+        cursor: default;
+      }
     }
+  }
+
+  /* Brings the speed up button closer to the speed. */
+  &.expanded .playback-rate {
+    padding-right: 0;
   }
 
   &:hover {

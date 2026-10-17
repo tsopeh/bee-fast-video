@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { formatTime } from "./format-time"
+import { formatPlaybackRate, formatTime } from "./format-time"
 
 describe("formatTime", () => {
   it("formats minutes and seconds", () => {
@@ -16,5 +16,17 @@ describe("formatTime", () => {
   it("returns a placeholder for unknown durations", () => {
     expect(formatTime(Number.NaN)).toBe("--:--")
     expect(formatTime(Number.POSITIVE_INFINITY)).toBe("--:--")
+  })
+})
+
+describe("formatPlaybackRate", () => {
+  it("always shows two decimals", () => {
+    expect(formatPlaybackRate(1)).toBe("1.00")
+    expect(formatPlaybackRate(0.5)).toBe("0.50")
+    expect(formatPlaybackRate(1.25)).toBe("1.25")
+  })
+
+  it("rounds to two decimals", () => {
+    expect(formatPlaybackRate(1.3333)).toBe("1.33")
   })
 })

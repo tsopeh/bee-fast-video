@@ -10,3 +10,8 @@ export function formatTime(seconds: number): string {
   const ss = s.toString().padStart(2, "0")
   return h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${ss}` : `${m}:${ss}`
 }
+
+/** Formats a playback rate with two decimals, e.g. `1.00`, `1.25`, `0.50`, so that the label keeps its width. */
+export function formatPlaybackRate(rate: number): string {
+  return rate.toFixed(2)
+}
