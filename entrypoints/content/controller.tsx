@@ -15,6 +15,7 @@ import {
 } from "@/assets/control-icons"
 import {
   adjustPlaybackRate,
+  getPictureInPictureAvailability,
   seekBy,
   seekToNormalized,
   toggleLoop,
@@ -43,6 +44,9 @@ export const Controller = (props: Props) => {
     isPictureInPicture: props.videoEl().ownerDocument.pictureInPictureElement === props.videoEl(),
     isClosed: false,
   })
+
+  // The document's policy can't change after load, so it's enough to check once.
+  const pictureInPictureAvailability = getPictureInPictureAvailability(props.videoEl())
 
   const isDisabled = () => props.isGloballyDisabled() || state.isClosed || !state.isVideoInViewport
 
@@ -356,7 +360,15 @@ export const Controller = (props: Props) => {
             <button
               type="button"
               class="control"
-              title={`${state.isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`}
+              disabled={pictureInPictureAvailability !== "available"}
+              title={
+                {
+                  available: `${state.isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`,
+                  blocked: "This site (or your browser settings) doesn't allow picture-in-picture.",
+                  unsupported:
+                    "Picture-in-picture isn't supported by this browser. Try the browser's own picture-in-picture button.",
+                }[pictureInPictureAvailability]
+              }
               onClick={(event) => {
                 event.stopPropagation()
                 togglePictureInPicture(state.videoEl)
@@ -371,7 +383,7 @@ export const Controller = (props: Props) => {
             <button
               type="button"
               class="control"
-              title="Toggle disable (B)"
+              title="Hide controls for this video"
               onClick={(event) => {
                 event.stopPropagation()
                 setState(

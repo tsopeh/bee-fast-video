@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { adjustPlaybackRate, seekBy, seekToNormalized } from "./video-mutators"
+import { adjustPlaybackRate, getPictureInPictureAvailability, seekBy, seekToNormalized } from "./video-mutators"
 
 function fakeVideo(props: Partial<HTMLVideoElement>): HTMLVideoElement {
   return { playbackRate: 1, currentTime: 0, duration: 100, ...props } as HTMLVideoElement
@@ -52,5 +52,23 @@ describe("seekToNormalized", () => {
     const video = fakeVideo({ currentTime: 42 })
     seekToNormalized(video, 1.5)
     expect(video.currentTime).toBe(42)
+  })
+})
+
+describe("getPictureInPictureAvailability", () => {
+  function fakePipVideo(requestPictureInPicture: unknown, pictureInPictureEnabled: unknown): HTMLVideoElement {
+    return { requestPictureInPicture, ownerDocument: { pictureInPictureEnabled } } as unknown as HTMLVideoElement
+  }
+
+  it("is available when the API exists and the document allows it", () => {
+    expect(getPictureInPictureAvailability(fakePipVideo(() => {}, true))).toBe("available")
+  })
+
+  it("is blocked when the document disallows it (e.g. Permissions-Policy)", () => {
+    expect(getPictureInPictureAvailability(fakePipVideo(() => {}, false))).toBe("blocked")
+  })
+
+  it("is unsupported when the browser lacks the API", () => {
+    expect(getPictureInPictureAvailability(fakePipVideo(undefined, undefined))).toBe("unsupported")
   })
 })

@@ -95,6 +95,12 @@ button {
         background-color: rgb(255, 248, 220);
       }
 
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+        background-color: transparent;
+      }
+
       svg {
         width: calc(0.7 * var(--height));
         height: calc(0.7 * var(--height));

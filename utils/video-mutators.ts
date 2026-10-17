@@ -26,7 +26,29 @@ export function toggleLoop(videoEl: HTMLVideoElement) {
   videoEl.loop = !videoEl.loop
 }
 
+export type PictureInPictureAvailability = "available" | "blocked" | "unsupported"
+
+/**
+ * - `unsupported`: the browser has no picture-in-picture web API (e.g. Firefox < 153, which only offers its own
+ *   built-in picture-in-picture toggle).
+ * - `blocked`: the document disallows it, e.g. via the `Permissions-Policy: picture-in-picture=()` response header or
+ *   an iframe without `allow="picture-in-picture"`, or the user turned it off in browser settings.
+ *
+ * The video's own `disablePictureInPicture` attribute is ignored on purpose; we override it when entering
+ * picture-in-picture.
+ */
+export function getPictureInPictureAvailability(videoEl: HTMLVideoElement): PictureInPictureAvailability {
+  const doc = videoEl.ownerDocument
+  if (typeof videoEl.requestPictureInPicture !== "function" || typeof doc.pictureInPictureEnabled !== "boolean") {
+    return "unsupported"
+  }
+  return doc.pictureInPictureEnabled ? "available" : "blocked"
+}
+
 export function togglePictureInPicture(videoEl: HTMLVideoElement) {
+  if (getPictureInPictureAvailability(videoEl) !== "available") {
+    return
+  }
   const isPictureInPicture = videoEl.ownerDocument.pictureInPictureElement === videoEl
   if (isPictureInPicture) {
     videoEl.ownerDocument
