@@ -33,6 +33,10 @@ Most of the important bits are located within the content script. The execution 
 
 **Note**: The only _setting_ that the `ControllersContainer` is keeping track of is _bring-to-top and enable the native controls_. Once turned on, this setting will be applied to all videos, while being a bit _destructive_. It yanks the video from its parent and appends it to the body while trying to maintain its original position. It also forces the video controls to be turned on. The `Controller` will observe if some other actor (e.g. YouTube page) tries to turn off the native controls and turn them on as soon as this happens.
 
+**Which videos get a controller**
+
+A controller is shown only for videos that are in the viewport, visible (`checkVisibility`: not hidden by `display`, `visibility` or `opacity` on the video or its ancestors) and at least 50×50 px, and only after staying so for a second (`utils/video-visibility.ts`, `controller.tsx`). Pages often keep hidden, tiny or short-lived videos in the DOM (preloaded players, hover previews), and controllers for those only get in the way. The collapsed controller also lets the pointer pass through until the pointer rests on it for a moment, so it doesn't steal hover from the page.
+
 **Controller**
 
 The `Controller` both updates the video element based on the user actions, and keeps track of changes related to the video element. It will update its state based on these changes. It will try to adjust its position to be on top of its video immediately (if it's possible to detect) and periodically (to cover the cases where it's not possible to easily detect such changes). While shown, the `Controller` registers its video with `keyboardShortcuts` (`shortcuts.ts`), and unregisters it when the extension is considered _disabled_. Shortcuts are handled in the capture phase on `window`, so video players that stop key event propagation can't block them, and they control a single video: the one last hovered or interacted with, otherwise the largest visible one, preferring a playing one (`utils/target-video.ts`).

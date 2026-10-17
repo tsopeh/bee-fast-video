@@ -21,8 +21,14 @@ import {
   togglePictureInPicture,
   togglePlayPause,
 } from "@/utils/video-mutators"
+import { isVideoVisibleEnough } from "@/utils/video-visibility"
 import { viewportIntersection } from "./intersection-observer"
 import { keyboardShortcuts } from "./shortcuts"
+
+/** How long a video must stay visible before its controller appears. */
+const SETTLE_DELAY_MS = 1000
+/** How long the pointer must rest on the collapsed widget before it reacts to the pointer. */
+const HOVER_ARM_DELAY_MS = 300
 
 interface Props {
   videoEl: Accessor<HTMLVideoElement>
@@ -36,6 +42,11 @@ export const Controller = (props: Props) => {
     videoEl: props.videoEl(),
     shouldShowMoreControls: false,
     isVideoInViewport: false,
+    isVisibleEnough: false,
+    // Whether the video has been eligible for a controller long enough (see `SETTLE_DELAY_MS`).
+    isSettled: false,
+    // Whether the collapsed widget reacts to the pointer (see `HOVER_ARM_DELAY_MS`).
+    isArmed: false,
     position: getControllerPosition(props.videoEl()),
     isPaused: props.videoEl().paused,
     playbackRate: props.videoEl().playbackRate,
@@ -47,19 +58,76 @@ export const Controller = (props: Props) => {
   // The document's policy can't change after load, so it's enough to check once.
   const pictureInPictureAvailability = getPictureInPictureAvailability(props.videoEl())
 
-  const isDisabled = () => props.isGloballyDisabled() || state.isClosed || !state.isVideoInViewport
+  const isEligible = () => state.isVideoInViewport && state.isVisibleEnough
+  const isDisabled = () => props.isGloballyDisabled() || state.isClosed || !isEligible() || !state.isSettled
 
-  // Handle viewport visibility change
+  let controllerEl: HTMLDivElement | undefined
+
+  // Track whether the video is in the viewport and visible enough (see `isVideoVisibleEnough`). Pages toggle
+  // visibility and size without moving the video, so visibility is also re-checked periodically.
   createEffect(() => {
-    const { unregister } = viewportIntersection.register(state.videoEl, (entry) => {
-      setState(
-        produce((state) => {
-          state.isVideoInViewport = entry.isIntersecting
-        }),
-      )
+    if (props.isGloballyDisabled() || state.isClosed) {
+      return
+    }
+    const videoEl = state.videoEl
+    const updateVisibility = () => {
+      setState("isVisibleEnough", isVideoVisibleEnough(videoEl))
+    }
+    const { unregister } = viewportIntersection.register(videoEl, (entry) => {
+      setState("isVideoInViewport", entry.isIntersecting)
+      updateVisibility()
     })
+    const intervalId = setInterval(updateVisibility, 1000)
     onCleanup(() => {
       unregister()
+      clearInterval(intervalId)
+    })
+  })
+
+  // Show the controller only after the video stayed eligible for a moment, so that short-lived videos (e.g. thumbnails
+  // turning into video previews on hover) don't make controllers flicker.
+  createEffect(() => {
+    if (!isEligible()) {
+      setState("isSettled", false)
+      return
+    }
+    const timeoutId = setTimeout(() => setState("isSettled", true), SETTLE_DELAY_MS)
+    onCleanup(() => clearTimeout(timeoutId))
+  })
+
+  // The collapsed widget lets the pointer pass through (`pointer-events: none`) until the pointer rests on it, so it
+  // doesn't steal hover from the page, e.g. from thumbnails that play a preview while hovered. With `pointer-events:
+  // none` the widget gets no pointer events itself, and after arming the browser doesn't consider it hovered until the
+  // pointer moves (so no `pointerleave` either), hence the global pointer tracking for both arming and disarming.
+  createEffect(() => {
+    if (isDisabled() || state.shouldShowMoreControls) {
+      return
+    }
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    const onPointerMove = (event: PointerEvent) => {
+      const rect = controllerEl?.getBoundingClientRect()
+      const isOver =
+        rect != null &&
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      if (isOver) {
+        if (!state.isArmed && timeoutId == null) {
+          timeoutId = setTimeout(() => setState("isArmed", true), HOVER_ARM_DELAY_MS)
+        }
+      } else {
+        clearTimeout(timeoutId)
+        timeoutId = undefined
+        if (state.isArmed) {
+          setState("isArmed", false)
+        }
+      }
+    }
+    window.addEventListener("pointermove", onPointerMove, { capture: true, passive: true })
+    onCleanup(() => {
+      window.removeEventListener("pointermove", onPointerMove, { capture: true })
+      clearTimeout(timeoutId)
     })
   })
 
@@ -192,7 +260,9 @@ export const Controller = (props: Props) => {
   return (
     <Show when={!isDisabled()}>
       <div
+        ref={controllerEl}
         class="controller"
+        classList={{ passthrough: !state.shouldShowMoreControls && !state.isArmed }}
         tabIndex={-1}
         // The widget can sit outside its video, so pointer tracking alone may not attribute it to this video.
         onPointerDown={() => keyboardShortcuts.markInteracted(state.videoEl)}

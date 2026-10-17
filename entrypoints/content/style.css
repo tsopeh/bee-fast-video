@@ -54,6 +54,11 @@ button {
   transition: opacity 200ms var(--ease-style);
   z-index: calc(2147483647 - 5) !important; /* max_int - 5 */
 
+  /* See the hover arming in `controller.tsx`. */
+  &.passthrough {
+    pointer-events: none;
+  }
+
   .underlay {
     width: 0;
     height: 0;
