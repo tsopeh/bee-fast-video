@@ -2,7 +2,8 @@ import { Show } from "solid-js"
 import {
   BackwardIcon,
   ForwardIcon,
-  NativeControlsIcon,
+  FullscreenIcon,
+  GripIcon,
   PauseIcon,
   PictureInPictureIcon,
   PlayIcon,
@@ -10,6 +11,7 @@ import {
   RepeatIcon,
   SlowDownIcon,
   SpeedUpIcon,
+  VolumeIcon,
 } from "@/assets/control-icons"
 import iconLarge from "@/assets/icon-large.png"
 import { useSettings } from "@/utils/settings"
@@ -142,11 +144,39 @@ export function Popup() {
           <tr>
             <td>
               <div class="icon">
-                <NativeControlsIcon />
+                <VolumeIcon />
               </div>
             </td>
             <td>
-              <div class="action">Native controls</div>
+              <div class="action">Mute | Volume</div>
+            </td>
+            <td>
+              <div class="key-wrapper">/</div>
+            </td>
+          </tr>
+          <tr class="row-gap" />
+          <tr>
+            <td>
+              <div class="icon">
+                <FullscreenIcon />
+              </div>
+            </td>
+            <td>
+              <div class="action">Fullscreen</div>
+            </td>
+            <td>
+              <div class="key-wrapper">/</div>
+            </td>
+          </tr>
+          <tr class="row-gap" />
+          <tr>
+            <td>
+              <div class="icon">
+                <GripIcon />
+              </div>
+            </td>
+            <td>
+              <div class="action">Drag to move</div>
             </td>
             <td>
               <div class="key-wrapper">/</div>

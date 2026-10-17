@@ -71,13 +71,58 @@ export function RepeatIcon() {
   )
 }
 
-export function NativeControlsIcon() {
+// Simple 24x24 icons for the player row; strokes use `currentColor`, so they follow the widget's text color.
+const strokeProps = {
+  fill: "none",
+  stroke: "currentColor",
+  "stroke-width": 2.5,
+  "stroke-linecap": "round",
+  "stroke-linejoin": "round",
+} as const
+
+export function VolumeIcon() {
   return (
-    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-      <path d="M0 432a32 32 0 0 0 32 32h54.7a79.8 79.8 0 0 0 146.6 0H480a32 32 0 1 0 0-64H233.3a79.8 79.8 0 0 0-146.6 0H32a32 32 0 0 0-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0z" />
-      <g stroke="null">
-        <path d="M472.2 49.6a56.6 56.6 0 0 0-40-40.1C397.2 0 256 0 256 0S115 0 79.7 9.5a56.6 56.6 0 0 0-39.9 40.1C30.4 85.1 30.4 159 30.4 159s0 73.9 9.4 109.3a55.8 55.8 0 0 0 40 39.5c35.1 9.5 176.2 9.5 176.2 9.5s141 0 176.3-9.5a55.9 55.9 0 0 0 39.9-39.5c9.4-35.4 9.4-109.3 9.4-109.3s0-73.8-9.4-109.3zM209.9 226V92l117.9 67-117.9 67z" />
-      </g>
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M3 9h4l5-4v14l-5-4H3z" />
+      <path {...strokeProps} d="M16 8.5a5 5 0 0 1 0 7M19 5.5a9 9 0 0 1 0 13" />
+    </svg>
+  )
+}
+
+export function MutedIcon() {
+  return (
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M3 9h4l5-4v14l-5-4H3z" />
+      <path {...strokeProps} d="M16 9l6 6M22 9l-6 6" />
+    </svg>
+  )
+}
+
+export function FullscreenIcon() {
+  return (
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path {...strokeProps} d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />
+    </svg>
+  )
+}
+
+export function ExitFullscreenIcon() {
+  return (
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path {...strokeProps} d="M9 4v5H4M15 4v5h5M20 15h-5v5M4 15h5v5" />
+    </svg>
+  )
+}
+
+export function GripIcon() {
+  return (
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 24">
+      <circle cx="3" cy="6" r="2" />
+      <circle cx="9" cy="6" r="2" />
+      <circle cx="3" cy="12" r="2" />
+      <circle cx="9" cy="12" r="2" />
+      <circle cx="3" cy="18" r="2" />
+      <circle cx="9" cy="18" r="2" />
     </svg>
   )
 }

@@ -14,9 +14,10 @@ Install 🐝 on **[Chrome](https://chromewebstore.google.com/detail/bee-fast-vid
 - ✅ seek forward (`D`) and backward (`A`) through any video
 - ✅ seek video to % on any video (like on YouTube) (`0 – 9`)
 - ✅ play and pause (`S`) any video
-- ✅ bring to front and enable native video controls for all videos on the page (reload the page to turn off)
+- ✅ seek with a seek bar, see the time and duration, change volume, mute and go fullscreen, even when the site covers its video with elements that block the native controls
+- ✅ drag the controls anywhere on the page (they snap back once the video leaves the viewport)
 - ✅ toggle loop for any video
-- ✅ toggle Picture-in-Picture (`P`) for any video
+- ✅ toggle Picture-in-Picture (`P`) for any video (disabled, with an explanation, where the site or browser doesn't allow it)
 - ✅ enable/disable controls on any website; useful for video conferencing
 
 ## Development notes
@@ -30,8 +31,6 @@ The extension consists of the content script (`entrypoints/content/`) and a popu
 **ControllersContainer**
 
 Most of the important bits are located within the content script. The execution starts from `entrypoints/content/index.tsx`, where the `ControllersContainer` is rendered into a shadow root (see [Styles](#styles)). `ControllersContainer` initially queries all available videos, after which it keeps track of newly added/removed videos via `observeForVideoElements` mutation observer. For every video we render a `Controller` component, which receives the reference to that video element. The shadow root's host element is intentionally an absolutely positioned, zero width and height element, in the top left corner of the page; Its purpose is to _house_ the `Controller` components, which are absolutely positioned over the top left corner of the video in respect to the host.
-
-**Note**: The only _setting_ that the `ControllersContainer` is keeping track of is _bring-to-top and enable the native controls_. Once turned on, this setting will be applied to all videos, while being a bit _destructive_. It yanks the video from its parent and appends it to the body while trying to maintain its original position. It also forces the video controls to be turned on. The `Controller` will observe if some other actor (e.g. YouTube page) tries to turn off the native controls and turn them on as soon as this happens.
 
 **Which videos get a controller**
 

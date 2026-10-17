@@ -1,9 +1,12 @@
-import { type Accessor, createEffect, onCleanup, type Setter, Show } from "solid-js"
+import { type Accessor, createEffect, onCleanup, Show } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import {
   BackwardIcon,
+  ExitFullscreenIcon,
   ForwardIcon,
-  NativeControlsIcon,
+  FullscreenIcon,
+  GripIcon,
+  MutedIcon,
   PauseIcon,
   PictureInPictureIcon,
   PlayIcon,
@@ -12,7 +15,9 @@ import {
   SlashIcon,
   SlowDownIcon,
   SpeedUpIcon,
+  VolumeIcon,
 } from "@/assets/control-icons"
+import { formatTime } from "@/utils/format-time"
 import {
   adjustPlaybackRate,
   getPictureInPictureAvailability,
@@ -33,8 +38,6 @@ const HOVER_ARM_DELAY_MS = 300
 interface Props {
   videoEl: Accessor<HTMLVideoElement>
   isGloballyDisabled: Accessor<boolean>
-  shouldBringToFront: Accessor<boolean>
-  setShouldBringToFront: Setter<boolean>
 }
 
 export const Controller = (props: Props) => {
@@ -52,6 +55,15 @@ export const Controller = (props: Props) => {
     playbackRate: props.videoEl().playbackRate,
     isLooped: props.videoEl().loop,
     isPictureInPicture: props.videoEl().ownerDocument.pictureInPictureElement === props.videoEl(),
+    currentTime: props.videoEl().currentTime,
+    duration: props.videoEl().duration,
+    // End of the seekable range; the seek bar's maximum for live streams, whose `duration` is `Infinity`.
+    seekableEnd: 0,
+    volume: props.videoEl().volume,
+    isMuted: props.videoEl().muted,
+    isFullscreen: false,
+    // Offset of the widget from its default position (the video's top-left corner), set by dragging the grip.
+    dragOffset: { x: 0, y: 0 },
     isClosed: false,
   })
 
@@ -89,6 +101,8 @@ export const Controller = (props: Props) => {
   createEffect(() => {
     if (!isEligible()) {
       setState("isSettled", false)
+      // A dragged widget returns to its default position once the video leaves the viewport.
+      setState("dragOffset", { x: 0, y: 0 })
       return
     }
     const timeoutId = setTimeout(() => setState("isSettled", true), SETTLE_DELAY_MS)
@@ -179,6 +193,30 @@ export const Controller = (props: Props) => {
     }
     videoEl.addEventListener("ratechange", onRateChange)
 
+    const onTimeChange = () => {
+      const { seekable } = videoEl
+      setState({
+        currentTime: videoEl.currentTime,
+        duration: videoEl.duration,
+        seekableEnd: seekable.length > 0 ? seekable.end(seekable.length - 1) : 0,
+      })
+    }
+    const timeEvents = ["timeupdate", "durationchange", "loadedmetadata", "progress", "seeked"]
+    for (const type of timeEvents) {
+      videoEl.addEventListener(type, onTimeChange)
+    }
+    onTimeChange()
+
+    const onVolumeChange = () => {
+      setState({ volume: videoEl.volume, isMuted: videoEl.muted })
+    }
+    videoEl.addEventListener("volumechange", onVolumeChange)
+
+    const onFullscreenChange = () => {
+      setState("isFullscreen", videoEl.ownerDocument.fullscreenElement === videoEl)
+    }
+    videoEl.ownerDocument.addEventListener("fullscreenchange", onFullscreenChange)
+
     const updatePosition = () => {
       const newPosition = getControllerPosition(videoEl)
       setState(
@@ -200,10 +238,6 @@ export const Controller = (props: Props) => {
           state.isLooped = videoEl.loop
         }),
       )
-      const shouldForceControls = props.shouldBringToFront() && !videoEl.controls
-      if (shouldForceControls) {
-        videoEl.controls = true
-      }
     })
     styleMutationObserver.observe(videoEl, { childList: false, attributes: true })
 
@@ -219,6 +253,11 @@ export const Controller = (props: Props) => {
       videoEl.removeEventListener("enterpictureinpicture", onPictureInPictureChange)
       videoEl.removeEventListener("leavepictureinpicture", onPictureInPictureChange)
       videoEl.removeEventListener("ratechange", onRateChange)
+      for (const type of timeEvents) {
+        videoEl.removeEventListener(type, onTimeChange)
+      }
+      videoEl.removeEventListener("volumechange", onVolumeChange)
+      videoEl.ownerDocument.removeEventListener("fullscreenchange", onFullscreenChange)
       styleMutationObserver.disconnect()
       clearInterval(intervalId)
     })
@@ -232,30 +271,28 @@ export const Controller = (props: Props) => {
     onCleanup(keyboardShortcuts.registerVideo(state.videoEl))
   })
 
-  // React on `shouldBringToFront`
-  createEffect(() => {
-    if (!props.shouldBringToFront()) {
-      return
+  // Drag the widget by its grip. The offset is relative to the default position, so the widget keeps following its
+  // video when the page scrolls or reflows.
+  const startDrag = (event: PointerEvent & { currentTarget: HTMLDivElement }) => {
+    event.preventDefault()
+    const grip = event.currentTarget
+    grip.setPointerCapture(event.pointerId)
+    const start = { x: event.clientX, y: event.clientY, offset: { ...state.dragOffset } }
+    const onMove = (moveEvent: PointerEvent) => {
+      setState("dragOffset", {
+        x: start.offset.x + moveEvent.clientX - start.x,
+        y: start.offset.y + moveEvent.clientY - start.y,
+      })
     }
-    const videoEl = state.videoEl
-    const videoPosition = getElementPositionFromTopOfPage(videoEl)
-    const { width, height } = videoEl.getBoundingClientRect()
-    videoEl.remove()
-    const shouldSetDifferentPosition =
-      videoEl.style.position == null || videoEl.style.position === "" || videoEl.style.position === "static"
-    if (shouldSetDifferentPosition) {
-      videoEl.style.position = "absolute"
+    const onEnd = () => {
+      grip.removeEventListener("pointermove", onMove)
+      grip.removeEventListener("pointerup", onEnd)
+      grip.removeEventListener("pointercancel", onEnd)
     }
-    videoEl.style.left = `${videoPosition.left}px`
-    videoEl.style.top = `${videoPosition.top}px`
-    videoEl.style.width = `${width}px`
-    videoEl.style.height = `min(85vh, ${height}px)`
-    videoEl.style.zIndex = `${2147483647 - 10}`
-    videoEl.controls = true
-    videoEl.style.outline = "2px solid rgb(233, 171, 23, 0.6)"
-    videoEl.style.backgroundColor = "#000000"
-    videoEl.ownerDocument.body.appendChild(videoEl)
-  })
+    grip.addEventListener("pointermove", onMove)
+    grip.addEventListener("pointerup", onEnd)
+    grip.addEventListener("pointercancel", onEnd)
+  }
 
   return (
     <Show when={!isDisabled()}>
@@ -267,161 +304,215 @@ export const Controller = (props: Props) => {
         // The widget can sit outside its video, so pointer tracking alone may not attribute it to this video.
         onPointerDown={() => keyboardShortcuts.markInteracted(state.videoEl)}
         style={{
-          left: `${state.position.left}px`,
-          top: `${state.position.top}px`,
+          left: `${state.position.left + state.dragOffset.x}px`,
+          top: `${state.position.top + state.dragOffset.y}px`,
         }}
       >
         <div class="underlay" />
         <div class="controls">
-          <button
-            type="button"
-            class="control playback-rate"
-            title="Video speed"
-            onClick={(event) => {
-              event.stopPropagation()
-              setState(
-                produce((state) => {
-                  state.shouldShowMoreControls = !state.shouldShowMoreControls
-                }),
-              )
-            }}
-          >
-            <span>{state.playbackRate.toFixed(2)}</span>
-          </button>
-          <Show when={state.shouldShowMoreControls}>
+          <div class="row">
+            <Show when={state.shouldShowMoreControls}>
+              <div class="grip" title="Drag to move" onPointerDown={startDrag}>
+                <GripIcon />
+              </div>
+            </Show>
             <button
               type="button"
-              class="control"
-              title="Slow down (Z)"
+              class="control playback-rate"
+              title="Video speed"
               onClick={(event) => {
                 event.stopPropagation()
-                adjustPlaybackRate(state.videoEl, -0.25)
-              }}
-            >
-              <SlowDownIcon />
-            </button>
-            <button
-              type="button"
-              class="control"
-              title="Speed up (X)"
-              onClick={(event) => {
-                event.stopPropagation()
-                adjustPlaybackRate(state.videoEl, +0.25)
-              }}
-            >
-              <SpeedUpIcon />
-            </button>
-            <button
-              type="button"
-              class="control"
-              title="Backward 5 seconds (A)"
-              onClick={(event) => {
-                event.stopPropagation()
-                seekBy(state.videoEl, -5_000)
-              }}
-            >
-              <BackwardIcon />
-            </button>
-            <button
-              type="button"
-              class="control"
-              title={`${state.isPaused ? "Play" : "Pause"} (S)`}
-              onClick={(event) => {
-                event.stopPropagation()
-                togglePlayPause(state.videoEl)
-              }}
-            >
-              {state.isPaused ? <PlayIcon /> : <PauseIcon />}
-            </button>
-            <button
-              type="button"
-              class="control"
-              title="Forward 5 seconds (D)"
-              onClick={(event) => {
-                event.stopPropagation()
-                seekBy(state.videoEl, +5_000)
-              }}
-            >
-              <ForwardIcon />
-            </button>
-            <button
-              type="button"
-              class="control"
-              title={state.isLooped ? "Disable loop" : "Loop"}
-              onClick={(event) => {
-                event.stopPropagation()
-                toggleLoop(state.videoEl)
                 setState(
                   produce((state) => {
-                    state.isLooped = state.videoEl.loop
+                    state.shouldShowMoreControls = !state.shouldShowMoreControls
                   }),
                 )
               }}
             >
-              <Show when={state.isLooped} fallback={<RepeatIcon />}>
-                <SlashIcon>
-                  <RepeatIcon />
-                </SlashIcon>
-              </Show>
+              <span>{state.playbackRate.toFixed(2)}</span>
             </button>
-            <button
-              type="button"
-              class={`control ${props.shouldBringToFront() ? "locked" : ""}`}
-              title={
-                props.shouldBringToFront()
-                  ? "Reload the page to disable this."
-                  : "Enable native controls and bring to front all videos on this page."
-              }
-              onClick={(event) => {
-                event.stopPropagation()
-                props.setShouldBringToFront(true)
-              }}
-            >
-              <NativeControlsIcon />
-            </button>
-            <button
-              type="button"
-              class="control"
-              disabled={pictureInPictureAvailability !== "available"}
-              title={
-                {
-                  available: `${state.isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`,
-                  blocked: "This site (or your browser settings) doesn't allow picture-in-picture.",
-                  unsupported:
-                    "Picture-in-picture isn't supported by this browser. Try the browser's own picture-in-picture button.",
-                }[pictureInPictureAvailability]
-              }
-              onClick={(event) => {
-                event.stopPropagation()
-                togglePictureInPicture(state.videoEl)
-              }}
-            >
-              <Show when={state.isPictureInPicture} fallback={<PictureInPictureIcon />}>
-                <SlashIcon>
-                  <PictureInPictureIcon />
-                </SlashIcon>
-              </Show>
-            </button>
-            <button
-              type="button"
-              class="control"
-              title="Hide controls for this video"
-              onClick={(event) => {
-                event.stopPropagation()
-                setState(
-                  produce((store) => {
-                    store.isClosed = true
-                  }),
-                )
-              }}
-            >
-              <RemoveIcon />
-            </button>
+            <Show when={state.shouldShowMoreControls}>
+              <button
+                type="button"
+                class="control"
+                title="Slow down (Z)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  adjustPlaybackRate(state.videoEl, -0.25)
+                }}
+              >
+                <SlowDownIcon />
+              </button>
+              <button
+                type="button"
+                class="control"
+                title="Speed up (X)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  adjustPlaybackRate(state.videoEl, +0.25)
+                }}
+              >
+                <SpeedUpIcon />
+              </button>
+              <button
+                type="button"
+                class="control"
+                title="Backward 5 seconds (A)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  seekBy(state.videoEl, -5_000)
+                }}
+              >
+                <BackwardIcon />
+              </button>
+              <button
+                type="button"
+                class="control"
+                title={`${state.isPaused ? "Play" : "Pause"} (S)`}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  togglePlayPause(state.videoEl)
+                }}
+              >
+                {state.isPaused ? <PlayIcon /> : <PauseIcon />}
+              </button>
+              <button
+                type="button"
+                class="control"
+                title="Forward 5 seconds (D)"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  seekBy(state.videoEl, +5_000)
+                }}
+              >
+                <ForwardIcon />
+              </button>
+              <button
+                type="button"
+                class="control"
+                title={state.isLooped ? "Disable loop" : "Loop"}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  toggleLoop(state.videoEl)
+                  setState(
+                    produce((state) => {
+                      state.isLooped = state.videoEl.loop
+                    }),
+                  )
+                }}
+              >
+                <Show when={state.isLooped} fallback={<RepeatIcon />}>
+                  <SlashIcon>
+                    <RepeatIcon />
+                  </SlashIcon>
+                </Show>
+              </button>
+              <button
+                type="button"
+                class="control"
+                disabled={pictureInPictureAvailability !== "available"}
+                title={
+                  {
+                    available: `${state.isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`,
+                    blocked: "This site (or your browser settings) doesn't allow picture-in-picture.",
+                    unsupported:
+                      "Picture-in-picture isn't supported by this browser. Try the browser's own picture-in-picture button.",
+                  }[pictureInPictureAvailability]
+                }
+                onClick={(event) => {
+                  event.stopPropagation()
+                  togglePictureInPicture(state.videoEl)
+                }}
+              >
+                <Show when={state.isPictureInPicture} fallback={<PictureInPictureIcon />}>
+                  <SlashIcon>
+                    <PictureInPictureIcon />
+                  </SlashIcon>
+                </Show>
+              </button>
+              <button
+                type="button"
+                class="control"
+                title="Hide controls for this video"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setState(
+                    produce((store) => {
+                      store.isClosed = true
+                    }),
+                  )
+                }}
+              >
+                <RemoveIcon />
+              </button>
+            </Show>
+          </div>
+          <Show when={state.shouldShowMoreControls}>
+            <div class="row player-row">
+              <input
+                class="seek"
+                type="range"
+                title="Seek"
+                min={0}
+                max={Number.isFinite(state.duration) ? state.duration : state.seekableEnd}
+                step="any"
+                value={state.currentTime}
+                onInput={(event) => {
+                  state.videoEl.currentTime = event.currentTarget.valueAsNumber
+                }}
+              />
+              <span class="time">
+                {Number.isFinite(state.duration)
+                  ? `${formatTime(state.currentTime)} / ${formatTime(state.duration)}`
+                  : state.duration === Number.POSITIVE_INFINITY
+                    ? "LIVE"
+                    : formatTime(state.currentTime)}
+              </span>
+              <button
+                type="button"
+                class="control"
+                title={state.isMuted ? "Unmute" : "Mute"}
+                onClick={() => {
+                  state.videoEl.muted = !state.videoEl.muted
+                }}
+              >
+                {state.isMuted || state.volume === 0 ? <MutedIcon /> : <VolumeIcon />}
+              </button>
+              <input
+                class="volume"
+                type="range"
+                title="Volume"
+                min={0}
+                max={1}
+                step={0.05}
+                value={state.isMuted ? 0 : state.volume}
+                onInput={(event) => {
+                  state.videoEl.volume = event.currentTarget.valueAsNumber
+                  state.videoEl.muted = false
+                }}
+              />
+              <button
+                type="button"
+                class="control"
+                title={state.isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                onClick={() => toggleFullscreen(state.videoEl)}
+              >
+                {state.isFullscreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}
+              </button>
+            </div>
           </Show>
         </div>
       </div>
     </Show>
   )
+}
+
+function toggleFullscreen(videoEl: HTMLVideoElement) {
+  if (videoEl.ownerDocument.fullscreenElement === videoEl) {
+    videoEl.ownerDocument.exitFullscreen().catch(() => console.log("bee-fast-video:", "Could not exit fullscreen"))
+  } else {
+    videoEl.requestFullscreen().catch(() => console.log("bee-fast-video:", "Could not enter fullscreen", videoEl))
+  }
 }
 
 function getControllerPosition(videoEl: HTMLVideoElement): { top: number; left: number } {

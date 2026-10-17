@@ -9,7 +9,6 @@ export function ControllersContainer() {
 
   const [videoElements, setVideoElements] = createSignal(new Set(document.body.querySelectorAll("video")))
 
-  const [shouldBringToFront, setShouldBringToFront] = createSignal(false)
   createEffect(() => {
     const { stopObserving } = observeForVideoElements({
       target: document.body,
@@ -32,14 +31,7 @@ export function ControllersContainer() {
   return (
     <For each={videosArray()}>
       {(videoEl) => {
-        return (
-          <Controller
-            videoEl={() => videoEl}
-            isGloballyDisabled={settings.isDisabledOnThisDomain}
-            shouldBringToFront={shouldBringToFront}
-            setShouldBringToFront={setShouldBringToFront}
-          />
-        )
+        return <Controller videoEl={() => videoEl} isGloballyDisabled={settings.isDisabledOnThisDomain} />
       }}
     </For>
   )

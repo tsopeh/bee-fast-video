@@ -94,8 +94,24 @@ function isTyping(event: KeyboardEvent): boolean {
   if (!(element instanceof HTMLElement)) {
     return false
   }
+  if (element instanceof HTMLInputElement) {
+    // Sliders, checkboxes and buttons don't take text, e.g. our own seek and volume sliders.
+    return !NON_TEXT_INPUT_TYPES.has(element.type)
+  }
   const tagName = element.tagName.toLowerCase()
-  return tagName === "input" || tagName === "textarea" || tagName === "select" || element.isContentEditable
+  return tagName === "textarea" || tagName === "select" || element.isContentEditable
 }
+
+const NON_TEXT_INPUT_TYPES = new Set([
+  "range",
+  "checkbox",
+  "radio",
+  "button",
+  "submit",
+  "reset",
+  "color",
+  "file",
+  "image",
+])
 
 export const keyboardShortcuts = initKeyboardShortcuts()
