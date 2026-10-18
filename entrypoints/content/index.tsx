@@ -6,14 +6,13 @@ import css from "./style.css?inline"
 export default defineContentScript({
   matches: ["<all_urls>"],
   allFrames: true,
-  // The CSS is bundled into the script as a string and handed to `createShadowRootUi` below. With
-  // `cssInjectionMode: "ui"`, WXT would instead fetch a separate CSS file from the extension at runtime, which needs a
-  // web-accessible resource (detectable by pages) and failed on some pages ("Unsafe attempt to load URL
-  // chrome-extension://<dynamic id>/content-scripts/content.css").
+  // The CSS is bundled into the script as a string and passed to `createShadowRootUi` below. WXT's default ("ui")
+  // fetches a separate CSS file at runtime instead. That needs a web-accessible resource, which pages can detect, and
+  // it failed on some pages ("Unsafe attempt to load URL chrome-extension://<id>/content-scripts/content.css").
   cssInjectionMode: "manual",
 
   async main(ctx) {
-    // Render inside a shadow root, so that page styles can't leak into the controls.
+    // Render inside a shadow root, so the page's CSS can't affect the controls.
     const ui = await createShadowRootUi(ctx, {
       name: "bee-fast-video-root",
       position: "inline",

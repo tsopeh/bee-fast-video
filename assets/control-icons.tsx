@@ -80,7 +80,7 @@ export function RepeatIcon() {
   )
 }
 
-// Simple 24x24 icons for the player row; strokes use `currentColor`, so they follow the widget's text color.
+// 24×24 line icons. Strokes use `currentColor`, so they follow the widget's text color.
 const strokeProps = {
   fill: "none",
   stroke: "currentColor",

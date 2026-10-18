@@ -8,7 +8,7 @@ function initIntersectionObservable() {
       })
     },
     {
-      /* Note: root = null means viewport */
+      // `null` means the viewport.
       root: null,
       rootMargin: "0px",
       threshold: 0,

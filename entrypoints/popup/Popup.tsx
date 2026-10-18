@@ -234,7 +234,7 @@ export function Popup() {
               </div>
             </td>
             <td>
-              <div class="action">Disable</div>
+              <div class="action">Hide for this video</div>
             </td>
             <td>
               <div class="key-wrapper">/</div>

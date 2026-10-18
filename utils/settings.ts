@@ -6,13 +6,14 @@ const blacklistedHostnamesItem = storage.defineItem<Array<string>>("sync:blackli
   fallback: [],
 })
 
-// Sites on which all videos are constrained to the viewport (see `fitVideoToViewport`).
+// Sites on which all videos are limited to 80% of the window (see `FIT_TO_VIEWPORT_STYLES`).
 const fitVideosHostnamesItem = storage.defineItem<Array<string>>("sync:fitVideosHostnames", {
   fallback: [],
 })
 
 /**
- * This hook will be executed in two independent contexts: content script and popup
+ * Used by both the content script and the popup. The content script reads the hostname of its page; the popup reads it
+ * from the active tab.
  */
 export function useSettings() {
   const [currentHostname, setCurrentHostname] = createSignal("--- unknown domain ---")

@@ -1,8 +1,8 @@
 /* Rendered inside the shadow root of the `bee-fast-video-root` host element (see `index.tsx`). */
 
 /*
-  Zero-size host in the top left corner of the page; controllers are positioned in page coordinates relative to it.
-  `!important` within `:host` wins over any (even `!important`) page styles targeting the host.
+  A zero-size host in the top left corner of the page. Controllers are positioned in page coordinates relative to it.
+  `!important` inside `:host` beats any page style aimed at the host, even an `!important` one.
 */
 :host {
   position: absolute !important;
@@ -57,6 +57,7 @@ button {
   transition: opacity 200ms var(--ease-style);
   z-index: calc(2147483647 - 5) !important; /* max_int - 5 */
 
+  /* Grows on hover (see below), so the widget stays hovered when the pointer slips just past its edge. */
   .underlay {
     width: 0;
     height: 0;

@@ -42,20 +42,17 @@ const MIN_RESIZE_PX = 100
 const WHEEL_RATE_STEP = 0.25
 /** Seek per mouse wheel step on the seek bar (same as the backward / forward buttons). */
 const WHEEL_SEEK_STEP_MS = 5_000
-/**
- * Minimum time between speed and seek steps while scrolling: a continuous scroll takes about 1 s from speed 1.0 to 2.5,
- * or seeks about 30 s.
- */
+/** Minimum time between speed and seek steps while scrolling. One second of scrolling: speed 1.00 to 2.50, or ~30 s. */
 const WHEEL_RATE_INTERVAL_MS = 175
 /** Volume change per mouse wheel step on the volume slider. */
 const WHEEL_VOLUME_STEP = 0.05
-/** Minimum time between volume steps while scrolling: a continuous scroll changes the volume about 55% in 1 s. */
+/** Minimum time between volume steps while scrolling. One second of scrolling changes the volume by ~55%. */
 const WHEEL_VOLUME_INTERVAL_MS = 80
 
 interface Props {
   videoEl: Accessor<HTMLVideoElement>
   isGloballyDisabled: Accessor<boolean>
-  /** Per-site setting: constrain all videos to the viewport. */
+  /** Per-site setting: limit all videos to 80% of the window. */
   fitVideos: Accessor<boolean>
 }
 
@@ -121,9 +118,8 @@ export const Controller = (props: Props) => {
     }
   })
 
-  // Handle `isGloballyDisabled` changes.
+  // Turning the extension back on for the site brings back controllers hidden with the close button.
   createEffect(() => {
-    // When `isGloballyDisabled` becomes `false`, we cancel `isClosed`
     const shouldCancelIsClosed = !props.isGloballyDisabled()
     if (shouldCancelIsClosed) {
       setState(
@@ -134,7 +130,7 @@ export const Controller = (props: Props) => {
     }
   })
 
-  // React on video events
+  // Follow changes to the video, whether they come from our controls, the page or the browser.
   createEffect(() => {
     if (isDisabled()) {
       return
@@ -206,7 +202,7 @@ export const Controller = (props: Props) => {
       )
     }
 
-    // Track position change
+    // Attribute changes (style, class, loop) may move the video or toggle its loop.
     const styleMutationObserver = new MutationObserver(() => {
       updatePosition()
       setState(

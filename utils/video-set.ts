@@ -21,9 +21,8 @@ export function computeNewState(oldState: Set<HTMLVideoElement>, mutations: Arra
 }
 
 function extractVideoElementsFromMutations(mutations: Array<MutationRecord>) {
-  // Subsequent mutations can add, then remove (or the other way around) some
-  // video element. That's why we need to clear that element from previous group
-  // before we assign that element.
+  // One batch of mutations can add a video and then remove it, or the other way around. Only the last change counts,
+  // so a video is taken out of the other group before it's put in one.
   return mutations.reduce(
     (acc, mutation) => {
       const didChildListChange = mutation.type === "childList"
