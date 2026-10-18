@@ -107,22 +107,6 @@ export function MutedIcon() {
   )
 }
 
-export function FullscreenIcon() {
-  return (
-    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-      <path {...strokeProps} d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />
-    </svg>
-  )
-}
-
-export function ExitFullscreenIcon() {
-  return (
-    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-      <path {...strokeProps} d="M9 4v5H4M15 4v5h5M20 15h-5v5M4 15h5v5" />
-    </svg>
-  )
-}
-
 // From Lucide (https://lucide.dev/icons/brain, ISC license).
 export function BrainIcon() {
   return (

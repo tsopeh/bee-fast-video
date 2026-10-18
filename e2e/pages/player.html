@@ -19,12 +19,17 @@
   </div>
   <input id="text" placeholder="Type here" />
   <button id="site-fullscreen" type="button">Site fullscreen</button>
+  <button id="video-fullscreen" type="button">Video fullscreen</button>
   <div id="spacer"></div>
   <script>
     // Like players that keep key presses to themselves.
     document.getElementById("player").addEventListener("keydown", (event) => event.stopPropagation())
     document.getElementById("site-fullscreen").addEventListener("click", () => {
       document.getElementById("player").requestFullscreen()
+    })
+    // Like the browser's own fullscreen button, or sites that make the video itself fullscreen.
+    document.getElementById("video-fullscreen").addEventListener("click", () => {
+      document.querySelector("video").requestFullscreen()
     })
   </script>
 </body>

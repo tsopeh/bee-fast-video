@@ -4,7 +4,6 @@ import {
   BrainIcon,
   FitScreenIcon,
   ForwardIcon,
-  FullscreenIcon,
   GripIcon,
   PictureInPictureIcon,
   PlayIcon,
@@ -43,7 +42,6 @@ const PANEL: Array<{ icons: () => JSX.Element; action: string }> = [
     action: "Time. Click for the time left. Scroll the seek bar to move 5 s.",
   },
   { icons: () => <VolumeIcon />, action: "Mute. Scroll the slider to change the volume." },
-  { icons: () => <FullscreenIcon />, action: "Fullscreen" },
   { icons: () => <GripIcon />, action: "Drag to move the panel" },
   { icons: () => <span class="handle" />, action: "Drag the video's corner to resize it. Double-click to undo." },
 ]

@@ -1,15 +1,6 @@
 import type { Browser, Page } from "puppeteer-core"
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
-import {
-  boxOf,
-  clickInPanel,
-  launchBrowser,
-  openPage,
-  openPanel,
-  sleep,
-  startServer,
-  waitForVideoReady,
-} from "./harness"
+import { boxOf, launchBrowser, openPage, sleep, startServer, waitForVideoReady } from "./harness"
 
 let server: Awaited<ReturnType<typeof startServer>>
 let browser: Browser
@@ -66,8 +57,7 @@ describe("fullscreen", () => {
 
   // Chrome only lets you click inside the fullscreen element, and a `<video>` can't hold the panel (see `host.ts`).
   it("shows the panel, unclickable, and keeps shortcuts working when the video itself is fullscreen", async () => {
-    await openPanel(page)
-    await clickInPanel(page, '[title="Fullscreen"]')
+    await page.click("#video-fullscreen")
     await page.waitForFunction(() => document.fullscreenElement?.tagName === "VIDEO")
     const isShownOnTop = await page.evaluate(() =>
       document.querySelector("bee-fast-video-root")?.matches(":popover-open"),

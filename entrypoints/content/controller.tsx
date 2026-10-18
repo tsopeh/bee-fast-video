@@ -3,10 +3,8 @@ import { createStore, produce } from "solid-js/store"
 import {
   BackwardIcon,
   BrainIcon,
-  ExitFullscreenIcon,
   FitScreenIcon,
   ForwardIcon,
-  FullscreenIcon,
   GripIcon,
   MutedIcon,
   PauseIcon,
@@ -82,7 +80,6 @@ export const Controller = (props: Props) => {
     isMuted: props.videoEl().muted,
     // Whether the time label shows the time until the end instead of the elapsed time.
     showRemainingTime: false,
-    isFullscreen: false,
     // Offset of the widget from its default position (the video's top-left corner), set by dragging the grip.
     dragOffset: { x: 0, y: 0 },
     // Page coordinates of the resize handle, at the video's bottom-right corner.
@@ -202,11 +199,8 @@ export const Controller = (props: Props) => {
     }
     videoEl.addEventListener("volumechange", onVolumeChange)
 
-    const onFullscreenChange = () => {
-      setState("isFullscreen", videoEl.ownerDocument.fullscreenElement === videoEl)
-      // The video and the host (see `followFullscreen`) both move.
-      requestAnimationFrame(updatePosition)
-    }
+    // In the site's fullscreen, the video and the host (see `followFullscreen`) both move.
+    const onFullscreenChange = () => requestAnimationFrame(updatePosition)
     videoEl.ownerDocument.addEventListener("fullscreenchange", onFullscreenChange)
 
     const updatePosition = () => {
@@ -667,14 +661,6 @@ export const Controller = (props: Props) => {
                   state.videoEl.muted = false
                 }}
               />
-              <button
-                type="button"
-                class="control"
-                title={state.isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                onClick={() => toggleFullscreen(state.videoEl)}
-              >
-                {state.isFullscreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}
-              </button>
             </div>
           </Show>
         </div>
@@ -691,14 +677,6 @@ export const Controller = (props: Props) => {
       </Show>
     </Show>
   )
-}
-
-function toggleFullscreen(videoEl: HTMLVideoElement) {
-  if (videoEl.ownerDocument.fullscreenElement === videoEl) {
-    videoEl.ownerDocument.exitFullscreen().catch(() => console.log("bee-fast-video:", "Could not exit fullscreen"))
-  } else {
-    videoEl.requestFullscreen().catch(() => console.log("bee-fast-video:", "Could not enter fullscreen", videoEl))
-  }
 }
 
 function getControllerPosition(videoEl: HTMLVideoElement): { top: number; left: number } {

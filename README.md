@@ -20,7 +20,7 @@ Click the speed to open the full panel:
 - Seek: back (`A`) and forward (`D`) by 5 seconds, or by 20 seconds with `Shift`. Keys `0`–`9` jump to 0%–90% of the video, like on YouTube. Scroll over the seek bar to move 5 seconds at a time.
 - Play and pause (`S`).
 - Step one frame back (`Q`) or forward (`E`). This pauses the video.
-- Seek bar, time, volume, mute and fullscreen. These work even when the site covers its video so that the browser's own controls can't be reached. Click the time to switch between time played and time left. Scroll over the volume to change it.
+- Seek bar, time, volume and mute. These work even when the site covers its video so that the browser's own controls can't be reached. Click the time to switch between time played and time left. Scroll over the volume to change it.
 - Loop.
 - Picture-in-picture (`P`). The button is greyed out, with a tooltip saying why, when the site or browser doesn't allow it.
 - Drag the panel anywhere by its grip. It goes back to its place once the video scrolls out of view.
@@ -30,7 +30,7 @@ Click the speed to open the full panel:
 - Hide the panel for one video. It comes back when the page reloads.
 - Turn the extension off for a site, e.g. for video calls (in the popup).
 
-The panel stays on top of the page and works in fullscreen when the site makes its player fullscreen, which is what most sites do. When the `<video>` itself is fullscreen (the browser's own fullscreen button, or ours), the panel is shown and shortcuts work, but it can't be clicked: Chrome doesn't allow clicks on anything outside a fullscreen element, and a video can't hold other elements.
+The panel stays on top of the page and works in fullscreen when the site makes its player fullscreen, which is what most sites do. When the `<video>` itself is fullscreen (e.g. with the browser's own fullscreen button), the panel is shown and shortcuts work, but it can't be clicked: Chrome doesn't allow clicks on anything outside a fullscreen element, and a video can't hold other elements. That's also why the panel has no fullscreen button: use the site's.
 
 The popup lists all keys and buttons:
 
