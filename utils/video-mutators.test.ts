@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { adjustPlaybackRate, getPictureInPictureAvailability, seekBy, seekToNormalized } from "./video-mutators"
+import {
+  adjustPlaybackRate,
+  getPictureInPictureAvailability,
+  seekBy,
+  seekToNormalized,
+  stepFrame,
+} from "./video-mutators"
 
 function fakeVideo(props: Partial<HTMLVideoElement>): HTMLVideoElement {
   return { playbackRate: 1, currentTime: 0, duration: 100, ...props } as HTMLVideoElement
@@ -73,6 +79,24 @@ describe("seekBy", () => {
     const live = fakeVideo({ currentTime: 10, duration: Number.POSITIVE_INFINITY })
     seekBy(live, 5_000)
     expect(live.currentTime).toBe(15)
+  })
+})
+
+describe("stepFrame", () => {
+  it("pauses and moves by one frame", () => {
+    let isPaused = false
+    const video = fakeVideo({ currentTime: 10, pause: () => (isPaused = true) })
+    stepFrame(video, 1, 0.04)
+    expect(isPaused).toBe(true)
+    expect(video.currentTime).toBeCloseTo(10.04)
+    stepFrame(video, -1, 0.04)
+    expect(video.currentTime).toBeCloseTo(10)
+  })
+
+  it("stays within the video", () => {
+    const video = fakeVideo({ currentTime: 0, pause: () => {} })
+    stepFrame(video, -1, 0.04)
+    expect(video.currentTime).toBe(0)
   })
 })
 

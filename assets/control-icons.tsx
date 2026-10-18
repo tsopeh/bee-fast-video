@@ -123,10 +123,34 @@ export function ExitFullscreenIcon() {
   )
 }
 
-export function ResizeIcon() {
+// From Lucide (https://lucide.dev/icons/brain, ISC license).
+export function BrainIcon() {
   return (
     <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-      <path {...strokeProps} d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" />
+      <g {...strokeProps} stroke-width="2">
+        <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+        <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+        <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
+        <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
+        <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
+        <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
+        <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
+        <path d="M6 18a4 4 0 0 1-1.967-.516" />
+        <path d="M19.967 17.484A4 4 0 0 1 18 18" />
+      </g>
+    </svg>
+  )
+}
+
+/** A screen with two arrows pointing in: "shrink to fit the screen". */
+export function FitScreenIcon() {
+  return (
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <g {...strokeProps} stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+        <path d="M5 10h5M8 7.5l2 2.5-2 2.5M19 10h-5M16 7.5l-2 2.5 2 2.5" />
+      </g>
     </svg>
   )
 }

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Player</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #player { position: relative; width: 640px; height: 360px; margin: 40px; background: black; }
+    #player video { width: 100%; height: 100%; display: block; }
+    /* Like many sites: an element covers the video, so the browser's own controls can't be reached. */
+    #overlay { position: absolute; inset: 0; }
+    #spacer { height: 3000px; }
+  </style>
+</head>
+<body>
+  <div id="player">
+    <video src="clip.webm" muted playsinline></video>
+    <div id="overlay"></div>
+  </div>
+  <input id="text" placeholder="Type here" />
+  <button id="site-fullscreen" type="button">Site fullscreen</button>
+  <div id="spacer"></div>
+  <script>
+    // Like players that keep key presses to themselves.
+    document.getElementById("player").addEventListener("keydown", (event) => event.stopPropagation())
+    document.getElementById("site-fullscreen").addEventListener("click", () => {
+      document.getElementById("player").requestFullscreen()
+    })
+  </script>
+</body>
+</html>

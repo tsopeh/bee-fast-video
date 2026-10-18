@@ -36,6 +36,9 @@ export function ControllersContainer() {
             videoEl={() => videoEl}
             isGloballyDisabled={settings.isDisabledOnThisDomain}
             fitVideos={settings.isFitVideosOnThisDomain}
+            toggleFitVideos={settings.toggleFitVideosOnThisDomain}
+            rememberedSpeed={settings.rememberedSpeed}
+            setRememberedSpeed={settings.setRememberedSpeed}
           />
         )
       }}

@@ -5,9 +5,11 @@ import {
   adjustPlaybackRate,
   seekBy,
   seekToNormalized,
+  stepFrame,
   togglePictureInPicture,
   togglePlayPause,
 } from "@/utils/video-mutators"
+import { getFrameDuration } from "./frame-duration"
 
 type VideoAction = (videoEl: HTMLVideoElement) => void
 
@@ -21,6 +23,9 @@ const keyActions = new Map<string, VideoAction>([
   ["d", (v) => seekBy(v, +5_000)],
   ["D", (v) => seekBy(v, +20_000)],
   ["s", (v) => togglePlayPause(v)],
+  // Above A and D, so frame steps sit right over seeking back and forward.
+  ["q", (v) => stepFrame(v, -1, getFrameDuration(v))],
+  ["e", (v) => stepFrame(v, 1, getFrameDuration(v))],
   ["p", (v) => togglePictureInPicture(v)],
   ["P", (v) => togglePictureInPicture(v)],
   // Number keys 0-9 seek to 0%-90%
@@ -30,9 +35,16 @@ const keyActions = new Map<string, VideoAction>([
   ]),
 ])
 
+const SPEED_KEYS = new Set(["z", "Z", "x", "X"])
+
+interface RegisteredVideo {
+  /** Called after a shortcut changed the speed, so "remember my speed" can save it. */
+  onSpeedSetByUser: () => void
+}
+
 function initKeyboardShortcuts() {
   // Videos whose controller is currently shown; only these can be controlled via shortcuts.
-  const registeredVideos = new Set<HTMLVideoElement>()
+  const registeredVideos = new Map<HTMLVideoElement, RegisteredVideo>()
   let lastInteractedVideo: HTMLVideoElement | undefined
 
   const markInteracted = (videoEl: HTMLVideoElement) => {
@@ -61,13 +73,16 @@ function initKeyboardShortcuts() {
     if (action == null || event.altKey || event.ctrlKey || event.metaKey || isTyping(event)) {
       return
     }
-    const target = pickTargetVideo(registeredVideos, lastInteractedVideo, (videoEl) => {
+    const target = pickTargetVideo(registeredVideos.keys(), lastInteractedVideo, (videoEl) => {
       const { width, height } = videoEl.getBoundingClientRect()
       return { area: width * height, isPlaying: !videoEl.paused && !videoEl.ended }
     })
     if (target != null) {
       // The page still receives the key; swallowing it would break the site's own shortcuts.
       action(target)
+      if (SPEED_KEYS.has(event.key)) {
+        registeredVideos.get(target)?.onSpeedSetByUser()
+      }
     }
   }
 
@@ -78,8 +93,8 @@ function initKeyboardShortcuts() {
   window.addEventListener("pointerdown", onPointer, { capture: true, passive: true })
 
   return {
-    registerVideo: (videoEl: HTMLVideoElement) => {
-      registeredVideos.add(videoEl)
+    registerVideo: (videoEl: HTMLVideoElement, handlers: RegisteredVideo) => {
+      registeredVideos.set(videoEl, handlers)
       return () => {
         registeredVideos.delete(videoEl)
       }

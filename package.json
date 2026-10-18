@@ -1,7 +1,7 @@
 {
   "name": "bee-fast-video",
   "version": "2.0.0",
-  "description": "Bee fast video 🐝 - Speed up or slow down videos, seek, loop, volume, fullscreen, resize and Picture-in-picture on any website.",
+  "description": "Speed up, slow down and control any video on any site: seek, step frames, loop, volume, fullscreen, resize, picture-in-picture.",
   "private": true,
   "license": "MIT",
   "repository": {
@@ -18,7 +18,10 @@
     "zip:firefox": "wxt zip -b firefox",
     "check": "tsc --noEmit && biome check .",
     "format": "biome check --write .",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"e2e/**\"",
+    "test:e2e": "wxt build && vitest run --dir e2e --exclude e2e/screenshots.test.ts --no-file-parallelism --testTimeout 30000 --hookTimeout 60000",
+    "e2e:install": "browsers install chrome@stable --path .cache/browsers",
+    "screenshots": "wxt build && vitest run e2e/screenshots.test.ts --testTimeout 60000 --hookTimeout 60000",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -26,7 +29,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
+    "@puppeteer/browsers": "^3.2.5",
+    "@types/node": "^26.6.5",
     "@wxt-dev/module-solid": "^1.1.4",
+    "puppeteer-core": "^25.14.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.5",

@@ -1,251 +1,108 @@
-import { Show } from "solid-js"
+import { For, type JSX } from "solid-js"
 import {
   BackwardIcon,
+  BrainIcon,
+  FitScreenIcon,
   ForwardIcon,
   FullscreenIcon,
   GripIcon,
-  PauseIcon,
   PictureInPictureIcon,
   PlayIcon,
   RemoveIcon,
   RepeatIcon,
-  ResizeIcon,
   SlowDownIcon,
+  SpeedIcon,
   SpeedUpIcon,
   VolumeIcon,
 } from "@/assets/control-icons"
 import iconLarge from "@/assets/icon-large.png"
 import { useSettings } from "@/utils/settings"
 
+// Written by hand: keep in sync with `keyActions` in `shortcuts.ts` and the panel in `controller.tsx`.
+
+const KEYS: Array<{ keys: Array<string>; action: string }> = [
+  { keys: ["Z", "X"], action: "Slower, faster by 0.25 (Shift: 0.1)" },
+  { keys: ["A", "D"], action: "Back, forward 5 s (Shift: 20 s)" },
+  { keys: ["Q", "E"], action: "One frame back, forward" },
+  { keys: ["S"], action: "Play, pause" },
+  { keys: ["P"], action: "Picture-in-picture" },
+  { keys: ["0", "9"], action: "Jump to 0% … 90%" },
+]
+
+const PANEL: Array<{ icons: () => JSX.Element; action: string }> = [
+  { icons: () => <SpeedIcon />, action: "The speed. Click to open the panel, scroll to change, right-click to reset." },
+  { icons: () => [<SlowDownIcon />, <SpeedUpIcon />], action: "Slower, faster" },
+  { icons: () => [<BackwardIcon />, <PlayIcon />, <ForwardIcon />], action: "Back 5 s, play, forward 5 s" },
+  { icons: () => <RepeatIcon />, action: "Loop" },
+  { icons: () => <PictureInPictureIcon />, action: "Picture-in-picture" },
+  { icons: () => <BrainIcon />, action: "Remember my speed on this site" },
+  { icons: () => <FitScreenIcon />, action: "Fit videos on this site to 80% of the window" },
+  { icons: () => <RemoveIcon />, action: "Hide the panel for this video" },
+  {
+    icons: () => <span class="chip-text">0:20</span>,
+    action: "Time. Click for the time left. Scroll the seek bar to move 5 s.",
+  },
+  { icons: () => <VolumeIcon />, action: "Mute. Scroll the slider to change the volume." },
+  { icons: () => <FullscreenIcon />, action: "Fullscreen" },
+  { icons: () => <GripIcon />, action: "Drag to move the panel" },
+  { icons: () => <span class="handle" />, action: "Drag the video's corner to resize it. Double-click to undo." },
+]
+
 export function Popup() {
-  const {
-    currentHostname,
-    isDisabledOnThisDomain,
-    toggleBlacklistHostName,
-    isFitVideosOnThisDomain,
-    toggleFitVideosOnThisDomain,
-  } = useSettings()
+  const { currentHostname, isDisabledOnThisDomain, toggleBlacklistHostName } = useSettings()
 
   return (
     <main>
-      <img class="logo" src={iconLarge} alt="Bee holding a red play-video button." />
-      <div class="title">Bee Fast Video</div>
-      <button
-        type="button"
-        class={`toggle ${isDisabledOnThisDomain() ? "disabled" : "enabled"}`}
-        onClick={() => {
-          toggleBlacklistHostName()
-        }}
-      >
-        <Show when={isDisabledOnThisDomain()} fallback={"Enabled"}>
-          Disabled
-        </Show>
-        {" for"}
-        <span class="hostname">&nbsp{currentHostname()}</span>
-      </button>
-      <label
-        class="fit-videos"
-        title="Limits all videos on this site to 80% of the window size. May affect some page layouts."
-      >
-        <input type="checkbox" checked={isFitVideosOnThisDomain()} onChange={() => toggleFitVideosOnThisDomain()} />
-        Fit videos to screen on this site
+      <header>
+        <img class="logo" src={iconLarge} alt="" />
+        <h1>Bee Fast Video</h1>
+      </header>
+
+      <label class="site" classList={{ off: isDisabledOnThisDomain() }}>
+        <span class="site-text">
+          <span class="site-state">{isDisabledOnThisDomain() ? "Off" : "On"} for</span>
+          <span class="hostname">{currentHostname()}</span>
+        </span>
+        <input
+          type="checkbox"
+          role="switch"
+          class="switch"
+          checked={!isDisabledOnThisDomain()}
+          aria-checked={!isDisabledOnThisDomain()}
+          onChange={() => toggleBlacklistHostName()}
+        />
       </label>
-      <table>
-        <thead>
-          <tr>
-            <th>Button</th>
-            <th>What it does</th>
-            <th>Shortcut</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div class="icon">
-                <SlowDownIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Slow down (or scroll on the speed)</div>
-            </td>
-            <td>
-              <div class="key-wrapper">
-                <KeyboardKey keyboardKey="Z" />
-              </div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <SpeedUpIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Speed up (or scroll on the speed)</div>
-            </td>
-            <td>
-              <div class="key-wrapper">
-                <KeyboardKey keyboardKey="X" />
-              </div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <BackwardIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Backward</div>
-            </td>
-            <td>
-              <div class="key-wrapper">
-                <KeyboardKey keyboardKey="A" />
-              </div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <PlayIcon />
-                <span class="separator">|</span>
-                <PauseIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Play | Pause</div>
-            </td>
-            <td>
-              <div class="key-wrapper">
-                <KeyboardKey keyboardKey="S" />
-              </div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <ForwardIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Forward</div>
-            </td>
-            <td>
-              <div class="key-wrapper">
-                <KeyboardKey keyboardKey="D" />
-              </div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <RepeatIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Loop</div>
-            </td>
-            <td>
-              <div class="key-wrapper">/</div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <VolumeIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Mute | Volume (scroll to adjust)</div>
-            </td>
-            <td>
-              <div class="key-wrapper">/</div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <FullscreenIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Fullscreen</div>
-            </td>
-            <td>
-              <div class="key-wrapper">/</div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <ResizeIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Resize video</div>
-            </td>
-            <td>
-              <div class="key-wrapper">/</div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <GripIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Drag to move</div>
-            </td>
-            <td>
-              <div class="key-wrapper">/</div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <PictureInPictureIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Picture-in-Picture</div>
-            </td>
-            <td>
-              <div class="key-wrapper">
-                <KeyboardKey keyboardKey="P" />
-              </div>
-            </td>
-          </tr>
-          <tr class="row-gap" />
-          <tr>
-            <td>
-              <div class="icon">
-                <RemoveIcon />
-              </div>
-            </td>
-            <td>
-              <div class="action">Hide for this video</div>
-            </td>
-            <td>
-              <div class="key-wrapper">/</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+
+      <section>
+        <h2>Keys</h2>
+        <p class="hint">They act on the video under the mouse, or the main one. Not while you type.</p>
+        <ul class="list">
+          <For each={KEYS}>
+            {(item) => (
+              <li>
+                <span class="keys">
+                  <For each={item.keys}>{(key) => <kbd>{key}</kbd>}</For>
+                </span>
+                <span>{item.action}</span>
+              </li>
+            )}
+          </For>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Panel</h2>
+        <ul class="list">
+          <For each={PANEL}>
+            {(item) => (
+              <li>
+                <span class="icons">{item.icons()}</span>
+                <span>{item.action}</span>
+              </li>
+            )}
+          </For>
+        </ul>
+      </section>
     </main>
   )
-}
-
-function KeyboardKey(props: { keyboardKey: string }) {
-  return <div class="keyboard-key">{props.keyboardKey}</div>
 }

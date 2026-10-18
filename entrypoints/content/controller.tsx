@@ -2,7 +2,9 @@ import { type Accessor, createEffect, onCleanup, Show } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import {
   BackwardIcon,
+  BrainIcon,
   ExitFullscreenIcon,
+  FitScreenIcon,
   ForwardIcon,
   FullscreenIcon,
   GripIcon,
@@ -12,7 +14,6 @@ import {
   PlayIcon,
   RemoveIcon,
   RepeatIcon,
-  ResizeIcon,
   SlashIcon,
   SlowDownIcon,
   SpeedIcon,
@@ -31,6 +32,8 @@ import {
 import { FIT_TO_VIEWPORT_STYLES, setImportantStyles } from "@/utils/video-styles"
 import { isVideoVisibleEnough } from "@/utils/video-visibility"
 import { createWheelStepper } from "@/utils/wheel-stepper"
+import { trackFrameDuration } from "./frame-duration"
+import { toHostCoordinates } from "./host"
 import { viewportIntersection } from "./intersection-observer"
 import { keyboardShortcuts } from "./shortcuts"
 
@@ -54,6 +57,10 @@ interface Props {
   isGloballyDisabled: Accessor<boolean>
   /** Per-site setting: limit all videos to 80% of the window. */
   fitVideos: Accessor<boolean>
+  toggleFitVideos: () => void
+  /** Per-site setting: the speed for all videos, or `undefined` when "remember my speed" is off. */
+  rememberedSpeed: Accessor<number | undefined>
+  setRememberedSpeed: (speed: number | undefined) => void
 }
 
 export const Controller = (props: Props) => {
@@ -78,7 +85,6 @@ export const Controller = (props: Props) => {
     isFullscreen: false,
     // Offset of the widget from its default position (the video's top-left corner), set by dragging the grip.
     dragOffset: { x: 0, y: 0 },
-    isResizing: false,
     // Page coordinates of the resize handle, at the video's bottom-right corner.
     handlePosition: { left: 0, top: 0 },
     isClosed: false,
@@ -89,6 +95,18 @@ export const Controller = (props: Props) => {
 
   const isEligible = () => state.isVideoInViewport && state.isVisibleEnough
   const isDisabled = () => props.isGloballyDisabled() || state.isClosed || !isEligible()
+
+  // Called after the user changed the speed through the extension. Only these changes are remembered, not the ones
+  // made by the site, e.g. Twitch nudging the speed to catch up with a live stream.
+  const onSpeedSetByUser = () => {
+    if (props.rememberedSpeed() != null) {
+      props.setRememberedSpeed(state.videoEl.playbackRate)
+    }
+  }
+  const setSpeedByUser = (adjust: () => void) => {
+    adjust()
+    onSpeedSetByUser()
+  }
 
   // Track whether the video is in the viewport and visible enough (see `isVideoVisibleEnough`). Pages toggle
   // visibility and size without moving the video, so visibility is also re-checked periodically.
@@ -186,6 +204,8 @@ export const Controller = (props: Props) => {
 
     const onFullscreenChange = () => {
       setState("isFullscreen", videoEl.ownerDocument.fullscreenElement === videoEl)
+      // The video and the host (see `followFullscreen`) both move.
+      requestAnimationFrame(updatePosition)
     }
     videoEl.ownerDocument.addEventListener("fullscreenchange", onFullscreenChange)
 
@@ -213,6 +233,12 @@ export const Controller = (props: Props) => {
     })
     styleMutationObserver.observe(videoEl, { childList: false, attributes: true })
 
+    // Scroll events don't bubble, but a capture listener on the document hears all of them, also from scroll areas
+    // inside the page. The page's own scroll doesn't move the controller, but videos in scroll areas (or fixed ones)
+    // move relative to the page.
+    videoEl.ownerDocument.addEventListener("scroll", updatePosition, { capture: true, passive: true })
+
+    // Catches moves nothing reports, e.g. a layout change above the video.
     const intervalId = setInterval(() => {
       updatePosition()
     }, 1000)
@@ -230,6 +256,7 @@ export const Controller = (props: Props) => {
       }
       videoEl.removeEventListener("volumechange", onVolumeChange)
       videoEl.ownerDocument.removeEventListener("fullscreenchange", onFullscreenChange)
+      videoEl.ownerDocument.removeEventListener("scroll", updatePosition, { capture: true })
       styleMutationObserver.disconnect()
       clearInterval(intervalId)
     })
@@ -244,20 +271,50 @@ export const Controller = (props: Props) => {
     onCleanup(setImportantStyles(state.videoEl, FIT_TO_VIEWPORT_STYLES))
   })
 
-  // Resize mode: a handle at the video's bottom-right corner resizes the video in place. Turning resize mode off (or
-  // the controller being hidden) restores the original size. Note that this resizes the `<video>`, not the site's
-  // player around it.
+  // Apply the remembered speed to every video on the site, also those without a shown controller. Sites often reset
+  // the speed when a new video starts, sometimes in the same `<video>` element (YouTube), so it's applied again when a
+  // video loads or starts playing.
+  createEffect(() => {
+    const speed = props.rememberedSpeed()
+    if (props.isGloballyDisabled() || speed == null) {
+      return
+    }
+    const videoEl = state.videoEl
+    const apply = () => {
+      if (videoEl.playbackRate !== speed) {
+        videoEl.playbackRate = speed
+      }
+    }
+    apply()
+    videoEl.addEventListener("loadedmetadata", apply)
+    videoEl.addEventListener("play", apply)
+    onCleanup(() => {
+      videoEl.removeEventListener("loadedmetadata", apply)
+      videoEl.removeEventListener("play", apply)
+    })
+  })
+
   const stepSpeedWheel = createWheelStepper(WHEEL_RATE_INTERVAL_MS)
   const stepVolumeWheel = createWheelStepper(WHEEL_VOLUME_INTERVAL_MS)
   const stepSeekWheel = createWheelStepper(WHEEL_RATE_INTERVAL_MS)
 
+  // While the panel is open, a handle at the video's bottom-right corner resizes the video in place. The new size stays
+  // when the panel closes. Double-clicking the handle, hiding the controls or turning the extension off for the site
+  // restores the original size. Note that this resizes the `<video>`, not the site's player around it.
   let restoreSize: (() => void) | undefined
   const resetSize = () => {
     restoreSize?.()
     restoreSize = undefined
   }
+  onCleanup(resetSize)
   createEffect(() => {
-    if (isDisabled() || !state.isResizing) {
+    if (props.isGloballyDisabled() || state.isClosed) {
+      resetSize()
+    }
+  })
+  const isResizeHandleShown = () => !isDisabled() && state.shouldShowMoreControls
+  createEffect(() => {
+    if (!isResizeHandleShown()) {
       return
     }
     const videoEl = state.videoEl
@@ -266,16 +323,12 @@ export const Controller = (props: Props) => {
     const followCorner = () => {
       const rect = videoEl.getBoundingClientRect()
       setState("handlePosition", {
-        left: rect.right + window.scrollX - RESIZE_HANDLE_SIZE_PX,
-        top: rect.bottom + window.scrollY - RESIZE_HANDLE_SIZE_PX,
+        ...toHostCoordinates(rect.right - RESIZE_HANDLE_SIZE_PX, rect.bottom - RESIZE_HANDLE_SIZE_PX),
       })
       frame = requestAnimationFrame(followCorner)
     }
     followCorner()
-    onCleanup(() => {
-      cancelAnimationFrame(frame)
-      resetSize()
-    })
+    onCleanup(() => cancelAnimationFrame(frame))
   })
 
   const startResize = (event: PointerEvent & { currentTarget: HTMLButtonElement }) => {
@@ -312,7 +365,8 @@ export const Controller = (props: Props) => {
     if (isDisabled()) {
       return
     }
-    onCleanup(keyboardShortcuts.registerVideo(state.videoEl))
+    onCleanup(keyboardShortcuts.registerVideo(state.videoEl, { onSpeedSetByUser }))
+    onCleanup(trackFrameDuration(state.videoEl))
   })
 
   // Drag the widget by its grip. The offset is relative to the default position, so the widget keeps following its
@@ -364,7 +418,7 @@ export const Controller = (props: Props) => {
                 title="Slow down (Z)"
                 onClick={(event) => {
                   event.stopPropagation()
-                  adjustPlaybackRate(state.videoEl, -0.25)
+                  setSpeedByUser(() => adjustPlaybackRate(state.videoEl, -0.25))
                 }}
               >
                 <SlowDownIcon />
@@ -385,13 +439,15 @@ export const Controller = (props: Props) => {
               onContextMenu={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
-                state.videoEl.playbackRate = 1
+                setSpeedByUser(() => {
+                  state.videoEl.playbackRate = 1
+                })
               }}
               onWheel={(event) => {
                 event.preventDefault()
                 const step = stepSpeedWheel(event.deltaY)
                 if (step !== 0) {
-                  adjustPlaybackRate(state.videoEl, step * WHEEL_RATE_STEP)
+                  setSpeedByUser(() => adjustPlaybackRate(state.videoEl, step * WHEEL_RATE_STEP))
                 }
               }}
             >
@@ -405,7 +461,7 @@ export const Controller = (props: Props) => {
                 title="Speed up (X)"
                 onClick={(event) => {
                   event.stopPropagation()
-                  adjustPlaybackRate(state.videoEl, +0.25)
+                  setSpeedByUser(() => adjustPlaybackRate(state.videoEl, +0.25))
                 }}
               >
                 <SpeedUpIcon />
@@ -468,18 +524,6 @@ export const Controller = (props: Props) => {
               <button
                 type="button"
                 class="control"
-                classList={{ active: state.isResizing }}
-                title={state.isResizing ? "Stop resizing (restores the original size)" : "Resize video"}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  setState("isResizing", !state.isResizing)
-                }}
-              >
-                <ResizeIcon />
-              </button>
-              <button
-                type="button"
-                class="control"
                 disabled={pictureInPictureAvailability !== "available"}
                 title={
                   {
@@ -499,6 +543,39 @@ export const Controller = (props: Props) => {
                     <PictureInPictureIcon />
                   </SlashIcon>
                 </Show>
+              </button>
+              <span class="divider" />
+              <button
+                type="button"
+                class="control"
+                classList={{ active: props.rememberedSpeed() != null }}
+                title={
+                  props.rememberedSpeed() != null
+                    ? `Remembering speed ${formatPlaybackRate(props.rememberedSpeed() ?? 1)}× for all videos on this site. Click to stop.`
+                    : "Remember my speed for all videos on this site"
+                }
+                onClick={(event) => {
+                  event.stopPropagation()
+                  props.setRememberedSpeed(props.rememberedSpeed() == null ? state.videoEl.playbackRate : undefined)
+                }}
+              >
+                <BrainIcon />
+              </button>
+              <button
+                type="button"
+                class="control"
+                classList={{ active: props.fitVideos() }}
+                title={
+                  props.fitVideos()
+                    ? "Videos on this site fit 80% of the window. Click to stop."
+                    : "Fit videos on this site to 80% of the window"
+                }
+                onClick={(event) => {
+                  event.stopPropagation()
+                  props.toggleFitVideos()
+                }}
+              >
+                <FitScreenIcon />
               </button>
               <span class="divider" />
               <button
@@ -602,7 +679,7 @@ export const Controller = (props: Props) => {
           </Show>
         </div>
       </div>
-      <Show when={state.isResizing}>
+      <Show when={isResizeHandleShown()}>
         <button
           type="button"
           class="resize-handle"
@@ -625,14 +702,6 @@ function toggleFullscreen(videoEl: HTMLVideoElement) {
 }
 
 function getControllerPosition(videoEl: HTMLVideoElement): { top: number; left: number } {
-  const { left, top } = getElementPositionFromTopOfPage(videoEl)
-  return { left: left + 5, top: top + 5 }
-}
-
-function getElementPositionFromTopOfPage(element: HTMLElement): { top: number; left: number } {
-  const { x, y } = element.getBoundingClientRect()
-  return {
-    left: x + window.scrollX,
-    top: y + window.scrollY,
-  }
+  const { x, y } = videoEl.getBoundingClientRect()
+  return toHostCoordinates(x + 5, y + 5)
 }

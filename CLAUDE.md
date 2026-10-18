@@ -32,12 +32,27 @@ Commit messages: a short summary line, then the changes as a list, each with its
 - Speed, seek and volume changes are relative to the current value. Never snap them to a grid, or going back and forth while a video plays gets stuck in the same window.
 - Scrolling over a control steps by time (at most one step per interval), not per wheel event, so trackpads and mouse wheels feel the same.
 - Keep the storage keys. `sync:blacklistedHostnames` dates from v1, and renaming it would wipe users' settings.
-- The popup's list of controls and shortcuts is written by hand. Update it with any change to controls or shortcuts.
+- Only speeds the user sets through the extension (buttons, keys, wheel, right-click) are remembered. Speeds the site sets itself are shown but never saved.
+- In fullscreen, Chrome only lets you click inside the fullscreen element. That's why the panels' host moves into it (`host.ts`). Don't try to fix the bare `<video>` case with a modal dialog: it would make the video itself unclickable.
 
 ## Checking your work
 
-Run `npm run check` and `npm test` before calling anything done.
+Run `npm run check`, `npm test` and `npm run test:e2e` before calling anything done. The browser tests need `npm run e2e:install` once.
 
-Unit tests can't show whether the UI works. For UI changes, also check in a real browser. So far that has meant Chrome for Testing driven by `puppeteer-core`, both installed in a scratch folder outside the repo, never as project dependencies. Serve test pages over HTTP. Load test videos as blob URLs, because Python's `http.server` doesn't support range requests and seeking fails without them.
+For a UI change, also look at it: take a screenshot with Puppeteer and view it. Numbers alone miss spacing and color problems.
 
-Not yet checked by hand: running in Firefox (only `web-ext lint` was run), and behavior on real sites such as YouTube and Instagram. Say so when it matters.
+When you change what the user sees or does, also:
+
+1. update the popup's lists (`entrypoints/popup/Popup.tsx`), which are written by hand;
+2. add or change a browser test in `e2e/`, with a page in `e2e/pages` that copies the real site's layout when a site is the reason;
+3. run `npm run screenshots` and look at the new pictures in `docs/`;
+4. update the README.
+
+To see how a real site works, use Puppeteer against the live site from a scratch folder, then copy the layout into a test page. Don't make the tests depend on live sites.
+
+Not yet checked by hand: running in Firefox (only `web-ext lint` was run), and real sites other than a quick look at Reddit. Say so when it matters.
+
+## Future work
+
+- Firefox in the browser tests. Puppeteer can drive Firefox (`browser: "firefox"`, installed with `browsers install firefox@stable`, about 100 MB). Whether `installExtension` works there with this extension hasn't been tried. Wait until the owner's connection allows the download.
+- Videos in shadow roots (Reddit). The test `in open shadow roots, like Reddit's player` in `e2e/pages.test.ts` is marked as failing until then. It needs: finding videos in open shadow roots, noticing shadow roots added later, and looking inside shadow roots when finding the video under the mouse.

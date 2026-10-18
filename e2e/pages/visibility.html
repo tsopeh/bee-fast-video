@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Visibility</title>
+  <style>video { width: 320px; height: 180px; display: block; margin: 8px; }</style>
+</head>
+<body>
+  <video id="visible" src="clip.webm" muted></video>
+  <video id="display-none" src="clip.webm" muted style="display: none"></video>
+  <div style="visibility: hidden"><video id="parent-hidden" src="clip.webm" muted></video></div>
+  <video id="transparent" src="clip.webm" muted style="opacity: 0"></video>
+  <video id="tiny" src="clip.webm" muted style="width: 30px; height: 30px"></video>
+  <div style="height: 2000px"></div>
+  <video id="below" src="clip.webm" muted></video>
+</body>
+</html>

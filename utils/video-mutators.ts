@@ -7,6 +7,12 @@ export function seekBy(videoEl: HTMLVideoElement, seekMs: number) {
   videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, seekSeconds)
 }
 
+/** Pauses the video and moves it one frame back (-1) or forward (1). */
+export function stepFrame(videoEl: HTMLVideoElement, direction: -1 | 1, frameDuration: number) {
+  videoEl.pause()
+  videoEl.currentTime = getValidSeekTime(videoEl.duration, videoEl.currentTime, direction * frameDuration)
+}
+
 export function seekToNormalized(videoEl: HTMLVideoElement, normalized: number) {
   if (normalized >= 0 && normalized <= 1) {
     videoEl.currentTime = Math.round(videoEl.duration * normalized)

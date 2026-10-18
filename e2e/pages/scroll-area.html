@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Scroll area</title>
+  <style>
+    body { margin: 0; }
+    /* Like many feeds: the page doesn't scroll, a box inside it does. */
+    #feed { position: absolute; inset: 0; overflow-y: auto; }
+    #feed video { width: 480px; height: 270px; display: block; margin: 200px 40px 2000px; }
+  </style>
+</head>
+<body>
+  <div id="feed"><video src="clip.webm" muted></video></div>
+</body>
+</html>

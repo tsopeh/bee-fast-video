@@ -11,6 +11,11 @@ const fitVideosHostnamesItem = storage.defineItem<Array<string>>("sync:fitVideos
   fallback: [],
 })
 
+// The speed to use for all videos on a site, for sites where "remember my speed" is on.
+const rememberedSpeedsItem = storage.defineItem<Record<string, number>>("sync:rememberedSpeeds", {
+  fallback: {},
+})
+
 /**
  * Used by both the content script and the popup. The content script reads the hostname of its page; the popup reads it
  * from the active tab.
@@ -34,12 +39,25 @@ export function useSettings() {
   const blacklist = useHostnameListSetting(blacklistedHostnamesItem, currentHostname)
   const fitVideos = useHostnameListSetting(fitVideosHostnamesItem, currentHostname)
 
+  const [rememberedSpeeds, setRememberedSpeeds] = createSignal<Record<string, number>>({})
+  createEffect(() => {
+    rememberedSpeedsItem.getValue().then((value) => setRememberedSpeeds(value))
+    onCleanup(rememberedSpeedsItem.watch((value) => setRememberedSpeeds(value)))
+  })
+
   return {
     currentHostname,
     isDisabledOnThisDomain: blacklist.includesCurrent,
     toggleBlacklistHostName: blacklist.toggleCurrent,
     isFitVideosOnThisDomain: fitVideos.includesCurrent,
     toggleFitVideosOnThisDomain: fitVideos.toggleCurrent,
+    /** The remembered speed for this site, or `undefined` when "remember my speed" is off. */
+    rememberedSpeed: (): number | undefined => rememberedSpeeds()[currentHostname()],
+    /** Remembers a speed for this site; `undefined` turns "remember my speed" off. */
+    setRememberedSpeed: (speed: number | undefined) => {
+      const { [currentHostname()]: _, ...others } = rememberedSpeeds()
+      rememberedSpeedsItem.setValue(speed == null ? others : { ...others, [currentHostname()]: speed })
+    },
   }
 }
 
