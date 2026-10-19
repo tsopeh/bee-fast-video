@@ -1,4 +1,4 @@
-import { type Accessor, createEffect, createSignal, onCleanup } from "solid-js"
+import { type Accessor, createSignal, onCleanup } from "solid-js"
 import { browser, storage, type WxtStorageItem } from "#imports"
 
 // Same storage key as v1, so that existing users keep their settings.
@@ -17,68 +17,89 @@ const rememberedSpeedsItem = storage.defineItem<Record<string, number>>("sync:re
 })
 
 /**
+ * Chrome allows 120 writes a minute to sync storage, and scrolling over the speed changes it about 6 times a second.
+ * So speed changes are saved at most once a second: the first one right away, the last one when the second is over.
+ */
+const SPEED_SAVE_INTERVAL_MS = 1000
+
+export type Settings = ReturnType<typeof useSettings>
+
+/**
  * Used by both the content script and the popup. The content script reads the hostname of its page; the popup reads it
  * from the active tab.
  */
 export function useSettings() {
-  const [currentHostname, setCurrentHostname] = createSignal("--- unknown domain ---")
+  const isPopup = browser.tabs != null
+  const [currentHostname, setCurrentHostname] = createSignal(isPopup ? "--- unknown domain ---" : location.hostname)
+  if (isPopup) {
+    browser.tabs.query({ active: true, currentWindow: true }).then(([currentTab]) => {
+      if (currentTab?.url) {
+        setCurrentHostname(new URL(currentTab.url).hostname)
+      }
+    })
+  }
 
-  createEffect(() => {
-    const isPopup = browser.tabs != null
-    if (isPopup) {
-      browser.tabs.query({ active: true, currentWindow: true }).then(([currentTab]) => {
-        if (currentTab?.url) {
-          setCurrentHostname(new URL(currentTab.url).hostname)
-        }
-      })
-    } else {
-      setCurrentHostname(window.location.hostname)
-    }
-  })
+  const blacklist = useStorageItem(blacklistedHostnamesItem)
+  const fitVideos = useStorageItem(fitVideosHostnamesItem)
+  const rememberedSpeeds = useStorageItem(rememberedSpeedsItem)
 
-  const blacklist = useHostnameListSetting(blacklistedHostnamesItem, currentHostname)
-  const fitVideos = useHostnameListSetting(fitVideosHostnamesItem, currentHostname)
+  const toggleHostname = (item: typeof blacklistedHostnamesItem, list: Array<string> = []) => {
+    const hostname = currentHostname()
+    item.setValue(list.includes(hostname) ? list.filter((h) => h !== hostname) : [...list, hostname])
+  }
 
-  const [rememberedSpeeds, setRememberedSpeeds] = createSignal<Record<string, number>>({})
-  createEffect(() => {
-    rememberedSpeedsItem.getValue().then((value) => setRememberedSpeeds(value))
-    onCleanup(rememberedSpeedsItem.watch((value) => setRememberedSpeeds(value)))
-  })
+  const saveSpeeds = createThrottle(SPEED_SAVE_INTERVAL_MS, (speeds: Record<string, number>) =>
+    rememberedSpeedsItem.setValue(speeds),
+  )
+  const withSpeed = (speed: number | undefined) => {
+    const { [currentHostname()]: _, ...others } = rememberedSpeeds() ?? {}
+    return speed == null ? others : { ...others, [currentHostname()]: speed }
+  }
 
   return {
     currentHostname,
-    isDisabledOnThisDomain: blacklist.includesCurrent,
-    toggleBlacklistHostName: blacklist.toggleCurrent,
-    isFitVideosOnThisDomain: fitVideos.includesCurrent,
-    toggleFitVideosOnThisDomain: fitVideos.toggleCurrent,
+    /** Whether all settings have been read from storage. */
+    isLoaded: () => blacklist() != null && fitVideos() != null && rememberedSpeeds() != null,
+    isDisabledOnThisDomain: () => blacklist()?.includes(currentHostname()) ?? false,
+    toggleBlacklistHostName: () => toggleHostname(blacklistedHostnamesItem, blacklist()),
+    isFitVideosOnThisDomain: () => fitVideos()?.includes(currentHostname()) ?? false,
+    toggleFitVideosOnThisDomain: () => toggleHostname(fitVideosHostnamesItem, fitVideos()),
     /** The remembered speed for this site, or `undefined` when "remember my speed" is off. */
-    rememberedSpeed: (): number | undefined => rememberedSpeeds()[currentHostname()],
-    /** Remembers a speed for this site; `undefined` turns "remember my speed" off. */
-    setRememberedSpeed: (speed: number | undefined) => {
-      const { [currentHostname()]: _, ...others } = rememberedSpeeds()
-      rememberedSpeedsItem.setValue(speed == null ? others : { ...others, [currentHostname()]: speed })
-    },
+    rememberedSpeed: (): number | undefined => rememberedSpeeds()?.[currentHostname()],
+    /** Turns "remember my speed" on (with this speed) or off (`undefined`). Saved right away. */
+    toggleRememberedSpeed: (speed: number | undefined) => saveSpeeds.now(withSpeed(speed)),
+    /** Remembers a new speed while "remember my speed" is on. */
+    updateRememberedSpeed: (speed: number) => saveSpeeds.later(withSpeed(speed)),
   }
 }
 
-/** A per-site on/off setting, stored as the list of hostnames for which it's on. */
-function useHostnameListSetting(
-  item: WxtStorageItem<Array<string>, Record<string, unknown>>,
-  hostname: Accessor<string>,
-) {
-  const [hostnames, setHostnames] = createSignal<Array<string>>([])
+/** The item's value, or `undefined` until it has been read from storage. */
+function useStorageItem<T>(item: WxtStorageItem<T, Record<string, unknown>>): Accessor<T | undefined> {
+  const [value, setValue] = createSignal<T>()
+  item.getValue().then((newValue) => setValue(() => newValue))
+  onCleanup(item.watch((newValue) => setValue(() => newValue)))
+  return value
+}
 
-  createEffect(() => {
-    item.getValue().then((value) => setHostnames(value))
-    onCleanup(item.watch((value) => setHostnames(value)))
-  })
-
-  return {
-    includesCurrent: () => hostnames().includes(hostname()),
-    toggleCurrent: () => {
-      const current = hostname()
-      const list = hostnames()
-      item.setValue(list.includes(current) ? list.filter((h) => h !== current) : [...list, current])
-    },
+/** Runs `run` at most once per `intervalMs` with the latest value (`later`), or right away (`now`). */
+function createThrottle<T>(intervalMs: number, run: (value: T) => void) {
+  let lastRunAt = Number.NEGATIVE_INFINITY
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  const now = (value: T) => {
+    clearTimeout(timeoutId)
+    timeoutId = undefined
+    lastRunAt = Date.now()
+    run(value)
   }
+  const later = (value: T) => {
+    const wait = lastRunAt + intervalMs - Date.now()
+    clearTimeout(timeoutId)
+    if (wait <= 0) {
+      now(value)
+    } else {
+      timeoutId = setTimeout(() => now(value), wait)
+    }
+  }
+  onCleanup(() => clearTimeout(timeoutId))
+  return { now, later }
 }

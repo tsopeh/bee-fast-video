@@ -1,4 +1,5 @@
-// Shared setup for the browser tests: a static server for the test pages, and Chrome with the extension installed.
+// Shared setup for the browser tests: a static server for the test pages, Chrome with the extension installed, and
+// helpers for reaching into the panels. Selectors starting with `>>>` look inside shadow roots, where the panels are.
 
 import { createReadStream, statSync } from "node:fs"
 import { createServer } from "node:http"
@@ -6,7 +7,8 @@ import type { AddressInfo } from "node:net"
 import { extname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { Browser as BrowserName, getInstalledBrowsers } from "@puppeteer/browsers"
-import puppeteer, { type Browser, type Page } from "puppeteer-core"
+import puppeteer, { type Browser, type Frame, type Page } from "puppeteer-core"
+import { afterAll, beforeAll } from "vitest"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const PAGES_DIR = join(ROOT, "e2e/pages")
@@ -19,7 +21,7 @@ const CONTENT_TYPES: Record<string, string> = { ".html": "text/html", ".webm": "
  * Serves `e2e/pages`. Supports range requests, without which the browser can't seek in a video. Pages whose name
  * starts with `blocked` get a header that forbids picture-in-picture.
  */
-export async function startServer() {
+async function startServer() {
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? "/", "http://localhost").pathname
     const file = join(PAGES_DIR, path)
@@ -55,60 +57,108 @@ export async function startServer() {
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done))
   const { port } = server.address() as AddressInfo
   return {
-    url: (path: string) => `http://127.0.0.1:${port}/${path}`,
+    port,
     close: () => new Promise<void>((done) => server.close(() => done())),
   }
 }
 
-/** Starts Chrome for Testing (installed by `npm run e2e:install`) with the built extension. */
-export async function launchBrowser() {
-  const installed = await getInstalledBrowsers({ cacheDir: BROWSERS_DIR })
-  const chrome = installed.find((browser) => browser.browser === BrowserName.CHROME)
-  if (chrome == null) {
-    throw new Error("Chrome for Testing isn't installed. Run `npm run e2e:install` first.")
-  }
-  const browser = await puppeteer.launch({
-    executablePath: chrome.executablePath,
-    headless: true,
-    pipe: true,
-    enableExtensions: true,
-    // Lets test pages call `play()` without a click first.
-    args: ["--autoplay-policy=no-user-gesture-required"],
-  })
-  const extensionId = await browser.installExtension(EXTENSION_DIR)
-  return { browser, extensionId }
+export interface TestEnv {
+  browser: Browser
+  extensionId: string
+  /** The test page's URL. `host` can also be `www.example.com`, which resolves to the test server too. */
+  url: (path: string, host?: string) => string
 }
 
-export async function openPage(browser: Browser, url: string, viewport = { width: 1100, height: 700 }) {
-  const page = await browser.newPage()
-  await page.setViewport(viewport)
-  await page.goto(url)
-  await waitForPanel(page)
-  return page
+/**
+ * Starts the test server and Chrome for Testing (installed by `npm run e2e:install`) with the built extension, once
+ * for the test file.
+ */
+export function useBrowser(): TestEnv {
+  const env = {} as TestEnv
+  let server: Awaited<ReturnType<typeof startServer>> | undefined
+  beforeAll(async () => {
+    server = await startServer()
+    const installed = await getInstalledBrowsers({ cacheDir: BROWSERS_DIR })
+    const chrome = installed.find((browser) => browser.browser === BrowserName.CHROME)
+    if (chrome == null) {
+      throw new Error("Chrome for Testing isn't installed. Run `npm run e2e:install` first.")
+    }
+    env.browser = await puppeteer.launch({
+      executablePath: chrome.executablePath,
+      headless: true,
+      pipe: true,
+      enableExtensions: true,
+      args: [
+        // Lets test pages call `play()` without a click first.
+        "--autoplay-policy=no-user-gesture-required",
+        // A real-looking site for the screenshots.
+        "--host-resolver-rules=MAP www.example.com 127.0.0.1",
+      ],
+    })
+    env.extensionId = await env.browser.installExtension(EXTENSION_DIR)
+    const { port } = server
+    env.url = (path, host = "127.0.0.1") => `http://${host}:${port}/${path}`
+  })
+  afterAll(async () => {
+    await env.browser?.close()
+    await server?.close()
+  })
+  return env
 }
 
 export const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms))
 
-/** Waits for the first panel to show. */
-export async function waitForPanel(page: Page) {
-  await page.waitForFunction(() =>
-    document.querySelector("bee-fast-video-root")?.shadowRoot?.querySelector(".controller"),
-  )
+/** Opens a test page and waits for the first panel. */
+export async function openPage(env: TestEnv, path: string, options?: { host?: string; viewport?: Viewport }) {
+  const page = await env.browser.newPage()
+  await page.setViewport(options?.viewport ?? { width: 1100, height: 700 })
+  await page.goto(env.url(path, options?.host))
+  await page.waitForSelector(">>> .controller")
+  return page
 }
 
-export function countPanels(page: Page) {
-  return page.evaluate(
-    () => document.querySelector("bee-fast-video-root")?.shadowRoot?.querySelectorAll(".controller").length ?? 0,
-  )
+type Viewport = { width: number; height: number; deviceScaleFactor?: number }
+
+/** Opens the player test page, with the video ready to play and seek. */
+export async function openPlayer(env: TestEnv, options?: { host?: string; viewport?: Viewport }) {
+  const page = await openPage(env, "player.html", options)
+  await waitForVideoReady(page)
+  return page
 }
 
-/** The box of an element inside the extension's shadow root, in viewport coordinates. */
+export async function waitForVideoReady(page: Page) {
+  await page.waitForFunction(() => {
+    const element = document.querySelector("video")
+    return element != null && element.readyState >= 2 && Number.isFinite(element.duration)
+  })
+}
+
+/** Opens the extension's popup for the page, the same as clicking the extension's icon in the toolbar. */
+export async function openPopup(env: TestEnv, page: Page) {
+  const extension = (await env.browser.extensions()).get(env.extensionId)
+  if (extension == null) {
+    throw new Error("The extension isn't installed")
+  }
+  await page.triggerExtensionAction(extension)
+  const popup = await (await env.browser.waitForTarget((target) => target.url().endsWith("popup.html"))).asPage()
+  if (popup == null) {
+    throw new Error("The popup didn't open")
+  }
+  return popup
+}
+
+export async function countPanels(page: Page | Frame) {
+  return (await page.$$(">>> .controller")).length
+}
+
+/** Whether there's an element for `selector` in the panels. */
+export async function hasInPanel(page: Page, selector: string) {
+  return (await page.$(`>>> ${selector}`)) != null
+}
+
+/** The box of an element in the panels, in viewport coordinates. */
 export async function boxOf(page: Page, selector: string) {
-  const box = await page.evaluate((selector) => {
-    const element = document.querySelector("bee-fast-video-root")?.shadowRoot?.querySelector(selector)
-    const rect = element?.getBoundingClientRect()
-    return rect && { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
-  }, selector)
+  const box = await (await page.$(`>>> ${selector}`))?.boundingBox()
   if (box == null) {
     throw new Error(`No ${selector} in the panel`)
   }
@@ -116,10 +166,7 @@ export async function boxOf(page: Page, selector: string) {
 }
 
 export function textOf(page: Page, selector: string) {
-  return page.evaluate(
-    (selector) => document.querySelector("bee-fast-video-root")?.shadowRoot?.querySelector(selector)?.textContent,
-    selector,
-  )
+  return page.$eval(`>>> ${selector}`, (element) => element.textContent)
 }
 
 export async function clickInPanel(
@@ -127,17 +174,14 @@ export async function clickInPanel(
   selector: string,
   options?: { button?: "left" | "right"; count?: number },
 ) {
-  const box = await boxOf(page, selector)
-  await page.mouse.click(box.centerX, box.centerY, options)
+  await page.click(`>>> ${selector}`, options)
   await sleep(50)
 }
 
 /** Clicks the speed label to open the full panel. */
 export async function openPanel(page: Page) {
   await clickInPanel(page, ".playback-rate")
-  await page.waitForFunction(() =>
-    document.querySelector("bee-fast-video-root")?.shadowRoot?.querySelector(".controller.expanded"),
-  )
+  await page.waitForSelector(">>> .controller.expanded")
 }
 
 /** Scrolls the mouse wheel over a point the way a trackpad does: a small step every 16 ms, for `ms`. */
@@ -155,9 +199,29 @@ export function video<K extends keyof HTMLVideoElement>(page: Page, key: K): Pro
   return page.evaluate((key) => document.querySelector("video")?.[key], key) as Promise<HTMLVideoElement[K]>
 }
 
-export async function waitForVideoReady(page: Page) {
-  await page.waitForFunction(() => {
+/** Sets properties of the first `<video>` on the page, the way the site would. */
+export async function setVideo(page: Page, values: Partial<Pick<HTMLVideoElement, VideoProperty>>) {
+  await page.evaluate((values) => {
     const element = document.querySelector("video")
-    return element != null && element.readyState >= 2 && Number.isFinite(element.duration)
+    if (element != null) {
+      Object.assign(element, values)
+    }
+  }, values)
+}
+
+type VideoProperty = "currentTime" | "playbackRate" | "volume" | "muted" | "src"
+
+/** The first video's box, in viewport coordinates. */
+export function videoBox(page: Page) {
+  return page.evaluate(() => {
+    const rect = document.querySelector("video")?.getBoundingClientRect()
+    return { x: rect?.x ?? 0, y: rect?.y ?? 0, width: rect?.width ?? 0, height: rect?.height ?? 0 }
   })
+}
+
+/** The panel's offset from its video's top left corner, which is normally 5 px each way. */
+export async function panelOffset(page: Page) {
+  const panel = await boxOf(page, ".controller")
+  const box = await videoBox(page)
+  return { x: Math.round(panel.x - box.x), y: Math.round(panel.y - box.y) }
 }

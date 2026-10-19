@@ -37,7 +37,7 @@ Commit messages: a short summary line, then the changes as a list, each with its
 
 ## Checking your work
 
-Run `npm run check`, `npm test` and `npm run test:e2e` before calling anything done. The browser tests need `npm run e2e:install` once.
+Run `npm run check`, `npm test` and `npm run test:e2e` before calling anything done. The browser tests need `npm run e2e:install` once. Test files run in parallel, each with its own Chrome; use the helpers in `e2e/harness.ts`.
 
 For a UI change, also look at it: take a screenshot with Puppeteer and view it. Numbers alone miss spacing and color problems.
 

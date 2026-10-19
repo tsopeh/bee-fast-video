@@ -17,7 +17,7 @@ import {
 import iconLarge from "@/assets/icon-large.png"
 import { useSettings } from "@/utils/settings"
 
-// Written by hand: keep in sync with `keyActions` in `shortcuts.ts` and the panel in `controller.tsx`.
+// Written by hand: keep in sync with `keyActions` in `shortcuts.ts` and the panel in `panel.tsx`.
 
 const KEYS: Array<{ keys: Array<string>; action: string }> = [
   { keys: ["Z", "X"], action: "Slower, faster by 0.25 (Shift: 0.1)" },

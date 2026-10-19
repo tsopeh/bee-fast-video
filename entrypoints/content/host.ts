@@ -1,18 +1,6 @@
 // The element that holds the shadow root with all panels (see `index.tsx`). Usually it sits in the page's top left
 // corner, but while the site shows an element fullscreen it moves inside that element.
 
-let host: HTMLElement | undefined
-
-export function setHost(element: HTMLElement) {
-  host = element
-}
-
-/** Where a point on screen is relative to the host, which is what panels are positioned against. */
-export function toHostCoordinates(x: number, y: number): { left: number; top: number } {
-  const origin = host?.getBoundingClientRect() ?? { left: -window.scrollX, top: -window.scrollY }
-  return { left: x - origin.left, top: y - origin.top }
-}
-
 /** Tags that can't show elements put inside them, so the host can't move into them. */
 const REPLACED_ELEMENTS = new Set(["VIDEO", "IFRAME", "CANVAS", "IMG", "OBJECT", "EMBED"])
 
@@ -29,11 +17,7 @@ const REPLACED_ELEMENTS = new Set(["VIDEO", "IFRAME", "CANVAS", "IMG", "OBJECT",
  * The browser closes all popovers when something enters fullscreen, and an element shown later is drawn above
  * earlier ones, so the popover is shown again on every fullscreen change.
  */
-export function followFullscreen(addFullscreenListener: (listener: () => void) => void) {
-  if (host == null) {
-    return
-  }
-  const element = host
+export function followFullscreen(element: HTMLElement, addFullscreenListener: (listener: () => void) => void) {
   // Popovers: Chrome 114+, Firefox 125+. Elsewhere the host is just the last element in `<body>`.
   const canPopover = typeof element.showPopover === "function"
   if (canPopover) {

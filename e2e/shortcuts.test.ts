@@ -1,25 +1,13 @@
-import type { Browser, KeyInput, Page } from "puppeteer-core"
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
-import { launchBrowser, openPage, sleep, startServer, video, waitForVideoReady } from "./harness"
+import type { KeyInput, Page } from "puppeteer-core"
+import { beforeEach, describe, expect, it } from "vitest"
+import { openPlayer, sleep, useBrowser, video } from "./harness"
 
-let server: Awaited<ReturnType<typeof startServer>>
-let browser: Browser
+const env = useBrowser()
 let page: Page
-
-beforeAll(async () => {
-  server = await startServer()
-  ;({ browser } = await launchBrowser())
-})
-
-afterAll(async () => {
-  await browser?.close()
-  await server?.close()
-})
 
 beforeEach(async () => {
   await page?.close()
-  page = await openPage(browser, server.url("player.html"))
-  await waitForVideoReady(page)
+  page = await openPlayer(env)
   // Focus the player, which keeps key presses to itself (see `player.html`).
   await page.click("#overlay")
 })
@@ -66,9 +54,9 @@ describe("keyboard shortcuts", () => {
   })
 
   it("step one frame back and forward with Q and E", async () => {
-    // Play for a moment so the frame length can be measured; the test clip is 10 fps.
+    // Play for a few frames so the frame length can be measured; the test clip is 10 fps.
     await page.evaluate(() => document.querySelector("video")?.play())
-    await sleep(1000)
+    await page.waitForFunction(() => (document.querySelector("video")?.currentTime ?? 0) >= 0.5)
     await press("e")
     expect(await video(page, "paused")).toBe(true)
     const start = await video(page, "currentTime")

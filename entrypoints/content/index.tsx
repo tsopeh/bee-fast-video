@@ -1,7 +1,7 @@
 import { render } from "solid-js/web"
 import { createShadowRootUi, defineContentScript } from "#imports"
 import { ControllersContainer } from "./controllers-container"
-import { followFullscreen, setHost } from "./host"
+import { followFullscreen } from "./host"
 import css from "./style.css?inline"
 
 export default defineContentScript({
@@ -21,11 +21,10 @@ export default defineContentScript({
       position: "inline",
       anchor: "body",
       css,
-      onMount: (container) => render(() => <ControllersContainer />, container),
+      onMount: (container, _shadow, host) => render(() => <ControllersContainer host={host} />, container),
       onRemove: (unmount) => unmount?.(),
     })
     ui.mount()
-    setHost(ui.shadowHost)
-    followFullscreen((listener) => ctx.addEventListener(document, "fullscreenchange", listener))
+    followFullscreen(ui.shadowHost, (listener) => ctx.addEventListener(document, "fullscreenchange", listener))
   },
 })

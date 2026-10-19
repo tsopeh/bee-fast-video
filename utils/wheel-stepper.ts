@@ -19,3 +19,15 @@ export function createWheelStepper(intervalMs: number, now: () => number = () =>
     return deltaY < 0 ? 1 : -1
   }
 }
+
+/** A wheel event handler that keeps the page from scrolling and calls `onStep` at most once per `intervalMs`. */
+export function onWheelStep(intervalMs: number, onStep: (step: -1 | 1) => void) {
+  const stepWheel = createWheelStepper(intervalMs)
+  return (event: WheelEvent) => {
+    event.preventDefault()
+    const step = stepWheel(event.deltaY)
+    if (step !== 0) {
+      onStep(step)
+    }
+  }
+}

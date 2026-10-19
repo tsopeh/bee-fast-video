@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
-  adjustPlaybackRate,
+  adjustedPlaybackRate,
+  adjustVolume,
   getPictureInPictureAvailability,
   seekBy,
   seekToNormalized,
@@ -11,37 +12,47 @@ function fakeVideo(props: Partial<HTMLVideoElement>): HTMLVideoElement {
   return { playbackRate: 1, currentTime: 0, duration: 100, ...props } as HTMLVideoElement
 }
 
-describe("adjustPlaybackRate", () => {
+describe("adjustedPlaybackRate", () => {
   it("adjusts the playback rate", () => {
-    const video = fakeVideo({ playbackRate: 1 })
-    adjustPlaybackRate(video, 0.25)
-    expect(video.playbackRate).toBe(1.25)
+    expect(adjustedPlaybackRate(1, 0.25)).toBe(1.25)
   })
 
   it("clamps to the browser's allowed range [0.1, 16]", () => {
-    const slow = fakeVideo({ playbackRate: 0.2 })
-    adjustPlaybackRate(slow, -0.25)
-    expect(slow.playbackRate).toBe(0.1)
-
-    const fast = fakeVideo({ playbackRate: 15.9 })
-    adjustPlaybackRate(fast, 0.25)
-    expect(fast.playbackRate).toBe(16)
+    expect(adjustedPlaybackRate(0.2, -0.25)).toBe(0.1)
+    expect(adjustedPlaybackRate(15.9, 0.25)).toBe(16)
   })
 
   it("doesn't snap to a grid: stepping up then down returns to the starting rate", () => {
-    const video = fakeVideo({ playbackRate: 1.1 })
-    adjustPlaybackRate(video, 0.25)
-    expect(video.playbackRate).toBe(1.35)
-    adjustPlaybackRate(video, -0.25)
-    expect(video.playbackRate).toBe(1.1)
+    expect(adjustedPlaybackRate(1.1, 0.25)).toBe(1.35)
+    expect(adjustedPlaybackRate(1.35, -0.25)).toBe(1.1)
   })
 
   it("doesn't accumulate floating point noise", () => {
-    const video = fakeVideo({ playbackRate: 1 })
+    let rate = 1
     for (let i = 0; i < 3; i++) {
-      adjustPlaybackRate(video, 0.1)
+      rate = adjustedPlaybackRate(rate, 0.1)
     }
-    expect(video.playbackRate).toBe(1.3)
+    expect(rate).toBe(1.3)
+  })
+})
+
+describe("adjustVolume", () => {
+  it("changes the volume and unmutes", () => {
+    const video = fakeVideo({ volume: 0.47, muted: true })
+    adjustVolume(video, 0.05)
+    // A muted video counts as volume 0.
+    expect(video.volume).toBe(0.05)
+    expect(video.muted).toBe(false)
+  })
+
+  it("doesn't snap to a grid, and stays within [0, 1]", () => {
+    const video = fakeVideo({ volume: 0.47, muted: false })
+    adjustVolume(video, 0.05)
+    expect(video.volume).toBe(0.52)
+    adjustVolume(video, -0.05)
+    expect(video.volume).toBe(0.47)
+    adjustVolume(video, 1)
+    expect(video.volume).toBe(1)
   })
 })
 

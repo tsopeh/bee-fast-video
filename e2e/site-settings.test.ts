@@ -1,39 +1,13 @@
 // Per-site settings in the panel: "remember my speed" and "fit videos".
 
-import type { Browser, Page } from "puppeteer-core"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
-import {
-  clickInPanel,
-  launchBrowser,
-  openPage,
-  openPanel,
-  sleep,
-  startServer,
-  video,
-  waitForVideoReady,
-} from "./harness"
+import type { Page } from "puppeteer-core"
+import { describe, expect, it } from "vitest"
+import { clickInPanel, openPanel, openPlayer, setVideo, sleep, useBrowser, video, waitForVideoReady } from "./harness"
 
-let server: Awaited<ReturnType<typeof startServer>>
-let browser: Browser
-
-beforeAll(async () => {
-  server = await startServer()
-  ;({ browser } = await launchBrowser())
-})
-
-afterAll(async () => {
-  await browser?.close()
-  await server?.close()
-})
+const env = useBrowser()
 
 const REMEMBER = '[title*="emember"]'
 const FIT = '[title*="80% of the window"]'
-
-async function freshPage() {
-  const page = await openPage(browser, server.url("player.html"))
-  await waitForVideoReady(page)
-  return page
-}
 
 /** Reloads the page and returns the speed the video starts with. */
 async function speedAfterReload(page: Page) {
@@ -44,22 +18,18 @@ async function speedAfterReload(page: Page) {
 }
 
 const isActive = (page: Page, selector: string) =>
-  page.evaluate(
-    (selector) =>
-      document.querySelector("bee-fast-video-root")?.shadowRoot?.querySelector(selector)?.classList.contains("active"),
-    selector,
-  )
+  page.$eval(`>>> ${selector}`, (element) => element.classList.contains("active"))
 
 describe("remember my speed", () => {
   it("is off by default", async () => {
-    const page = await freshPage()
+    const page = await openPlayer(env)
     await page.keyboard.press("x")
     expect(await speedAfterReload(page)).toBe(1)
     await page.close()
   })
 
   it("remembers only speeds set through the extension, for every video on the site", async () => {
-    const page = await freshPage()
+    const page = await openPlayer(env)
     await openPanel(page)
     await clickInPanel(page, '[title^="Speed up"]')
     await clickInPanel(page, '[title^="Speed up"]')
@@ -68,10 +38,7 @@ describe("remember my speed", () => {
     expect(await speedAfterReload(page)).toBe(1.5)
 
     // A speed set by the site (like Twitch catching up with a live stream) isn't remembered.
-    await page.evaluate(() => {
-      const element = document.querySelector("video")
-      if (element) element.playbackRate = 1.1
-    })
+    await setVideo(page, { playbackRate: 1.1 })
     expect(await speedAfterReload(page)).toBe(1.5)
 
     // Shortcuts count as the user's choice.
@@ -80,20 +47,14 @@ describe("remember my speed", () => {
     expect(await speedAfterReload(page)).toBe(1.75)
 
     // A site that resets the speed and loads the next video in the same element still gets the remembered speed.
-    await page.evaluate(() => {
-      const element = document.querySelector("video")
-      if (element) {
-        element.playbackRate = 1
-        element.src = "clip.webm?next"
-      }
-    })
+    await setVideo(page, { playbackRate: 1, src: "clip.webm?next" })
     await page.waitForFunction(() => document.querySelector("video")?.currentSrc.endsWith("?next"))
     await waitForVideoReady(page)
     await sleep(100)
     expect(await video(page, "playbackRate")).toBe(1.75)
 
     // Other pages on the same site get it too.
-    const other = await freshPage()
+    const other = await openPlayer(env)
     expect(await video(other, "playbackRate")).toBe(1.75)
     await other.close()
 
@@ -107,7 +68,7 @@ describe("remember my speed", () => {
 
 describe("fit videos", () => {
   it("limits all videos on the site to 80% of the window, and undoes it when turned off", async () => {
-    const page = await freshPage()
+    const page = await openPlayer(env)
     await openPanel(page)
     await clickInPanel(page, FIT)
     expect(await isActive(page, FIT)).toBe(true)

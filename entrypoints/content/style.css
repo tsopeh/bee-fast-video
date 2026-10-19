@@ -230,8 +230,9 @@ button {
 }
 
 .resize-handle {
-  /* Keep the size in sync with `RESIZE_HANDLE_SIZE_PX` in `controller.tsx`. */
+  /* Placed at the video's bottom-right corner (set in `panel.tsx`); this moves it inside the video. */
   position: absolute;
+  transform: translate(-100%, -100%);
   width: 12px;
   height: 12px;
   background-color: #ffdb00;

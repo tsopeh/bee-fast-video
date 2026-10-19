@@ -1,5 +1,23 @@
-export function adjustPlaybackRate(videoEl: HTMLVideoElement, adjustment: number) {
-  videoEl.playbackRate = getValidPlaybackRate(videoEl.playbackRate, adjustment)
+/** Speed change of the slow down / speed up buttons, the Z / X keys and one scroll step. */
+export const SPEED_STEP = 0.25
+/** Seek of the back / forward buttons, the A / D keys and one scroll step on the seek bar. */
+export const SEEK_STEP_MS = 5_000
+
+// Adjustments (rate, seek, volume) are relative to the current value and never snap to a grid (e.g. multiples of 5 s),
+// so going back and forth while the video plays doesn't get stuck in the same window, and stepping up then down returns
+// to the starting value. Rates and volumes are only rounded to hundredths to remove floating point noise
+// (1 + 0.1 + 0.1 + 0.1 is 1.3000000000000003).
+
+/** The playback rate after changing it by `adjustment`, within Chrome's allowed range [0.1, 16]. */
+export function adjustedPlaybackRate(current: number, adjustment: number): number {
+  return Math.min(16, Math.max(0.1, roundToHundredths(current + adjustment)))
+}
+
+/** Changes the volume by `adjustment` and unmutes. A muted video counts as volume 0. */
+export function adjustVolume(videoEl: HTMLVideoElement, adjustment: number) {
+  const current = videoEl.muted ? 0 : videoEl.volume
+  videoEl.volume = Math.min(1, Math.max(0, roundToHundredths(current + adjustment)))
+  videoEl.muted = false
 }
 
 export function seekBy(videoEl: HTMLVideoElement, seekMs: number) {
@@ -51,12 +69,15 @@ export function getPictureInPictureAvailability(videoEl: HTMLVideoElement): Pict
   return doc.pictureInPictureEnabled ? "available" : "blocked"
 }
 
+export function isPictureInPicture(videoEl: HTMLVideoElement): boolean {
+  return videoEl.ownerDocument.pictureInPictureElement === videoEl
+}
+
 export function togglePictureInPicture(videoEl: HTMLVideoElement) {
   if (getPictureInPictureAvailability(videoEl) !== "available") {
     return
   }
-  const isPictureInPicture = videoEl.ownerDocument.pictureInPictureElement === videoEl
-  if (isPictureInPicture) {
+  if (isPictureInPicture(videoEl)) {
     videoEl.ownerDocument
       .exitPictureInPicture()
       .catch(() => console.log("bee-fast-video:", "Could not exit from the picture-in-picture mode for video", videoEl))
@@ -68,16 +89,8 @@ export function togglePictureInPicture(videoEl: HTMLVideoElement) {
   }
 }
 
-// Adjustments (rate, seek, volume) are relative to the current value and never snap to a grid (e.g. multiples of 5 s),
-// so going back and forth while the video plays doesn't get stuck in the same window, and stepping up then down returns
-// to the starting value. Rates are only rounded to hundredths to remove floating point noise (1 + 0.1 + 0.1 + 0.1 is
-// 1.3000000000000003).
-
-function getValidPlaybackRate(current: number, adjustment: number): number {
-  const chromeMinAllowedPlaybackRate = 0.1
-  const chromeMaxAllowedPlaybackRate = 16
-  const rate = Math.round((current + adjustment) * 100) / 100
-  return Math.min(chromeMaxAllowedPlaybackRate, Math.max(chromeMinAllowedPlaybackRate, rate))
+function roundToHundredths(value: number): number {
+  return Math.round(value * 100) / 100
 }
 
 function getValidSeekTime(totalDuration: number, currentTime: number, adjustment: number): number {

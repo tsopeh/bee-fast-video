@@ -44,19 +44,21 @@ The extension has two parts: a content script (`entrypoints/content/`), which ru
 
 ### Content script
 
-`index.tsx` renders `ControllersContainer` into a shadow root (see [Styles](#styles)). The container finds all videos on the page, watches for videos being added or removed, and renders a `Controller` for each one. The script runs in every frame, also in iframes without an address of their own (`about:blank`, `srcdoc`), and each frame shows panels for its own videos.
+`index.tsx` renders `ControllersContainer` into a shadow root (see [Styles](#styles)). The container finds all videos on the page, watches for videos being added or removed, and renders a `Controller` for each one. It renders nothing until the settings are read and while the extension is off for the site, so turning it off undoes every change to the videos. The script runs in every frame, also in iframes without an address of their own (`about:blank`, `srcdoc`), and each frame shows panels for its own videos.
 
 Videos inside shadow roots aren't found yet. Reddit's player is one: its videos sit in the open shadow root of a `<shreddit-player>` element.
 
 The shadow root's host element is a popover, so it sits in the browser's top layer, above everything on the page. In fullscreen Chrome only lets you click inside the fullscreen element, so the host moves into it while it lasts. `host.ts` explains the details.
 
-A controller only shows while its video is in view, visible and at least 50×50 px. Pages often keep hidden or tiny videos around, like preloaded players, and panels for those would only get in the way. `utils/video-visibility.ts` explains the rules.
+A `Controller` applies the site settings to its video (fit videos, remembered speed) and keeps a resized video's size. It shows a `Panel` (`panel.tsx`) only while the video is in view, visible and at least 50×50 px. Pages often keep hidden or tiny videos around, like preloaded players, and panels for those would only get in the way. `utils/video-visibility.ts` explains the rules.
 
-The `Controller` changes the video when you use its controls, and follows changes the page makes to the video, so the panel always shows the real state. It keeps itself over the video's top left corner: when the video's attributes change, on any scroll (also inside scroll areas), and on a timer, since some moves can't be noticed.
+`video-tracker.ts` follows where all videos are, in one pass per frame for all of them: on scroll (also inside scroll areas), on size changes, on fullscreen changes, and on a 1 s timer for moves nothing reports. Videos out of view cost nothing.
 
-While its panel shows, the controller registers its video for keyboard shortcuts (`shortcuts.ts`). Shortcuts listen on `window` in the capture phase, which runs before any of the page's own handlers, so a player can't block them. `utils/target-video.ts` picks the one video they act on.
+The `Panel` changes the video when you use its controls, and follows changes the page makes to the video, so it always shows the real state. Clicks on it never reach the page, so a player that pauses on click doesn't. The panel starts collapsed each time it shows.
 
-Speed, seek and volume changes are always relative to the current value and never snap to a grid like multiples of 5 seconds. So going back and forth while a video plays still moves forward. Scrolling changes values at most once every so often (`utils/wheel-stepper.ts`), so a trackpad and a mouse wheel change them at the same pace.
+While it shows, the panel registers its video for keyboard shortcuts (`shortcuts.ts`). Shortcuts listen on `window` in the capture phase, which runs before any of the page's own handlers, so a player can't block them. `utils/target-video.ts` picks the one video they act on.
+
+All speed changes the user makes go through one function in `ControllersContainer`, which is also where "remember my speed" saves them. Speed, seek and volume changes are always relative to the current value and never snap to a grid like multiples of 5 seconds. So going back and forth while a video plays still moves forward. Scrolling changes values at most once every so often (`utils/wheel-stepper.ts`), so a trackpad and a mouse wheel change them at the same pace.
 
 ### Popup
 
@@ -93,7 +95,7 @@ npm run e2e:install
 
 It goes into `.cache/browsers`, which git ignores. Run it again to update to the latest stable version.
 
-Each test file starts its own Chrome and a small local server for the test pages. The test video (`e2e/pages/clip.webm`) is 60 seconds at 10 frames per second, so a frame step is exactly 0.1 s.
+Each test file starts its own Chrome and a small local server for the test pages, and the files run in parallel. The test video (`e2e/pages/clip.webm`) is 60 seconds at 10 frames per second, so a frame step is exactly 0.1 s.
 
 Both browsers get a Manifest V3 build. The Firefox manifest also has the add-on ID and the data collection declaration (`wxt.config.ts`).
 

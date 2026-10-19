@@ -1,47 +1,52 @@
-import { createEffect, createSignal, For, onCleanup } from "solid-js"
-import { useSettings } from "@/utils/settings"
+import { createSignal, For, onCleanup, Show } from "solid-js"
+import { type Settings, useSettings } from "@/utils/settings"
+import { adjustedPlaybackRate } from "@/utils/video-mutators"
 import { computeNewState } from "@/utils/video-set"
 import { Controller } from "./controller"
-import { observeForVideoElements } from "./mutation-observer"
+import { createKeyboardShortcuts, type KeyboardShortcuts } from "./shortcuts"
+import { createVideoTracker, type VideoTracker } from "./video-tracker"
 
-export function ControllersContainer() {
+/** What every controller shares. */
+export interface App {
+  settings: Settings
+  shortcuts: KeyboardShortcuts
+  tracker: VideoTracker
+  setSpeed: (video: HTMLVideoElement, rate: number) => void
+  adjustSpeed: (video: HTMLVideoElement, adjustment: number) => void
+}
+
+export function ControllersContainer(props: { host: HTMLElement }) {
   const settings = useSettings()
 
-  const [videoElements, setVideoElements] = createSignal(new Set(document.body.querySelectorAll("video")))
+  // The only way the user changes the speed: the panel's buttons, scrolling, right-click and keys. Only these changes
+  // are remembered, not the ones the site makes, e.g. Twitch nudging the speed to catch up with a live stream.
+  const setSpeed = (video: HTMLVideoElement, rate: number) => {
+    video.playbackRate = rate
+    if (settings.rememberedSpeed() != null) {
+      settings.updateRememberedSpeed(video.playbackRate)
+    }
+  }
+  const adjustSpeed = (video: HTMLVideoElement, adjustment: number) =>
+    setSpeed(video, adjustedPlaybackRate(video.playbackRate, adjustment))
 
-  createEffect(() => {
-    const { stopObserving } = observeForVideoElements({
-      target: document.body,
-      onMutation: (mutations) => {
-        setVideoElements((prevState) => {
-          return computeNewState(prevState, mutations)
-        })
-      },
-    })
-
-    onCleanup(() => {
-      stopObserving()
-    })
-  })
-
-  const videosArray = () => {
-    return Array.from(videoElements()) as Array<HTMLVideoElement>
+  const app: App = {
+    settings,
+    shortcuts: createKeyboardShortcuts(adjustSpeed),
+    tracker: createVideoTracker(props.host),
+    setSpeed,
+    adjustSpeed,
   }
 
+  const [videos, setVideos] = createSignal(new Set(document.body.querySelectorAll("video")))
+  const observer = new MutationObserver((mutations) => setVideos((previous) => computeNewState(previous, mutations)))
+  observer.observe(document.body, { childList: true, subtree: true })
+  onCleanup(() => observer.disconnect())
+
   return (
-    <For each={videosArray()}>
-      {(videoEl) => {
-        return (
-          <Controller
-            videoEl={() => videoEl}
-            isGloballyDisabled={settings.isDisabledOnThisDomain}
-            fitVideos={settings.isFitVideosOnThisDomain}
-            toggleFitVideos={settings.toggleFitVideosOnThisDomain}
-            rememberedSpeed={settings.rememberedSpeed}
-            setRememberedSpeed={settings.setRememberedSpeed}
-          />
-        )
-      }}
-    </For>
+    // Turning the extension off for the site removes all controllers, and their cleanup undoes every change they made
+    // to the videos. Waiting for the settings keeps panels from flashing on sites where the extension is off.
+    <Show when={settings.isLoaded() && !settings.isDisabledOnThisDomain()}>
+      <For each={[...videos()]}>{(video) => <Controller video={video} app={app} />}</For>
+    </Show>
   )
 }
