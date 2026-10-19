@@ -127,6 +127,39 @@ describe("panel", () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(0)
   })
 
+  it("also changes values when scrolling sideways: right is more", async () => {
+    await openPanel(page)
+    const label = await boxOf(page, ".playback-rate")
+    await scrollFor(page, label.centerX, label.centerY, 500, "right")
+    expect(await video(page, "playbackRate")).toBeGreaterThan(1)
+    await sleep(200)
+    await scrollFor(page, label.centerX, label.centerY, 1000, "left")
+    expect(await video(page, "playbackRate")).toBeLessThan(1)
+
+    const seek = await boxOf(page, ".seek")
+    await scrollFor(page, seek.centerX, seek.centerY, 500, "right")
+    expect(await video(page, "currentTime")).toBeGreaterThanOrEqual(10)
+
+    await setVideo(page, { volume: 1 })
+    const volume = await boxOf(page, ".volume")
+    await scrollFor(page, volume.centerX, volume.centerY, 500, "left")
+    expect(await video(page, "volume")).toBeLessThan(1)
+
+    // The page itself didn't scroll.
+    expect(await page.evaluate(() => [window.scrollX, window.scrollY])).toEqual([0, 0])
+  })
+
+  it("follows the stronger direction of a swipe as it turns", async () => {
+    await openPanel(page)
+    const label = await boxOf(page, ".playback-rate")
+    // Starts upward, then turns left more than up.
+    await scrollFor(page, label.centerX, label.centerY, 500, { deltaX: 1, deltaY: -4 })
+    const afterUp = await video(page, "playbackRate")
+    expect(afterUp).toBeGreaterThan(1)
+    await scrollFor(page, label.centerX, label.centerY, 500, { deltaX: -4, deltaY: -1 })
+    expect(await video(page, "playbackRate")).toBeLessThan(afterUp)
+  })
+
   it("switches the time between time played and time left", async () => {
     await openPanel(page)
     await setVideo(page, { currentTime: 20 })

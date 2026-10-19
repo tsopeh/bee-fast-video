@@ -184,12 +184,28 @@ export async function openPanel(page: Page) {
   await page.waitForSelector(">>> .controller.expanded")
 }
 
-/** Scrolls the mouse wheel over a point the way a trackpad does: a small step every 16 ms, for `ms`. */
-export async function scrollFor(page: Page, x: number, y: number, ms: number, direction: "up" | "down") {
+/**
+ * Scrolls over a point the way a trackpad does: a small step every 16 ms, for `ms`. A direction can also be a delta,
+ * for a swipe that isn't straight.
+ */
+export async function scrollFor(
+  page: Page,
+  x: number,
+  y: number,
+  ms: number,
+  direction: "up" | "down" | "left" | "right" | { deltaX: number; deltaY: number },
+) {
+  const delta =
+    typeof direction === "object"
+      ? direction
+      : {
+          deltaX: { left: -4, right: 4, up: 0, down: 0 }[direction],
+          deltaY: { up: -4, down: 4, left: 0, right: 0 }[direction],
+        }
   await page.mouse.move(x, y)
   const end = Date.now() + ms
   while (Date.now() < end) {
-    await page.mouse.wheel({ deltaY: direction === "up" ? -4 : 4 })
+    await page.mouse.wheel(delta)
     await sleep(16)
   }
 }
