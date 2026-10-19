@@ -1,5 +1,6 @@
 import { render } from "solid-js/web"
-import { createShadowRootUi, defineContentScript } from "#imports"
+import { type ContentScriptContext, createShadowRootUi, defineContentScript } from "#imports"
+import { addsVideo } from "@/utils/video-set"
 import { ControllersContainer } from "./controllers-container"
 import { followFullscreen } from "./host"
 import css from "./style.css?inline"
@@ -15,6 +16,9 @@ export default defineContentScript({
   cssInjectionMode: "manual",
 
   async main(ctx) {
+    // Most pages and frames (ads, embeds) never have a video. Until one shows up, the extension adds nothing to the page
+    // and doesn't read its settings.
+    await waitForVideo(ctx)
     // Render inside a shadow root, so the page's CSS can't affect the controls.
     const ui = await createShadowRootUi(ctx, {
       name: "bee-fast-video-root",
@@ -28,3 +32,20 @@ export default defineContentScript({
     followFullscreen(ui.shadowHost, (listener) => ctx.addEventListener(document, "fullscreenchange", listener))
   },
 })
+
+function waitForVideo(ctx: ContentScriptContext): Promise<void> {
+  return new Promise((resolve) => {
+    if (document.body.getElementsByTagName("video").length > 0) {
+      resolve()
+      return
+    }
+    const observer = new MutationObserver((mutations) => {
+      if (addsVideo(mutations)) {
+        observer.disconnect()
+        resolve()
+      }
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    ctx.onInvalidated(() => observer.disconnect())
+  })
+}

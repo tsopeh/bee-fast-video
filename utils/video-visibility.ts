@@ -7,10 +7,13 @@ export const MIN_VIDEO_SIZE_PX = 50
 /**
  * Heuristics deciding whether a video gets a panel (besides being in the viewport, which is tracked separately
  * with an `IntersectionObserver`). Many pages keep hidden or tiny videos in the DOM (preloaded next videos, hidden
- * players, background effects); showing panels for those only gets in the user's way.
+ * players, background effects); showing panels for those only gets in the user's way. Pass the video's size when the
+ * caller already has it, to skip measuring it again.
  */
-export function isVideoVisibleEnough(videoEl: HTMLVideoElement): boolean {
-  const { width, height } = videoEl.getBoundingClientRect()
+export function isVideoVisibleEnough(
+  videoEl: HTMLVideoElement,
+  { width, height }: { width: number; height: number } = videoEl.getBoundingClientRect(),
+): boolean {
   if (width < MIN_VIDEO_SIZE_PX || height < MIN_VIDEO_SIZE_PX) {
     return false
   }

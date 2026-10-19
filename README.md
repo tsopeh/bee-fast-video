@@ -44,7 +44,7 @@ The extension has two parts: a content script (`entrypoints/content/`), which ru
 
 ### Content script
 
-`index.tsx` renders `ControllersContainer` into a shadow root (see [Styles](#styles)). The container finds all videos on the page, watches for videos being added or removed, and renders a `Controller` for each one. It renders nothing until the settings are read and while the extension is off for the site, so turning it off undoes every change to the videos. The script runs in every frame, also in iframes without an address of their own (`about:blank`, `srcdoc`), and each frame shows panels for its own videos.
+`index.tsx` waits until the page has a video. Most pages and frames (ads, embeds) never do, and on those the extension adds nothing and doesn't read its settings. Then it renders `ControllersContainer` into a shadow root (see [Styles](#styles)). The container finds all videos on the page, watches for videos being added or removed, and renders a `Controller` for each one. It renders nothing until the settings are read and while the extension is off for the site, so turning it off undoes every change to the videos. The script runs in every frame, also in iframes without an address of their own (`about:blank`, `srcdoc`), and each frame shows panels for its own videos.
 
 Videos inside shadow roots aren't found yet. Reddit's player is one: its videos sit in the open shadow root of a `<shreddit-player>` element.
 
@@ -52,7 +52,7 @@ The shadow root's host element is a popover, so it sits in the browser's top lay
 
 A `Controller` applies the site settings to its video (fit videos, remembered speed) and keeps a resized video's size. It shows a `Panel` (`panel.tsx`) only while the video is in view, visible and at least 50×50 px. Pages often keep hidden or tiny videos around, like preloaded players, and panels for those would only get in the way. `utils/video-visibility.ts` explains the rules.
 
-`video-tracker.ts` follows where all videos are, in one pass per frame for all of them: on scroll (also inside scroll areas), on size changes, on fullscreen changes, and on a 1 s timer for moves nothing reports. Videos out of view cost nothing.
+`video-tracker.ts` follows where all videos are, in one pass per frame for all of them: on scroll (also inside scroll areas), on size changes, on fullscreen changes, and on a 1 s timer for moves nothing reports. Videos out of view cost nothing, and while no video is in view, nothing runs.
 
 The `Panel` changes the video when you use its controls, and follows changes the page makes to the video, so it always shows the real state. Clicks on it never reach the page, so a player that pauses on click doesn't. The panel starts collapsed each time it shows.
 

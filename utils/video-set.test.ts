@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { computeNewState } from "./video-set"
+import { addsVideo, computeNewState } from "./video-set"
 
 // Minimal stand-ins for DOM nodes; `computeNewState` only relies on these members.
-function fakeVideo(): HTMLVideoElement {
-  return { nodeName: "VIDEO", nodeType: 1, hasChildNodes: () => false } as unknown as HTMLVideoElement
+function fakeVideo(isConnected = true): HTMLVideoElement {
+  return { nodeName: "VIDEO", nodeType: 1, isConnected, hasChildNodes: () => false } as unknown as HTMLVideoElement
 }
 
 function fakeContainer(videos: Array<HTMLVideoElement>): Node {
@@ -19,10 +19,14 @@ function childListMutation(added: Array<Node>, removed: Array<Node> = []): Mutat
   return { type: "childList", addedNodes: added, removedNodes: removed } as unknown as MutationRecord
 }
 
+function disconnect(video: HTMLVideoElement) {
+  Object.assign(video, { isConnected: false })
+}
+
 describe("computeNewState", () => {
   it("returns the same set when no videos were added or removed", () => {
     const state = new Set([fakeVideo()])
-    expect(computeNewState(state, [childListMutation([fakeContainer([])])])).toBe(state)
+    expect(computeNewState(state, [childListMutation([fakeContainer([])], [fakeContainer([])])])).toBe(state)
   })
 
   it("adds directly added videos and videos nested in added nodes", () => {
@@ -32,11 +36,13 @@ describe("computeNewState", () => {
     expect(result).toEqual(new Set([direct, nested]))
   })
 
-  it("removes removed videos without mutating the previous state", () => {
+  it("removes videos that left the document without mutating the previous state", () => {
     const kept = fakeVideo()
     const removed = fakeVideo()
     const state = new Set([kept, removed])
-    const result = computeNewState(state, [childListMutation([], [removed])])
+    disconnect(removed)
+    // The removed node is the video's parent, not the video itself.
+    const result = computeNewState(state, [childListMutation([], [fakeContainer([])])])
     expect(result).toEqual(new Set([kept]))
     expect(state.size).toBe(2)
   })
@@ -47,9 +53,27 @@ describe("computeNewState", () => {
     expect(result).toEqual(new Set([video]))
   })
 
+  it("skips a video that was added and then removed in the same batch", () => {
+    const video = fakeVideo(false)
+    const state = new Set<HTMLVideoElement>()
+    expect(computeNewState(state, [childListMutation([video]), childListMutation([], [video])])).toBe(state)
+  })
+
   it("ignores non-childList mutations", () => {
     const state = new Set<HTMLVideoElement>()
     const attributeMutation = { type: "attributes" } as unknown as MutationRecord
     expect(computeNewState(state, [attributeMutation])).toBe(state)
+  })
+})
+
+describe("addsVideo", () => {
+  it("finds added videos, also nested ones", () => {
+    expect(addsVideo([childListMutation([fakeContainer([fakeVideo()])])])).toBe(true)
+    expect(addsVideo([childListMutation([fakeVideo()])])).toBe(true)
+  })
+
+  it("ignores videos that are no longer in the document, and removals", () => {
+    expect(addsVideo([childListMutation([fakeVideo(false)])])).toBe(false)
+    expect(addsVideo([childListMutation([], [fakeVideo()])])).toBe(false)
   })
 })

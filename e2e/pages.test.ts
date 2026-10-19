@@ -45,6 +45,24 @@ describe("which videos get a panel", () => {
     }
   })
 
+  it("only once the page has a video, and not after it's removed", async () => {
+    page = await env.browser.newPage()
+    await page.goto(env.url("no-video.html"))
+    // Give the content script time to start.
+    await sleep(500)
+    expect(await page.$("bee-fast-video-root")).toBeNull()
+
+    await page.evaluate(() => {
+      const slot = document.getElementById("slot")
+      if (slot) slot.innerHTML = `<div><video src="clip.webm" muted width="320" height="180"></video></div>`
+    })
+    await waitForPanels(page, 1)
+
+    // Remove the video's parent, not the video itself.
+    await page.evaluate(() => document.querySelector("#slot > div")?.remove())
+    await waitForPanels(page, 0)
+  })
+
   // Reddit puts its videos in the open shadow root of a custom element (see `shadow-player.html`). Not supported yet:
   // when it is, this test fails, and `.fails` should be removed.
   it.fails("in open shadow roots, like Reddit's player", async () => {
