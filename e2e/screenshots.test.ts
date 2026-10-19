@@ -1,10 +1,21 @@
 // Not a test: `npm run screenshots` runs this to update the images in `docs/` that the README shows.
 
+import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import type { Page } from "puppeteer-core"
 import { it } from "vitest"
-import { boxOf, openPanel, openPlayer, openPopup, sleep, useBrowser } from "./harness"
+import {
+  boxOf,
+  openPage,
+  openPanel,
+  openPlayer,
+  openPopup,
+  setVideo,
+  sleep,
+  useBrowser,
+  waitForVideoReady,
+} from "./harness"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 // Resolves to the test server (see `useBrowser`), so the popup shows a real-looking site.
@@ -14,11 +25,23 @@ const env = useBrowser()
 
 const openSitePage = () => openPlayer(env, { host: SITE, viewport: { width: 900, height: 520, deviceScaleFactor: 2 } })
 
-/** A screenshot of the panel, hovered (its resting look is see-through, too faint for a picture). */
-async function shootPanel(page: Page, path: string) {
+/** A video partway through, with sound and a speed other than 1, so the pictures show more than defaults. */
+async function setUpVideo(page: Page) {
+  await setVideo(page, { currentTime: 20, playbackRate: 1.5, volume: 0.7, muted: false })
+  await page.waitForFunction(() => !document.querySelector("video")?.seeking)
+}
+
+/** Hovers the speed label: the panel's resting look is see-through, too faint for a picture. */
+async function hoverPanel(page: Page) {
   const label = await boxOf(page, ".playback-rate")
   await page.mouse.move(label.centerX, label.centerY)
   await sleep(300)
+}
+
+const base64 = (path: string) => readFileSync(join(ROOT, path)).toString("base64")
+
+async function shootPanel(page: Page, path: string) {
+  await hoverPanel(page)
   const panel = await boxOf(page, ".controller")
   await page.screenshot({
     path: join(ROOT, path),
@@ -30,6 +53,7 @@ async function shootPanel(page: Page, path: string) {
 
 it("panel", async () => {
   const page = await openSitePage()
+  await setUpVideo(page)
   await shootPanel(page, "docs/panel-collapsed.png")
   await openPanel(page)
   await shootPanel(page, "docs/panel.png")
@@ -52,5 +76,28 @@ it("popup", async () => {
   await tab.setViewport({ width: 320, height, deviceScaleFactor: 2 })
   await tab.screenshot({ path: join(ROOT, "docs/popup.png") })
   await tab.close()
+  await page.close()
+})
+
+it("banner", async () => {
+  const page = await openPage(env, "banner.html", { viewport: { width: 1022, height: 575, deviceScaleFactor: 2 } })
+  await waitForVideoReady(page)
+  await page.addStyleTag({
+    content: `
+      @font-face { font-family: "Salsa"; src: url(data:font/woff2;base64,${base64("assets/fonts/salsa-latin.woff2")}); }
+    `,
+  })
+  await page.$eval(
+    "#logo",
+    (img, data) => {
+      ;(img as HTMLImageElement).src = `data:image/png;base64,${data}`
+    },
+    base64("assets/icon-large.png"),
+  )
+  await page.evaluate(() => document.fonts.ready)
+  await setUpVideo(page)
+  await openPanel(page)
+  await hoverPanel(page)
+  await page.screenshot({ path: join(ROOT, "docs/intro.png"), captureBeyondViewport: false })
   await page.close()
 })

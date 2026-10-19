@@ -2,7 +2,7 @@
 
 Install 🐝 on **[Chrome](https://chromewebstore.google.com/detail/bee-fast-video/lljkgbedmbiipekmphnhapdpfmkgbjbd)** or **[Firefox](https://addons.mozilla.org/en-US/firefox/addon/bee-fast-video/)**.
 
-<img src="docs/intro.png" alt="Bee fast video banner" width=640>
+<img src="docs/intro.png" alt="The panel on a video, next to the bee logo" width=640>
 
 **Bee fast video** is a browser extension that gives you better control over videos on any website.
 
@@ -14,7 +14,7 @@ Each visible video gets a small panel in its top left corner. At first it only s
 
 Click the speed to open the full panel:
 
-<img src="docs/panel.png" alt="The panel, open" width=325>
+<img src="docs/panel.png" alt="The panel, open" width=327>
 
 - Speed: slow down (`Z`) and speed up (`X`) by 0.25, or by 0.1 with `Shift`. Scroll over the speed to change it. Right-click the speed to reset it to 1.00.
 - Seek: back (`A`) and forward (`D`) by 5 seconds, or by 20 seconds with `Shift`. Keys `0`–`9` jump to 0%–90% of the video, like on YouTube. Scroll over the seek bar to move 5 seconds at a time.
@@ -28,7 +28,7 @@ Click the speed to open the full panel:
 - Resize a video by dragging the yellow square on its corner, shown while the panel is open. The size stays when you close the panel. Double-click the square to undo.
 - Remember my speed on this site (brain button). Every video on the site then plays at the speed you last set with the extension. Speeds the site sets itself aren't remembered, like Twitch nudging the speed to catch up with a live stream.
 - Fit videos on this site to 80% of the window (screen button). Useful on sites whose videos don't fit on screen.
-- Hide the panel for one video. It comes back when the page reloads.
+- Hide the panel for one video. This also undoes its resizing. The panel comes back when the page reloads.
 - Turn the extension off for a site, e.g. for video calls (in the popup).
 
 The panel stays on top of the page and works in fullscreen when the site makes its player fullscreen, which is what most sites do. When the `<video>` itself is fullscreen (e.g. with the browser's own fullscreen button), the panel is shown and shortcuts work, but it can't be clicked: Chrome doesn't allow clicks on anything outside a fullscreen element, and a video can't hold other elements. That's also why the panel has no fullscreen button: use the site's.
@@ -63,7 +63,7 @@ All speed changes the user makes go through one function in `ControllersContaine
 
 ### Popup
 
-The popup lists the controls and shortcuts, and has the per-site settings. Its list has to be updated by hand when controls or shortcuts change.
+The popup lists the controls and shortcuts, and has the switch that turns the extension off for the site. The other site settings (remember my speed, fit videos) are buttons in the panel. The popup's lists have to be updated by hand when controls or shortcuts change.
 
 ### Styles
 
@@ -84,7 +84,7 @@ The project started from a [Preact template](https://github.com/fell-lucas/chrom
 - `npm run format`: apply Biome's formatting and safe fixes.
 - `npm test`: unit tests ([Vitest](https://vitest.dev)).
 - `npm run test:e2e`: browser tests. They build the extension, install it in Chrome for Testing, and use it on the test pages in `e2e/pages` through [Puppeteer](https://pptr.dev).
-- `npm run screenshots`: retakes the pictures of the panel and the popup in `docs/`.
+- `npm run screenshots`: retakes the pictures in `docs/`: the panel, the popup, and the banner at the top of this file (`e2e/pages/banner.html`, with the real panel on it). The logo and `docs/store-banner.psd` aren't made by it.
 
 ### Browser tests
 
