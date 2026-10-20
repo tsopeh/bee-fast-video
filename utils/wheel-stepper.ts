@@ -5,9 +5,9 @@
 const SWIPE_GAP_MS = 150
 /**
  * Movement needed to step the other way within a swipe. In the same log, a stray event moved 1 px against the swipe,
- * while a real turn moved 1, 2, then 4 px and passed this on its third event, 16 ms in.
+ * while a real turn moved 1, 2, 4, then 2 px and passed this on its fourth event, 24 ms in.
  */
-const TURN_THRESHOLD_PX = 4
+const TURN_THRESHOLD_PX = 8
 
 /**
  * Turns wheel events into at most one step per `intervalMs`: 1 for scrolling up or right, -1 for down or left, 0 for

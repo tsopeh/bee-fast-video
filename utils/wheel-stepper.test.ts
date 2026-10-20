@@ -40,7 +40,7 @@ describe("createWheelStepper", () => {
     expect(step(1, -4)).toBe(1)
     // Down and right in the same swipe still counts as down.
     time = 100
-    expect(step(6, 4)).toBe(-1)
+    expect(step(12, 8)).toBe(-1)
     // After a pause, the next swipe picks its axis anew.
     time = 400
     expect(step(3, 2)).toBe(1)
@@ -71,12 +71,12 @@ describe("createWheelStepper", () => {
     }
   })
 
-  it("needs 4 px of movement to step the other way within a swipe", () => {
+  it("needs 8 px of movement to step the other way within a swipe", () => {
     let time = 0
     const step = createWheelStepper(100, () => time)
     expect(step(0, -2)).toBe(1)
     time = 100
-    expect(step(0, 3)).toBe(0)
+    expect(step(0, 7)).toBe(0)
     time = 110
     expect(step(0, 1)).toBe(-1)
   })
