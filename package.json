@@ -19,7 +19,7 @@
     "check": "tsc --noEmit && biome check .",
     "format": "biome check --write .",
     "test": "vitest run --exclude \"e2e/**\"",
-    "test:e2e": "wxt build && vitest run --dir e2e --exclude e2e/screenshots.test.ts --testTimeout 30000 --hookTimeout 60000",
+    "test:e2e": "wxt build && vitest run --dir e2e --exclude screenshots.test.ts --testTimeout 30000 --hookTimeout 60000",
     "e2e:install": "browsers install chrome@stable --path .cache/browsers",
     "screenshots": "wxt build && vitest run e2e/screenshots.test.ts --testTimeout 60000 --hookTimeout 60000",
     "postinstall": "wxt prepare"
