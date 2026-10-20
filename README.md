@@ -18,7 +18,7 @@ Click the speed to open the full panel:
 
 - Speed: slow down (`Z`) and speed up (`X`) by 0.25, or by 0.1 with `Shift`. Scroll over the speed to change it. Right-click the speed to reset it to 1.00.
 - Seek: back (`A`) and forward (`D`) by 5 seconds, or by 20 seconds with `Shift`. Keys `0`–`9` jump to 0%–90% of the video, like on YouTube. Scroll over the seek bar to move 5 seconds at a time.
-- Scrolling works up and down or sideways: up and right are more. A diagonal scroll counts only in its stronger direction, so it never changes a value twice.
+- Scrolling works up and down or sideways: up and right are more. A swipe stays on the axis it starts on until you pause, so a diagonal swipe on a trackpad doesn't flip between more and less. Turning back takes a few pixels of movement, so jitter is ignored.
 - Play and pause (`S`).
 - Step one frame back (`Q`) or forward (`E`). This pauses the video.
 - Seek bar, time, volume and mute. These work even when the site covers its video so that the browser's own controls can't be reached. Click the time to switch between time played and time left. Scroll over the volume to change it.

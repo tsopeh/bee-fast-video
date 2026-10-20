@@ -149,15 +149,18 @@ describe("panel", () => {
     expect(await page.evaluate(() => [window.scrollX, window.scrollY])).toEqual([0, 0])
   })
 
-  it("follows the stronger direction of a swipe as it turns", async () => {
+  it("keeps a swipe on the axis it started on, even going diagonally", async () => {
     await openPanel(page)
     const label = await boxOf(page, ".playback-rate")
-    // Starts upward, then turns left more than up.
-    await scrollFor(page, label.centerX, label.centerY, 500, { deltaX: 1, deltaY: -4 })
-    const afterUp = await video(page, "playbackRate")
-    expect(afterUp).toBeGreaterThan(1)
-    await scrollFor(page, label.centerX, label.centerY, 500, { deltaX: -4, deltaY: -1 })
-    expect(await video(page, "playbackRate")).toBeLessThan(afterUp)
+    // Down and to the right, like fingers on a trackpad: starts more down than right, then drifts.
+    await scrollFor(page, label.centerX, label.centerY, 150, { deltaX: 1, deltaY: 3 })
+    await scrollFor(page, label.centerX, label.centerY, 850, { deltaX: 3, deltaY: 2 })
+    // About 6 steps, all down.
+    expect(await video(page, "playbackRate")).toBeLessThanOrEqual(0.25)
+    // After a pause, a new swipe picks its axis anew.
+    await sleep(200)
+    await scrollFor(page, label.centerX, label.centerY, 500, { deltaX: 3, deltaY: 2 })
+    expect(await video(page, "playbackRate")).toBeGreaterThan(0.25)
   })
 
   it("switches the time between time played and time left", async () => {
