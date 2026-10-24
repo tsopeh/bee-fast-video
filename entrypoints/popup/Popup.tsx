@@ -5,8 +5,8 @@ import iconLarge from "@/assets/icon-large.png"
 import { formatHours, formatPlaybackRate } from "@/utils/format-time"
 import { GET_SPEED, useSettings, useTotalSavedSeconds } from "@/utils/settings"
 
-// Written by hand: keep in sync with `keyActions` in `shortcuts.ts`. Opposite keys share a row, and the step under
-// it says what Shift changes.
+// Written by hand: keep in sync with `keyActions` in `shortcuts.ts`. Opposite keys share a row, followed by how
+// far they step, without and with Shift.
 
 const KEYS: Array<{ keys: Array<string>; action: string; step?: string; shiftStep?: string }> = [
   { keys: ["Z", "X"], action: "Slower, faster", step: "by 0.25", shiftStep: "by 0.1" },
@@ -81,14 +81,15 @@ export function Popup() {
                 <span class="key-pair">
                   <For each={item.keys}>{(key) => <kbd>{key}</kbd>}</For>
                 </span>
-                <span class="action">
+                <span class="action" classList={{ wide: item.step == null }}>
                   {item.action}
-                  <Show when={item.step}>
-                    <span class="step">
-                      {item.step} · <kbd>Shift</kbd> {item.shiftStep}
-                    </span>
-                  </Show>
                 </span>
+                <Show when={item.step}>
+                  <span class="step">{item.step}</span>
+                  <span class="shift-step">
+                    or <kbd>Shift</kbd> {item.shiftStep}
+                  </span>
+                </Show>
               </li>
             )}
           </For>
