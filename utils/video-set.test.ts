@@ -6,12 +6,24 @@ function fakeVideo(isConnected = true): HTMLVideoElement {
   return { nodeName: "VIDEO", nodeType: 1, isConnected, hasChildNodes: () => false } as unknown as HTMLVideoElement
 }
 
-function fakeContainer(videos: Array<HTMLVideoElement>): Node {
+function fakeContainer(videos: Array<HTMLVideoElement>, descendants: Array<Node> = []): Node {
   return {
     nodeName: "DIV",
     nodeType: 1,
+    shadowRoot: null,
     hasChildNodes: () => true,
     getElementsByTagName: () => videos,
+    querySelectorAll: () => descendants,
+  } as unknown as Node
+}
+
+/** An element with an open shadow root that holds `children`. */
+function fakeShadowHost(children: Array<Node>): Node {
+  return {
+    nodeName: "SOME-PLAYER",
+    nodeType: 1,
+    shadowRoot: { children },
+    hasChildNodes: () => false,
   } as unknown as Node
 }
 
@@ -34,6 +46,19 @@ describe("computeNewState", () => {
     const nested = fakeVideo()
     const result = computeNewState(new Set(), [childListMutation([direct, fakeContainer([nested])])])
     expect(result).toEqual(new Set([direct, nested]))
+  })
+
+  it("adds videos in open shadow roots, also nested ones, and reports each shadow root", () => {
+    const outer = fakeVideo()
+    const inner = fakeVideo()
+    const innerHost = fakeShadowHost([inner])
+    const outerHost = fakeShadowHost([outer, fakeContainer([], [innerHost])])
+    const roots: Array<unknown> = []
+    const result = computeNewState(new Set(), [childListMutation([fakeContainer([], [outerHost])])], (root) =>
+      roots.push(root),
+    )
+    expect(result).toEqual(new Set([outer, inner]))
+    expect(roots).toEqual([(outerHost as Element).shadowRoot, (innerHost as Element).shadowRoot])
   })
 
   it("removes videos that left the document without mutating the previous state", () => {

@@ -1,7 +1,7 @@
 import { createSignal, For, onCleanup, Show } from "solid-js"
 import { type Settings, useSettings } from "@/utils/settings"
 import { adjustedPlaybackRate } from "@/utils/video-mutators"
-import { computeNewState } from "@/utils/video-set"
+import { watchVideos } from "@/utils/video-set"
 import { Controller } from "./controller"
 import { createKeyboardShortcuts, type KeyboardShortcuts } from "./shortcuts"
 import { createVideoTracker, type VideoTracker } from "./video-tracker"
@@ -37,10 +37,8 @@ export function ControllersContainer(props: { host: HTMLElement }) {
     adjustSpeed,
   }
 
-  const [videos, setVideos] = createSignal(new Set(document.body.querySelectorAll("video")))
-  const observer = new MutationObserver((mutations) => setVideos((previous) => computeNewState(previous, mutations)))
-  observer.observe(document.body, { childList: true, subtree: true })
-  onCleanup(() => observer.disconnect())
+  const [videos, setVideos] = createSignal(new Set<HTMLVideoElement>())
+  onCleanup(watchVideos(document.body, setVideos))
 
   return (
     // Turning the extension off for the site removes all controllers, and their cleanup undoes every change they made

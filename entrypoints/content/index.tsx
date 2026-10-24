@@ -1,6 +1,6 @@
 import { render } from "solid-js/web"
 import { type ContentScriptContext, createShadowRootUi, defineContentScript } from "#imports"
-import { computeNewState } from "@/utils/video-set"
+import { watchVideos } from "@/utils/video-set"
 import { ControllersContainer } from "./controllers-container"
 import { followFullscreen } from "./host"
 import css from "./style.css?inline"
@@ -38,18 +38,14 @@ export default defineContentScript({
 
 function waitForVideo(ctx: ContentScriptContext): Promise<void> {
   return new Promise((resolve) => {
-    if (document.body.getElementsByTagName("video").length > 0) {
-      resolve()
-      return
-    }
-    const observer = new MutationObserver((mutations) => {
-      if (computeNewState(new Set(), mutations).size > 0) {
-        observer.disconnect()
+    const stop = watchVideos(document.body, (videos) => {
+      if (videos.size > 0) {
+        // Called once before `watchVideos` returns, so `stop` may not be set yet.
+        queueMicrotask(() => stop())
         resolve()
       }
     })
-    observer.observe(document.body, { childList: true, subtree: true })
-    ctx.onInvalidated(() => observer.disconnect())
+    ctx.onInvalidated(stop)
   })
 }
 

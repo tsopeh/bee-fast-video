@@ -50,8 +50,4 @@ When you change what the user sees or does, also:
 
 To see how a real site works, use Puppeteer against the live site from a scratch folder, then copy the layout into a test page. Don't make the tests depend on live sites.
 
-Not yet checked by hand: running in a real Firefox (only `web-ext lint` and the browser tests were run), and real sites other than a quick look at Reddit. Say so when it matters.
-
-## Future work
-
-- Videos in shadow roots (Reddit). The test `in open shadow roots, like Reddit's player` in `e2e/pages.test.ts` is marked as failing until then. It needs: finding videos in open shadow roots, noticing shadow roots added later, and looking inside shadow roots when finding the video under the mouse.
+The owner has loaded the extension in a real Firefox as a temporary add-on, and it worked. Real sites are mostly unchecked. Reddit was checked with a Puppeteer script in Chrome and Firefox: the panel shows, and keys and clicks work. Say so when it matters.

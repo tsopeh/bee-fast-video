@@ -63,12 +63,37 @@ describe("which videos get a panel", () => {
     await waitForPanels(page, 0)
   })
 
-  // Reddit puts its videos in the open shadow root of a custom element (see `shadow-player.html`). Not supported yet:
-  // when it is, this test fails, and `.fails` should be removed.
-  it.fails("in open shadow roots, like Reddit's player", async () => {
+  // Reddit puts its videos in the open shadow root of a custom element (see `shadow-player.html`).
+  it("in open shadow roots, like Reddit's player, also ones added later", async () => {
     page = await env.browser.newPage()
     await page.goto(env.url("shadow-player.html"))
+    // Gives the content script time to start, so it's already watching when the player gets its shadow root.
+    await sleep(300)
+    await page.evaluate(() => (window as unknown as { definePlayers: () => void }).definePlayers())
     await page.waitForSelector(">>> .controller", { timeout: 3000 })
+    // Not the hidden 0×0 preview video a few shadow roots deeper.
+    await sleep(500)
+    expect(await countPanels(page)).toBe(1)
+    await page.evaluate(() => document.body.append(document.createElement("shadow-player")))
+    await waitForPanels(page, 2)
+
+    // Keys go to the video under the mouse, which takes looking inside the shadow roots.
+    const rates = () =>
+      page?.$$eval("shadow-player", (players) =>
+        players.map((player) => player.shadowRoot?.querySelector("video")?.playbackRate),
+      )
+    const second = await page.evaluate(() => {
+      const box = document
+        .querySelectorAll("shadow-player")[1]
+        ?.shadowRoot?.querySelector("video")
+        ?.getBoundingClientRect()
+      return { x: (box?.x ?? 0) + 100, y: (box?.y ?? 0) + 100 }
+    })
+    await page.mouse.move(second.x, second.y)
+    await sleep(200)
+    await page.keyboard.press("x")
+    await sleep(50)
+    expect(await rates()).toEqual([1, 1.25])
   })
 })
 

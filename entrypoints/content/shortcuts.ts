@@ -51,9 +51,9 @@ export function createKeyboardShortcuts(adjustSpeed: (videoEl: HTMLVideoElement,
       return
     }
     lastPointerCheck = now
-    const videoUnderPointer = document
-      .elementsFromPoint(event.clientX, event.clientY)
-      .find((el): el is HTMLVideoElement => registeredVideos.has(el as HTMLVideoElement))
+    const videoUnderPointer = elementsFromPoint(document, event.clientX, event.clientY).find(
+      (el): el is HTMLVideoElement => registeredVideos.has(el as HTMLVideoElement),
+    )
     if (videoUnderPointer != null) {
       markInteracted(videoUnderPointer)
     }
@@ -92,6 +92,26 @@ export function createKeyboardShortcuts(adjustSpeed: (videoEl: HTMLVideoElement,
     },
     markInteracted,
   }
+}
+
+/**
+ * Like `document.elementsFromPoint`, but also looks inside open shadow roots, where the page's list stops at the host.
+ * A shadow root's list also has the elements around it, so `visited` keeps it from going back into the same roots.
+ */
+function elementsFromPoint(
+  root: Document | ShadowRoot,
+  x: number,
+  y: number,
+  visited = new Set<Document | ShadowRoot>([root]),
+): Array<Element> {
+  return root.elementsFromPoint(x, y).flatMap((element) => {
+    const shadowRoot = element.shadowRoot
+    if (shadowRoot == null || visited.has(shadowRoot)) {
+      return [element]
+    }
+    visited.add(shadowRoot)
+    return elementsFromPoint(shadowRoot, x, y, visited)
+  })
 }
 
 function isTyping(event: KeyboardEvent): boolean {

@@ -4,23 +4,27 @@
 <body>
   <!--
     Copies Reddit's layout (checked in October 2026): the video sits in the open shadow root of a `<shreddit-player>`
-    element, and a hidden 0×0 preview video sits several shadow roots deeper.
+    element, and a hidden 0×0 preview video sits several shadow roots deeper. Reddit's HTML has the player element, and
+    the script that defines it loads about 0.4 s later. Only then does the player get its shadow root. The test calls
+    `definePlayers()` to do the same.
   -->
   <shadow-player></shadow-player>
   <script>
-    customElements.define("shadow-player", class extends HTMLElement {
-      constructor() {
-        super()
-        const root = this.attachShadow({ mode: "open" })
-        root.innerHTML = `<video src="clip.webm" muted style="width: 545px; height: 306px; display: block"></video><preview-ui></preview-ui>`
-      }
-    })
-    customElements.define("preview-ui", class extends HTMLElement {
-      constructor() {
-        super()
-        this.attachShadow({ mode: "open" }).innerHTML = `<video src="clip.webm" muted style="width: 0; height: 0"></video>`
-      }
-    })
+    window.definePlayers = () => {
+      customElements.define("shadow-player", class extends HTMLElement {
+        constructor() {
+          super()
+          const root = this.attachShadow({ mode: "open" })
+          root.innerHTML = `<video src="clip.webm" muted style="width: 545px; height: 306px; display: block"></video><preview-ui></preview-ui>`
+        }
+      })
+      customElements.define("preview-ui", class extends HTMLElement {
+        constructor() {
+          super()
+          this.attachShadow({ mode: "open" }).innerHTML = `<video src="clip.webm" muted style="width: 0; height: 0"></video>`
+        }
+      })
+    }
   </script>
 </body>
 </html>
