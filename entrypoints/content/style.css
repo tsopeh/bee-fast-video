@@ -60,7 +60,7 @@ button {
   /* top: _; Set in component. */
   /* left: _; Set in component. */
   display: flex;
-  opacity: 0.4;
+  opacity: 0.6;
   transition: opacity 200ms var(--ease-style);
   z-index: calc(2147483647 - 5) !important;
 
@@ -260,7 +260,7 @@ button {
   }
 
   &:hover {
-    opacity: 0.95;
+    opacity: 1;
 
     .underlay {
       width: calc(100% + var(--height));
