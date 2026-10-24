@@ -58,13 +58,13 @@ describe("panel", () => {
       ),
     )
     expect(titles).toEqual([
-      "Speed 1",
+      "Playback speed 1",
       "Slow down",
       "Speed up",
       "|",
-      "Backward 5 seconds",
+      "Rewind 5 seconds",
       "Play",
-      "Forward 5 seconds",
+      "Fast forward 5 seconds",
       "|",
       "Loop",
       "|",
@@ -178,14 +178,14 @@ describe("panel", () => {
 
   it("plays, pauses, seeks and loops with the buttons", async () => {
     await openPanel(page)
-    await clickInPanel(page, '[title^="Play"]')
+    await clickInPanel(page, '[title^="Play ("]')
     await page.waitForFunction(() => !document.querySelector("video")?.paused)
     await clickInPanel(page, '[title^="Pause"]')
     expect(await video(page, "paused")).toBe(true)
     const before = await video(page, "currentTime")
-    await clickInPanel(page, '[title^="Forward"]')
+    await clickInPanel(page, '[title^="Fast forward"]')
     expect(await video(page, "currentTime")).toBeCloseTo(before + 5, 1)
-    await clickInPanel(page, '[title^="Backward"]')
+    await clickInPanel(page, '[title^="Rewind"]')
     expect(await video(page, "currentTime")).toBeCloseTo(before, 1)
     await clickInPanel(page, '[title="Loop"]')
     expect(await video(page, "loop")).toBe(true)
@@ -256,7 +256,7 @@ describe("panel", () => {
       document.addEventListener("pointerdown", () => counts.pointerdown++)
     })
     await openPanel(page)
-    await clickInPanel(page, '[title^="Play"]')
+    await clickInPanel(page, '[title^="Play ("]')
     await page.waitForFunction(() => !document.querySelector("video")?.paused)
     expect(await page.evaluate(() => (window as unknown as { counts: object }).counts)).toEqual({
       click: 0,

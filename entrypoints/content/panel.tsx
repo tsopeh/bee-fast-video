@@ -122,7 +122,7 @@ export function Panel(props: Props) {
             <button
               type="button"
               class="control playback-rate"
-              title={`Speed ${formatPlaybackRate(state.playbackRate)}×. Click to ${state.isExpanded ? "hide" : "show"} controls, scroll to change speed, right-click to reset to 1.00.`}
+              title={`Playback speed ${formatPlaybackRate(state.playbackRate)}×. Click to ${state.isExpanded ? "hide" : "show"} controls, scroll to change, right-click to reset to 1.00.`}
               on:click={() => setState("isExpanded", !state.isExpanded)}
               on:contextmenu={(event) => {
                 event.preventDefault()
@@ -140,13 +140,13 @@ export function Panel(props: Props) {
                 <SpeedUpIcon />
               </ControlButton>
               <span class="divider" />
-              <ControlButton title="Backward 5 seconds (A)" onClick={() => seekBy(video, -SEEK_STEP_MS)}>
+              <ControlButton title="Rewind 5 seconds (A)" onClick={() => seekBy(video, -SEEK_STEP_MS)}>
                 <BackwardIcon />
               </ControlButton>
               <ControlButton title={`${state.isPaused ? "Play" : "Pause"} (S)`} onClick={() => togglePlayPause(video)}>
                 {state.isPaused ? <PlayIcon /> : <PauseIcon />}
               </ControlButton>
-              <ControlButton title="Forward 5 seconds (D)" onClick={() => seekBy(video, +SEEK_STEP_MS)}>
+              <ControlButton title="Fast forward 5 seconds (D)" onClick={() => seekBy(video, +SEEK_STEP_MS)}>
                 <ForwardIcon />
               </ControlButton>
               <span class="divider" />
@@ -168,7 +168,7 @@ export function Panel(props: Props) {
               <input
                 class="seek"
                 type="range"
-                title="Seek (scroll to seek 5 seconds)"
+                title="Seek (scroll to rewind or fast forward 5 seconds)"
                 min={0}
                 max={Number.isFinite(state.duration) ? state.duration : state.seekableEnd}
                 step="any"
@@ -209,7 +209,7 @@ export function Panel(props: Props) {
               <input
                 class="volume"
                 type="range"
-                title="Volume"
+                title="Volume (scroll to change)"
                 min={0}
                 max={1}
                 step={0.05}

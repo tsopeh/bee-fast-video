@@ -9,11 +9,11 @@ import { GET_SPEED, useSettings, useTotalSavedSeconds } from "@/utils/settings"
 // far they step, without and with Shift.
 
 const KEYS: Array<{ keys: Array<string>; action: string; step?: string; shiftStep?: string }> = [
-  { keys: ["Z", "X"], action: "Slower, faster", step: "by 0.25", shiftStep: "by 0.1" },
-  { keys: ["A", "D"], action: "Back, forward", step: "5 s", shiftStep: "20 s" },
-  { keys: ["Q", "E"], action: "Frame back, forward" },
-  { keys: ["S"], action: "Play, pause" },
-  { keys: ["0–9"], action: "Jump to 0% … 90%" },
+  { keys: ["Z", "X"], action: "Slow down, speed up", step: "±0.25", shiftStep: "±0.1" },
+  { keys: ["A", "D"], action: "Rewind, fast forward", step: "±5 s", shiftStep: "±20 s" },
+  { keys: ["Q", "E"], action: "Previous, next frame" },
+  { keys: ["S"], action: "Play/pause" },
+  { keys: ["0–9"], action: "Seek to 0% … 90% of the video" },
 ]
 
 /** The speed of the video the keys act on in the active tab, or 1 when there's none. */
