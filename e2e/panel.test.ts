@@ -40,14 +40,17 @@ describe("panel", () => {
     expect(await isPanelOnTop(page)).toBe(true)
   })
 
-  it("opens and closes with a click on the speed", async () => {
+  it("opens and closes with a click on the speed, which stays in place", async () => {
+    const closed = await boxOf(page, ".playback-rate")
     await openPanel(page)
     expect(await hasInPanel(page, ".seek")).toBe(true)
+    const open = await boxOf(page, ".playback-rate")
+    expect({ x: open.x, y: open.y }).toEqual({ x: closed.x, y: closed.y })
     await clickInPanel(page, ".playback-rate")
     expect(await hasInPanel(page, ".seek")).toBe(false)
   })
 
-  it("groups the buttons, with close at the end", async () => {
+  it("groups the buttons, with hide at the end", async () => {
     await openPanel(page)
     const titles = await page.$eval(">>> .row", (row) =>
       [...row.children].map((el) =>
@@ -55,9 +58,8 @@ describe("panel", () => {
       ),
     )
     expect(titles).toEqual([
-      "Drag to move",
-      "Slow down",
       "Speed 1",
+      "Slow down",
       "Speed up",
       "|",
       "Backward 5 seconds",

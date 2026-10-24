@@ -12,7 +12,7 @@ Each visible video gets a small panel in its top left corner. At first it only s
 
 <img src="docs/panel-collapsed.png" alt="The panel, closed: just the speed" width=160>
 
-Click the speed to open the full panel:
+Click the speed to open the full panel. The speed stays in the same place, so you can click it again to close the panel:
 
 <img src="docs/panel.png" alt="The panel, open" width=327>
 
@@ -23,11 +23,11 @@ Click the speed to open the full panel:
 - Step one frame back (`Q`) or forward (`E`). This pauses the video.
 - Seek bar, time, volume and mute. These work even when the site covers its video so that the browser's own controls can't be reached. Click the time to switch between time played and time left. Time left is at the current speed: 40 minutes left at 2× shows 20:00. Scroll over the volume to change it.
 - Loop.
-- Drag the panel anywhere by its grip. It goes back to its place once the video scrolls out of view.
+- Drag the panel anywhere by its grip, at the end of the second row. It goes back to its place once the video scrolls out of view.
 - Resize a video by dragging the yellow square on its corner, shown while the panel is open. The size stays when you close the panel. Double-click the square to undo.
 - Remember my speed on this site (brain button). Every video on the site then plays at the speed you last set with the extension. Speeds the site sets itself aren't remembered, like Twitch nudging the speed to catch up with a live stream.
 - Fit videos on this site to 80% of the window (screen button). Useful on sites whose videos don't fit on screen.
-- Hide the panel for one video. This also undoes its resizing. The panel comes back when the page reloads.
+- Hide the panel for one video (crossed-out eye). This also undoes its resizing. The panel comes back when the page reloads.
 - Turn the extension off for a site, e.g. for video calls (in the popup).
 - See how much time you saved by watching faster, in hours, like Steam's play time (in the popup). Watching slower than 1× takes time off. The total adds up all your devices where the browser syncs extension data.
 

@@ -5,11 +5,10 @@ import {
   FitScreenIcon,
   ForwardIcon,
   GripIcon,
+  HideIcon,
   PlayIcon,
-  RemoveIcon,
   RepeatIcon,
   SlowDownIcon,
-  SpeedIcon,
   SpeedUpIcon,
   VolumeIcon,
 } from "@/assets/control-icons"
@@ -28,13 +27,16 @@ const KEYS: Array<{ keys: Array<string>; action: string }> = [
 ]
 
 const PANEL: Array<{ icons: () => JSX.Element; action: string }> = [
-  { icons: () => <SpeedIcon />, action: "The speed. Click to open the panel, scroll to change, right-click to reset." },
+  {
+    icons: () => <span class="chip-text">1.00</span>,
+    action: "The speed. Click to open the panel, scroll to change, right-click to reset.",
+  },
   { icons: () => [<SlowDownIcon />, <SpeedUpIcon />], action: "Slower, faster" },
   { icons: () => [<BackwardIcon />, <PlayIcon />, <ForwardIcon />], action: "Back 5 s, play, forward 5 s" },
   { icons: () => <RepeatIcon />, action: "Loop" },
   { icons: () => <BrainIcon />, action: "Remember my speed on this site" },
   { icons: () => <FitScreenIcon />, action: "Fit videos on this site to 80% of the window" },
-  { icons: () => <RemoveIcon />, action: "Hide the panel for this video" },
+  { icons: () => <HideIcon />, action: "Hide the panel for this video" },
   {
     icons: () => <span class="chip-text">0:20</span>,
     action: "Time. Click for the time left at this speed. Scroll the seek bar to move 5 s.",

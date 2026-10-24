@@ -120,14 +120,8 @@ button {
     }
 
     .playback-rate {
-      gap: 1px;
       font-size: calc(0.65 * var(--height));
       font-variant-numeric: tabular-nums;
-
-      svg {
-        width: calc(0.6 * var(--height));
-        height: calc(0.6 * var(--height));
-      }
 
       &:hover {
         background-color: transparent;
@@ -152,7 +146,7 @@ button {
       height: var(--height);
       display: flex;
       align-items: center;
-      padding-left: 3px;
+      padding: 0 3px;
       cursor: grab;
       /* Lets pointer capture drag the widget on touch screens instead of scrolling the page. */
       touch-action: none;
@@ -202,7 +196,7 @@ button {
     }
   }
 
-  /* Brings the speed up button closer to the speed. */
+  /* Brings the slow down button closer to the speed. */
   &.expanded .playback-rate {
     padding-right: 0;
   }

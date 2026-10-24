@@ -6,13 +6,12 @@ import {
   FitScreenIcon,
   ForwardIcon,
   GripIcon,
+  HideIcon,
   MutedIcon,
   PauseIcon,
   PlayIcon,
-  RemoveIcon,
   RepeatIcon,
   SlowDownIcon,
-  SpeedIcon,
   SpeedUpIcon,
   VolumeIcon,
 } from "@/assets/control-icons"
@@ -121,14 +120,7 @@ export function Panel(props: Props) {
         <div class="underlay" />
         <div class="controls">
           <div class="row">
-            <Show when={state.isExpanded}>
-              <div class="grip" title="Drag to move" on:pointerdown={startDrag}>
-                <GripIcon />
-              </div>
-              <ControlButton title="Slow down (Z)" onClick={() => app.adjustSpeed(video, -SPEED_STEP)}>
-                <SlowDownIcon />
-              </ControlButton>
-            </Show>
+            {/* First, so it stays in place when the panel opens and closes. */}
             <button
               type="button"
               class="control playback-rate"
@@ -140,10 +132,12 @@ export function Panel(props: Props) {
               }}
               on:wheel={onWheelStep(WHEEL_RATE_INTERVAL_MS, (step) => app.adjustSpeed(video, step * SPEED_STEP))}
             >
-              <SpeedIcon />
-              <span>{formatPlaybackRate(state.playbackRate)}</span>
+              {formatPlaybackRate(state.playbackRate)}
             </button>
             <Show when={state.isExpanded}>
+              <ControlButton title="Slow down (Z)" onClick={() => app.adjustSpeed(video, -SPEED_STEP)}>
+                <SlowDownIcon />
+              </ControlButton>
               <ControlButton title="Speed up (X)" onClick={() => app.adjustSpeed(video, +SPEED_STEP)}>
                 <SpeedUpIcon />
               </ControlButton>
@@ -194,7 +188,7 @@ export function Panel(props: Props) {
               </ControlButton>
               <span class="divider" />
               <ControlButton title="Hide controls for this video" onClick={() => props.onClose()}>
-                <RemoveIcon />
+                <HideIcon />
               </ControlButton>
             </Show>
           </div>
@@ -257,6 +251,10 @@ export function Panel(props: Props) {
                   adjustVolume(video, step * WHEEL_VOLUME_STEP),
                 )}
               />
+              {/* A row away from the hide button, so a drag that starts a little off doesn't hide the panel. */}
+              <div class="grip" title="Drag to move" on:pointerdown={startDrag}>
+                <GripIcon />
+              </div>
             </div>
           </Show>
         </div>
