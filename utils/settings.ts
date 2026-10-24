@@ -17,6 +17,12 @@ const rememberedSpeedsItem = storage.defineItem<Record<string, number>>("sync:re
 })
 
 /**
+ * Time saved by watching faster than 1×, in seconds, net of time lost below 1×. Local storage, not sync: every tab with
+ * a playing video writes to it, and sync storage allows only 120 writes a minute.
+ */
+export const savedSecondsItem = storage.defineItem<number>("local:savedSeconds", { fallback: 0 })
+
+/**
  * Chrome allows 120 writes a minute to sync storage, and scrolling over the speed changes it about 6 times a second.
  * So speed changes are saved at most once a second: the first one right away, the last one when the second is over.
  */
@@ -74,7 +80,7 @@ export function useSettings() {
 }
 
 /** The item's value, or `undefined` until it has been read from storage. */
-function useStorageItem<T>(item: WxtStorageItem<T, Record<string, unknown>>): Accessor<T | undefined> {
+export function useStorageItem<T>(item: WxtStorageItem<T, Record<string, unknown>>): Accessor<T | undefined> {
   const [value, setValue] = createSignal<T>()
   item.getValue().then((newValue) => setValue(() => newValue))
   onCleanup(item.watch((newValue) => setValue(() => newValue)))

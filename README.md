@@ -21,15 +21,15 @@ Click the speed to open the full panel:
 - Scrolling works up and down or sideways: up and right are more. A swipe stays on the axis it starts on until you pause, so a diagonal swipe on a trackpad doesn't flip between more and less. Turning back takes a few pixels of movement, so jitter is ignored.
 - Play and pause (`S`).
 - Step one frame back (`Q`) or forward (`E`). This pauses the video.
-- Seek bar, time, volume and mute. These work even when the site covers its video so that the browser's own controls can't be reached. Click the time to switch between time played and time left. Scroll over the volume to change it.
+- Seek bar, time, volume and mute. These work even when the site covers its video so that the browser's own controls can't be reached. Click the time to switch between time played and time left. Time left is at the current speed: 40 minutes left at 2× shows 20:00. Scroll over the volume to change it.
 - Loop.
-- Picture-in-picture (`P`). The button is greyed out, with a tooltip saying why, when the site or browser doesn't allow it.
 - Drag the panel anywhere by its grip. It goes back to its place once the video scrolls out of view.
 - Resize a video by dragging the yellow square on its corner, shown while the panel is open. The size stays when you close the panel. Double-click the square to undo.
 - Remember my speed on this site (brain button). Every video on the site then plays at the speed you last set with the extension. Speeds the site sets itself aren't remembered, like Twitch nudging the speed to catch up with a live stream.
 - Fit videos on this site to 80% of the window (screen button). Useful on sites whose videos don't fit on screen.
 - Hide the panel for one video. This also undoes its resizing. The panel comes back when the page reloads.
 - Turn the extension off for a site, e.g. for video calls (in the popup).
+- See how much time you saved by watching faster, in hours, like Steam's play time (in the popup). Watching slower than 1× takes time off. The total stays on this device.
 
 The panel stays on top of the page and works in fullscreen when the site makes its player fullscreen, which is what most sites do. When the `<video>` itself is fullscreen (e.g. with the browser's own fullscreen button), the panel is shown and shortcuts work, but it can't be clicked: Chrome doesn't allow clicks on anything outside a fullscreen element, and a video can't hold other elements. That's also why the panel has no fullscreen button: use the site's.
 
@@ -51,7 +51,7 @@ Videos inside shadow roots aren't found yet. Reddit's player is one: its videos 
 
 The shadow root's host element is a popover, so it sits in the browser's top layer, above everything on the page. In fullscreen Chrome only lets you click inside the fullscreen element, so the host moves into it while it lasts. `host.ts` explains the details.
 
-A `Controller` applies the site settings to its video (fit videos, remembered speed) and keeps a resized video's size. It shows a `Panel` (`panel.tsx`) only while the video is in view, visible and at least 50×50 px. Pages often keep hidden or tiny videos around, like preloaded players, and panels for those would only get in the way. `utils/video-visibility.ts` explains the rules.
+A `Controller` applies the site settings to its video (fit videos, remembered speed), keeps a resized video's size, and counts the time it saves (`saved-time.ts`). Between two `timeupdate` events, the video time that passed took that time divided by the speed to watch; the difference is time saved. Seeks, loops and speed changes start a new measurement, so a jump never counts. The total goes to local storage, not sync: every tab with a playing video writes it, at most every 10 seconds and when a video pauses or the page is hidden. It shows a `Panel` (`panel.tsx`) only while the video is in view, visible and at least 50×50 px. Pages often keep hidden or tiny videos around, like preloaded players, and panels for those would only get in the way. `utils/video-visibility.ts` explains the rules.
 
 `video-tracker.ts` follows where all videos are, in one pass per frame for all of them: on scroll (also inside scroll areas), on size changes, on fullscreen changes, and on a 1 s timer for moves nothing reports. Videos out of view cost nothing, and while no video is in view, nothing runs.
 
@@ -63,7 +63,7 @@ All speed changes the user makes go through one function in `ControllersContaine
 
 ### Popup
 
-The popup lists the controls and shortcuts, and has the switch that turns the extension off for the site. The other site settings (remember my speed, fit videos) are buttons in the panel. The popup's lists have to be updated by hand when controls or shortcuts change.
+The popup lists the controls and shortcuts, has the switch that turns the extension off for the site, and shows the time saved. The other site settings (remember my speed, fit videos) are buttons in the panel. The popup's lists have to be updated by hand when controls or shortcuts change.
 
 ### Styles
 

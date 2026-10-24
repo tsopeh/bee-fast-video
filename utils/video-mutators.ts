@@ -50,45 +50,6 @@ export function toggleLoop(videoEl: HTMLVideoElement) {
   videoEl.loop = !videoEl.loop
 }
 
-export type PictureInPictureAvailability = "available" | "blocked" | "unsupported"
-
-/**
- * - `unsupported`: the browser has no picture-in-picture web API (e.g. Firefox < 153, which only offers its own
- *   built-in picture-in-picture toggle).
- * - `blocked`: the document disallows it, e.g. via the `Permissions-Policy: picture-in-picture=()` response header or
- *   an iframe without `allow="picture-in-picture"`, or the user turned it off in browser settings.
- *
- * The video's own `disablePictureInPicture` attribute is ignored on purpose; we override it when entering
- * picture-in-picture.
- */
-export function getPictureInPictureAvailability(videoEl: HTMLVideoElement): PictureInPictureAvailability {
-  const doc = videoEl.ownerDocument
-  if (typeof videoEl.requestPictureInPicture !== "function" || typeof doc.pictureInPictureEnabled !== "boolean") {
-    return "unsupported"
-  }
-  return doc.pictureInPictureEnabled ? "available" : "blocked"
-}
-
-export function isPictureInPicture(videoEl: HTMLVideoElement): boolean {
-  return videoEl.ownerDocument.pictureInPictureElement === videoEl
-}
-
-export function togglePictureInPicture(videoEl: HTMLVideoElement) {
-  if (getPictureInPictureAvailability(videoEl) !== "available") {
-    return
-  }
-  if (isPictureInPicture(videoEl)) {
-    videoEl.ownerDocument
-      .exitPictureInPicture()
-      .catch(() => console.log("bee-fast-video:", "Could not exit from the picture-in-picture mode for video", videoEl))
-  } else {
-    videoEl.disablePictureInPicture = false
-    videoEl
-      .requestPictureInPicture()
-      .catch(() => console.log("bee-fast-video:", "Could not enter the picture-in-picture mode for video", videoEl))
-  }
-}
-
 function roundToHundredths(value: number): number {
   return Math.round(value * 100) / 100
 }

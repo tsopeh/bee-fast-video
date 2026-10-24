@@ -1,11 +1,10 @@
-import { For, type JSX } from "solid-js"
+import { For, type JSX, Show } from "solid-js"
 import {
   BackwardIcon,
   BrainIcon,
   FitScreenIcon,
   ForwardIcon,
   GripIcon,
-  PictureInPictureIcon,
   PlayIcon,
   RemoveIcon,
   RepeatIcon,
@@ -15,7 +14,8 @@ import {
   VolumeIcon,
 } from "@/assets/control-icons"
 import iconLarge from "@/assets/icon-large.png"
-import { useSettings } from "@/utils/settings"
+import { formatHours } from "@/utils/format-time"
+import { savedSecondsItem, useSettings, useStorageItem } from "@/utils/settings"
 
 // Written by hand: keep in sync with `keyActions` in `shortcuts.ts` and the panel in `panel.tsx`.
 
@@ -24,7 +24,6 @@ const KEYS: Array<{ keys: Array<string>; action: string }> = [
   { keys: ["A", "D"], action: "Back, forward 5 s (Shift: 20 s)" },
   { keys: ["Q", "E"], action: "One frame back, forward" },
   { keys: ["S"], action: "Play, pause" },
-  { keys: ["P"], action: "Picture-in-picture" },
   { keys: ["0", "9"], action: "Jump to 0% … 90%" },
 ]
 
@@ -33,13 +32,12 @@ const PANEL: Array<{ icons: () => JSX.Element; action: string }> = [
   { icons: () => [<SlowDownIcon />, <SpeedUpIcon />], action: "Slower, faster" },
   { icons: () => [<BackwardIcon />, <PlayIcon />, <ForwardIcon />], action: "Back 5 s, play, forward 5 s" },
   { icons: () => <RepeatIcon />, action: "Loop" },
-  { icons: () => <PictureInPictureIcon />, action: "Picture-in-picture" },
   { icons: () => <BrainIcon />, action: "Remember my speed on this site" },
   { icons: () => <FitScreenIcon />, action: "Fit videos on this site to 80% of the window" },
   { icons: () => <RemoveIcon />, action: "Hide the panel for this video" },
   {
     icons: () => <span class="chip-text">0:20</span>,
-    action: "Time. Click for the time left. Scroll the seek bar to move 5 s.",
+    action: "Time. Click for the time left at this speed. Scroll the seek bar to move 5 s.",
   },
   { icons: () => <VolumeIcon />, action: "Mute. Scroll the slider to change the volume." },
   { icons: () => <GripIcon />, action: "Drag to move the panel" },
@@ -48,6 +46,7 @@ const PANEL: Array<{ icons: () => JSX.Element; action: string }> = [
 
 export function Popup() {
   const { currentHostname, isDisabledOnThisDomain, toggleBlacklistHostName } = useSettings()
+  const savedSeconds = useStorageItem(savedSecondsItem)
 
   return (
     <main>
@@ -70,6 +69,10 @@ export function Popup() {
           onChange={() => toggleBlacklistHostName()}
         />
       </label>
+
+      <Show when={savedSeconds() != null}>
+        <p class="stats">Time saved: {formatHours(savedSeconds() ?? 0)}</p>
+      </Show>
 
       <section>
         <h2>Keys</h2>

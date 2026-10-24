@@ -2,15 +2,7 @@
 
 import { onCleanup } from "solid-js"
 import { pickTargetVideo } from "@/utils/target-video"
-import {
-  SEEK_STEP_MS,
-  SPEED_STEP,
-  seekBy,
-  seekToNormalized,
-  stepFrame,
-  togglePictureInPicture,
-  togglePlayPause,
-} from "@/utils/video-mutators"
+import { SEEK_STEP_MS, SPEED_STEP, seekBy, seekToNormalized, stepFrame, togglePlayPause } from "@/utils/video-mutators"
 import { getFrameDuration } from "./frame-duration"
 
 type VideoAction = (videoEl: HTMLVideoElement) => void
@@ -35,8 +27,6 @@ export function createKeyboardShortcuts(adjustSpeed: (videoEl: HTMLVideoElement,
     // Above A and D, so frame steps sit right over seeking back and forward.
     ["q", (v) => stepFrame(v, -1, getFrameDuration(v))],
     ["e", (v) => stepFrame(v, 1, getFrameDuration(v))],
-    ["p", (v) => togglePictureInPicture(v)],
-    ["P", (v) => togglePictureInPicture(v)],
     // Number keys 0-9 seek to 0%-90%
     ...Array.from({ length: 10 }, (_, index): [string, VideoAction] => [
       index.toString(),

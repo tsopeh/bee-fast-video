@@ -15,3 +15,18 @@ export function formatTime(seconds: number): string {
 export function formatPlaybackRate(rate: number): string {
   return rate.toFixed(2)
 }
+
+/** Hours with one decimal, like Steam's play time: `14.2 hours`. */
+export function formatHours(seconds: number): string {
+  const hours = (seconds / 3600).toFixed(1)
+  // -0.04 hours would show as "-0.0".
+  return `${hours === "-0.0" ? "0.0" : hours} hours`
+}
+
+/**
+ * How long the rest of the video takes to watch at this speed: 40 minutes left at 2× take 20. A rate of 0 or less
+ * (which some browsers allow) gives the time left as is.
+ */
+export function timeLeftAtSpeed(secondsLeft: number, rate: number): number {
+  return rate > 0 ? secondsLeft / rate : secondsLeft
+}

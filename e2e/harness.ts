@@ -17,10 +17,7 @@ const BROWSERS_DIR = join(ROOT, ".cache/browsers")
 
 const CONTENT_TYPES: Record<string, string> = { ".html": "text/html", ".webm": "video/webm" }
 
-/**
- * Serves `e2e/pages`. Supports range requests, without which the browser can't seek in a video. Pages whose name
- * starts with `blocked` get a header that forbids picture-in-picture.
- */
+/** Serves `e2e/pages`. Supports range requests, without which the browser can't seek in a video. */
 async function startServer() {
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? "/", "http://localhost").pathname
@@ -32,12 +29,9 @@ async function startServer() {
       response.writeHead(404).end()
       return
     }
-    const headers: Record<string, string | number> = {
+    const headers = {
       "Content-Type": CONTENT_TYPES[extname(file)] ?? "application/octet-stream",
       "Accept-Ranges": "bytes",
-    }
-    if (path.startsWith("/blocked")) {
-      headers["Permissions-Policy"] = "picture-in-picture=()"
     }
     const range = /bytes=(\d*)-(\d*)/.exec(request.headers.range ?? "")
     if (range == null) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { formatPlaybackRate, formatTime } from "./format-time"
+import { formatHours, formatPlaybackRate, formatTime, timeLeftAtSpeed } from "./format-time"
 
 describe("formatTime", () => {
   it("formats minutes and seconds", () => {
@@ -28,5 +28,28 @@ describe("formatPlaybackRate", () => {
 
   it("rounds to two decimals", () => {
     expect(formatPlaybackRate(1.3333)).toBe("1.33")
+  })
+})
+
+describe("formatHours", () => {
+  it("shows hours with one decimal", () => {
+    expect(formatHours(0)).toBe("0.0 hours")
+    expect(formatHours(51_120)).toBe("14.2 hours")
+    expect(formatHours(-1800)).toBe("-0.5 hours")
+  })
+
+  it("never shows minus zero", () => {
+    expect(formatHours(-100)).toBe("0.0 hours")
+  })
+})
+
+describe("timeLeftAtSpeed", () => {
+  it("divides the time left by the speed", () => {
+    expect(timeLeftAtSpeed(2400, 2)).toBe(1200)
+    expect(timeLeftAtSpeed(60, 0.5)).toBe(120)
+  })
+
+  it("keeps the time left when the speed is 0", () => {
+    expect(timeLeftAtSpeed(60, 0)).toBe(60)
   })
 })

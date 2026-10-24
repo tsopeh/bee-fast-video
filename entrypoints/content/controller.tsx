@@ -4,6 +4,7 @@ import { FIT_TO_VIEWPORT_STYLES, setImportantStyles } from "@/utils/video-styles
 import type { App } from "./controllers-container"
 import { trackDrag } from "./drag"
 import { Panel } from "./panel"
+import { trackSavedTime } from "./saved-time"
 import type { VideoLayout } from "./video-tracker"
 
 /** Smallest size a video can be resized to. */
@@ -11,7 +12,8 @@ const MIN_RESIZE_PX = 100
 
 /**
  * Everything the extension does to one video. The site settings (fit videos, remembered speed) apply to every video,
- * and a resized video keeps its size. The panel only exists while the video is in view and visible.
+ * a resized video keeps its size, and the time it saves counts for the popup. The panel only exists while the video is
+ * in view and visible.
  */
 export function Controller(props: { video: HTMLVideoElement; app: App }) {
   const { video, app } = props
@@ -23,6 +25,9 @@ export function Controller(props: { video: HTMLVideoElement; app: App }) {
       onCleanup(app.tracker.track(video, setLayout))
     }
   })
+
+  // Also while the panel isn't shown, e.g. for a video playing out of view.
+  onCleanup(trackSavedTime(video))
 
   // Limit the video to 80% of the window, when that's on for the site.
   createEffect(() => {

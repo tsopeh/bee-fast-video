@@ -2,7 +2,7 @@
 
 import type { Page } from "puppeteer-core"
 import { afterEach, describe, expect, it } from "vitest"
-import { clickInPanel, countPanels, openPage, openPanel, openPlayer, panelOffset, sleep, useBrowser } from "./harness"
+import { countPanels, openPage, panelOffset, sleep, useBrowser } from "./harness"
 
 const env = useBrowser()
 let page: Page | undefined
@@ -69,28 +69,6 @@ describe("which videos get a panel", () => {
     page = await env.browser.newPage()
     await page.goto(env.url("shadow-player.html"))
     await page.waitForSelector(">>> .controller", { timeout: 3000 })
-  })
-})
-
-describe("picture-in-picture", () => {
-  it("is greyed out with a reason when the site forbids it", async () => {
-    page = await openPage(env, "blocked.html")
-    await openPanel(page)
-    const button = await page.$eval('>>> [title*="picture-in-picture"]', (element) => ({
-      disabled: (element as HTMLButtonElement).disabled,
-      title: element.getAttribute("title"),
-    }))
-    expect(button).toEqual({
-      disabled: true,
-      title: "This site (or your browser settings) doesn't allow picture-in-picture.",
-    })
-  })
-
-  it("works where the site allows it", async () => {
-    page = await openPlayer(env)
-    await openPanel(page)
-    await clickInPanel(page, '[title^="Enter picture-in-picture"]')
-    await page.waitForFunction(() => document.pictureInPictureElement?.tagName === "VIDEO")
   })
 })
 

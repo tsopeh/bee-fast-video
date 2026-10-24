@@ -8,7 +8,6 @@ import {
   GripIcon,
   MutedIcon,
   PauseIcon,
-  PictureInPictureIcon,
   PlayIcon,
   RemoveIcon,
   RepeatIcon,
@@ -18,18 +17,8 @@ import {
   SpeedUpIcon,
   VolumeIcon,
 } from "@/assets/control-icons"
-import { formatPlaybackRate, formatTime } from "@/utils/format-time"
-import {
-  adjustVolume,
-  getPictureInPictureAvailability,
-  isPictureInPicture,
-  SEEK_STEP_MS,
-  SPEED_STEP,
-  seekBy,
-  toggleLoop,
-  togglePictureInPicture,
-  togglePlayPause,
-} from "@/utils/video-mutators"
+import { formatPlaybackRate, formatTime, timeLeftAtSpeed } from "@/utils/format-time"
+import { adjustVolume, SEEK_STEP_MS, SPEED_STEP, seekBy, toggleLoop, togglePlayPause } from "@/utils/video-mutators"
 import { onWheelStep } from "@/utils/wheel-stepper"
 import type { App } from "./controllers-container"
 import { trackDrag } from "./drag"
@@ -51,8 +40,6 @@ const VIDEO_EVENTS = [
   "pause",
   "ratechange",
   "volumechange",
-  "enterpictureinpicture",
-  "leavepictureinpicture",
   "timeupdate",
   "durationchange",
   "loadedmetadata",
@@ -67,7 +54,6 @@ function readVideo(video: HTMLVideoElement) {
     isPaused: video.paused,
     playbackRate: video.playbackRate,
     isLooped: video.loop,
-    isPictureInPicture: isPictureInPicture(video),
     currentTime: video.currentTime,
     duration: video.duration,
     // End of the seekable range; the seek bar's maximum for live streams, whose `duration` is `Infinity`.
@@ -113,9 +99,6 @@ export function Panel(props: Props) {
   })
   onCleanup(app.shortcuts.registerVideo(video))
   onCleanup(trackFrameDuration(video))
-
-  // The document's policy can't change after load, so it's enough to check once.
-  const pictureInPictureAvailability = getPictureInPictureAvailability(video)
 
   const startDrag = (event: PointerEvent & { currentTarget: HTMLDivElement }) => {
     // A copy: the store updates `dragOffset` in place.
@@ -182,22 +165,6 @@ export function Panel(props: Props) {
                   <RepeatIcon />
                 </Slashed>
               </ControlButton>
-              <ControlButton
-                title={
-                  {
-                    available: `${state.isPictureInPicture ? "Exit" : "Enter"} picture-in-picture (P)`,
-                    blocked: "This site (or your browser settings) doesn't allow picture-in-picture.",
-                    unsupported:
-                      "Picture-in-picture isn't supported by this browser. Try the browser's own picture-in-picture button.",
-                  }[pictureInPictureAvailability]
-                }
-                disabled={pictureInPictureAvailability !== "available"}
-                onClick={() => togglePictureInPicture(video)}
-              >
-                <Slashed when={state.isPictureInPicture}>
-                  <PictureInPictureIcon />
-                </Slashed>
-              </ControlButton>
               <span class="divider" />
               <ControlButton
                 title={
@@ -250,14 +217,18 @@ export function Panel(props: Props) {
                 class="time"
                 title={
                   state.showRemainingTime
-                    ? "Time until the end. Click to show the elapsed time."
+                    ? `Time until the end at ${formatPlaybackRate(state.playbackRate)}×. Click to show the elapsed time.`
                     : "Elapsed time. Click to show the time until the end."
                 }
                 disabled={!Number.isFinite(state.duration)}
                 onClick={() => setState("showRemainingTime", !state.showRemainingTime)}
               >
                 {Number.isFinite(state.duration)
-                  ? formatTime(state.showRemainingTime ? state.duration - state.currentTime : state.currentTime)
+                  ? formatTime(
+                      state.showRemainingTime
+                        ? timeLeftAtSpeed(state.duration - state.currentTime, state.playbackRate)
+                        : state.currentTime,
+                    )
                   : state.duration === Number.POSITIVE_INFINITY
                     ? "LIVE"
                     : formatTime(state.currentTime)}

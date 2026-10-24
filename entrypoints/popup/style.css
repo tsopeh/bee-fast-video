@@ -139,6 +139,11 @@ header {
   }
 }
 
+.stats {
+  margin-top: -6px;
+  color: var(--muted);
+}
+
 section {
   display: flex;
   flex-direction: column;

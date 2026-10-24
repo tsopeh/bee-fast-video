@@ -68,7 +68,6 @@ describe("panel", () => {
       "Forward 5 seconds",
       "|",
       "Loop",
-      "Enter picture-in-picture",
       "|",
       "Remember my speed for all videos on this site",
       "Fit videos on this site to 80% of the window",
@@ -171,6 +170,17 @@ describe("panel", () => {
     expect(await textOf(page, ".time")).toBe("0:20")
     await clickInPanel(page, ".time")
     expect(await textOf(page, ".time")).toBe("0:40")
+  })
+
+  it("shows the time left at the current speed", async () => {
+    await openPanel(page)
+    await setVideo(page, { currentTime: 20, playbackRate: 2 })
+    await page.waitForFunction(() => document.querySelector("video")?.currentTime === 20)
+    await clickInPanel(page, ".time")
+    expect(await textOf(page, ".time")).toBe("0:20")
+    await setVideo(page, { playbackRate: 0.5 })
+    await sleep(100)
+    expect(await textOf(page, ".time")).toBe("1:20")
   })
 
   it("plays, pauses, seeks and loops with the buttons", async () => {
