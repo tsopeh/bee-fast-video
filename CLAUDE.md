@@ -43,7 +43,7 @@ For a UI change, also look at it: take a screenshot with Puppeteer and view it. 
 
 When you change what the user sees or does, also:
 
-1. update the popup's lists (`entrypoints/popup/Popup.tsx`), which are written by hand;
+1. update the popup's key list (`entrypoints/popup/Popup.tsx`), which is written by hand;
 2. add or change a browser test in `e2e/`, with a page in `e2e/pages` that copies the real site's layout when a site is the reason;
 3. run `npm run screenshots` and look at the new pictures in `docs/`;
 4. update the README.

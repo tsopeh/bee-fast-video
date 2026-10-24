@@ -205,83 +205,55 @@ section:not(.site) {
 }
 
 .hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--muted);
-
-  kbd {
-    height: 18px;
-    font-size: 11px;
-  }
 }
 
-.list {
+/* Two keys a row, opposites side by side. */
+.keys {
   display: grid;
-  /* The same first column in both lists, so their text lines up. */
-  grid-template-columns: 44px 1fr;
-  gap: 4px 10px;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 6px;
   list-style: none;
 
   li {
     display: contents;
   }
-
-  li > :first-child {
-    display: flex;
-    align-items: center;
-  }
-
-  li > :last-child {
-    align-self: center;
-  }
 }
 
-.keys {
-  gap: 3px;
+.key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  & + .key {
+    padding-left: 10px;
+    border-left: 1px solid #e3d9cf;
+  }
 }
 
 kbd {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 4px;
+  flex: none;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: inherit;
   font-size: 12px;
+  line-height: 1;
   background-color: var(--card);
   border: 1px solid #c9bfb5;
   border-bottom-width: 2px;
   border-radius: 4px;
-}
 
-/* Icons look like the panel's buttons. */
-.icons {
-  svg,
-  .chip,
-  .handle {
-    height: 20px;
-    background-color: var(--yellow);
-    border: 1px solid var(--yellow-edge);
-    border-radius: 4px;
-  }
-
-  svg {
-    width: 20px;
-    padding: 3px;
-  }
-
-  .chip {
-    padding: 0 4px;
-    display: inline-flex;
-    align-items: center;
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Same as the resize handle on the video's corner. */
-  .handle {
-    width: 12px;
-    height: 12px;
-    margin: 4px;
-    border-radius: 2px;
+  /* The same width for all keys in the list, so the actions line up. */
+  .key & {
+    width: 30px;
+    padding: 0;
+    white-space: nowrap;
   }
 }

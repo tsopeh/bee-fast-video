@@ -33,7 +33,7 @@ Click the speed to open the full panel. The speed stays in the same place, so yo
 
 The panel stays on top of the page and works in fullscreen when the site makes its player fullscreen, which is what most sites do. When the `<video>` itself is fullscreen (e.g. with the browser's own fullscreen button), the panel is shown and shortcuts work, but it can't be clicked: Chrome doesn't allow clicks on anything outside a fullscreen element, and a video can't hold other elements. That's also why the panel has no fullscreen button: use the site's.
 
-The popup has the settings for the current site, the time saved, all keys, and tips for what the panel doesn't show by itself:
+The popup has the settings for the current site, the time saved, and all keys:
 
 <img src="docs/popup.png" alt="The popup" width=320>
 
@@ -63,7 +63,7 @@ All speed changes the user makes go through one function in `ControllersContaine
 
 ### Popup
 
-The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, the keys, and tips for the panel. It fits without scrolling: the tips cover only what the panel can't show, like right-click, double-click and scrolling. The panel's buttons have tooltips. The lists have to be updated by hand when controls or shortcuts change.
+The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, and the keys, with opposite keys side by side. It fits without scrolling. The panel explains itself through its buttons' tooltips, so the popup doesn't. The key list has to be updated by hand when shortcuts change.
 
 The popup can't see the page's videos, so to remember a speed it asks the tab (`GET_SPEED` in `utils/settings.ts`). Only a frame with a shown panel answers, with the speed of the video the keys act on. With no answer, it remembers 1.00.
 
