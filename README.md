@@ -77,9 +77,9 @@ The "fit videos" option and resizing change the video's own inline styles with `
 
 The project started from a [Preact template](https://github.com/fell-lucas/chrome-extension-template-preact-vite). It moved to [Solid](https://github.com/solidjs/solid) in `v1.2.0`, and to [WXT](https://wxt.dev) in `v2.0.0`. WXT builds the extension, writes the manifest and makes the zips for both Chrome and Firefox.
 
-- `npm run dev` / `npm run dev:firefox`: development build that reloads on changes. Load `.output/chrome-mv3-dev` (or `.output/firefox-mv3-dev`) into the browser once as an unpacked (Firefox: temporary) extension.
-- `npm run build` / `npm run build:firefox`: production build in `.output/chrome-mv3` / `.output/firefox-mv3`.
-- `npm run zip` / `npm run zip:firefox`: zips for the stores in `.output/`. Firefox also gets the source zip that its store asks for.
+- `npm run dev` / `npm run dev:firefox`: development build that reloads on changes. Load `dist/chrome-mv3-dev` (or `dist/firefox-mv3-dev`) into the browser once as an unpacked (Firefox: temporary) extension.
+- `npm run build`: production builds for both browsers, in `dist/chrome-mv3` and `dist/firefox-mv3`. `npm run build:chrome` and `npm run build:firefox` build one.
+- `npm run zip` / `npm run zip:firefox`: zips for the stores in `dist/`. Firefox also gets the source zip that its store asks for.
 - `npm run check`: type check (`tsc`), then lint and format check ([Biome](https://biomejs.dev)).
 - `npm run format`: apply Biome's formatting and safe fixes.
 - `npm test`: unit tests ([Vitest](https://vitest.dev)).

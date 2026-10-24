@@ -114,7 +114,7 @@ export function useBrowser(): TestEnv {
             "--host-resolver-rules=MAP www.example.com 127.0.0.1",
           ],
         })
-    env.extensionId = await env.browser.installExtension(join(ROOT, `.output/${isFirefox ? "firefox" : "chrome"}-mv3`))
+    env.extensionId = await env.browser.installExtension(join(ROOT, `dist/${isFirefox ? "firefox" : "chrome"}-mv3`))
     const { port } = server
     env.url = (path, host = "127.0.0.1") => `http://${host}:${port}/${path}`
   })
