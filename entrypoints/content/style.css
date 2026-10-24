@@ -50,7 +50,8 @@ button {
 
 .controller {
   --size: 9px;
-  --height: calc(var(--size) * 2.3);
+  /* Whole, even pixels, so the speed has the same room above and below it (see `.playback-rate`). */
+  --height: round(calc(var(--size) * 2.3), 2px);
   --ease-style: ease-out;
   --gap: calc(0.35 * var(--size));
 
@@ -119,9 +120,17 @@ button {
       }
     }
 
+    /*
+      Centered on its digits, not on the font's line, whose room above and below differs per font and per browser.
+      Trimmed, the text's box is just the digits' height. Without this the speed sat up to 2.5 px off center in Chrome.
+    */
     .playback-rate {
-      font-size: calc(0.65 * var(--height));
+      font-size: round(calc(0.65 * var(--height)), 1px);
       font-variant-numeric: tabular-nums;
+
+      span {
+        text-box: trim-both cap alphabetic;
+      }
 
       &:hover {
         background-color: transparent;
@@ -166,10 +175,59 @@ button {
       padding-left: calc(0.5 * var(--size));
     }
 
+    /*
+      A thin track and a small thumb, both in the text color. The browsers' own thumb is about as tall as the row.
+      Chrome can't style the filled part on its own, so the panel sets `--progress` (0 to 1) and the track draws it.
+      The fill ends at the thumb's center, which moves between half a thumb from each end.
+    */
     input[type="range"] {
-      height: calc(0.5 * var(--height));
-      accent-color: #e9ab17;
+      --thumb: calc(0.4 * var(--height));
+      --track: calc(0.15 * var(--height));
+      --fill: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--progress, 0));
+
+      appearance: none;
+      height: var(--height);
+      background: none;
+      color: inherit;
       cursor: pointer;
+
+      &::-webkit-slider-runnable-track {
+        height: var(--track);
+        border-radius: var(--track);
+        background: linear-gradient(
+          to right,
+          currentColor var(--fill),
+          color-mix(in srgb, currentColor 30%, transparent) var(--fill)
+        );
+      }
+
+      &::-moz-range-track {
+        height: var(--track);
+        border-radius: var(--track);
+        background: linear-gradient(
+          to right,
+          currentColor var(--fill),
+          color-mix(in srgb, currentColor 30%, transparent) var(--fill)
+        );
+      }
+
+      &::-webkit-slider-thumb {
+        appearance: none;
+        width: var(--thumb);
+        height: var(--thumb);
+        margin-top: calc((var(--track) - var(--thumb)) / 2);
+        border: none;
+        border-radius: 50%;
+        background-color: currentColor;
+      }
+
+      &::-moz-range-thumb {
+        width: var(--thumb);
+        height: var(--thumb);
+        border: none;
+        border-radius: 50%;
+        background-color: currentColor;
+      }
     }
 
     .seek {

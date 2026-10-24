@@ -96,6 +96,9 @@ export function Panel(props: Props) {
   onCleanup(app.shortcuts.registerVideo(video))
   onCleanup(trackFrameDuration(video))
 
+  // The seek bar's end. A live stream has no duration, only the part that can be seeked.
+  const seekEnd = () => (Number.isFinite(state.duration) ? state.duration : state.seekableEnd)
+
   const startDrag = (event: PointerEvent & { currentTarget: HTMLDivElement }) => {
     // A copy: the store updates `dragOffset` in place.
     const start = { ...state.dragOffset }
@@ -130,7 +133,7 @@ export function Panel(props: Props) {
               }}
               on:wheel={onWheelStep(WHEEL_RATE_INTERVAL_MS, (step) => app.adjustSpeed(video, step * SPEED_STEP))}
             >
-              {formatPlaybackRate(state.playbackRate)}
+              <span>{formatPlaybackRate(state.playbackRate)}</span>
             </button>
             <Show when={state.isExpanded}>
               <ControlButton title="Slow down (Z)" onClick={() => app.adjustSpeed(video, -SPEED_STEP)}>
@@ -170,9 +173,10 @@ export function Panel(props: Props) {
                 type="range"
                 title="Seek (scroll to rewind or fast forward 5 seconds)"
                 min={0}
-                max={Number.isFinite(state.duration) ? state.duration : state.seekableEnd}
+                max={seekEnd()}
                 step="any"
                 value={state.currentTime}
+                style={{ "--progress": seekEnd() > 0 ? Math.min(state.currentTime / seekEnd(), 1) : 0 }}
                 on:input={(event) => {
                   video.currentTime = event.currentTarget.valueAsNumber
                 }}
@@ -214,6 +218,7 @@ export function Panel(props: Props) {
                 max={1}
                 step={0.05}
                 value={state.isMuted ? 0 : state.volume}
+                style={{ "--progress": state.isMuted ? 0 : state.volume }}
                 on:input={(event) => {
                   video.volume = event.currentTarget.valueAsNumber
                   video.muted = false
