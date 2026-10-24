@@ -83,12 +83,12 @@ The project started from a [Preact template](https://github.com/fell-lucas/chrom
 - `npm run check`: type check (`tsc`), then lint and format check ([Biome](https://biomejs.dev)).
 - `npm run format`: apply Biome's formatting and safe fixes.
 - `npm test`: unit tests ([Vitest](https://vitest.dev)).
-- `npm run test:e2e`: browser tests. They build the extension, install it in Chrome for Testing, and use it on the test pages in `e2e/pages` through [Puppeteer](https://pptr.dev).
+- `npm run test:e2e`: browser tests. They build the extension, install it in Chrome for Testing and then in Firefox, and use it on the test pages in `e2e/pages` through [Puppeteer](https://pptr.dev). `npm run test:e2e:chrome` and `npm run test:e2e:firefox` run one browser.
 - `npm run screenshots`: retakes the pictures in `docs/`: the panel, the popup, and the banner at the top of this file (`e2e/pages/banner.html`, with the real panel on it). The logo and `docs/store-banner.psd` aren't made by it.
 
 ### Browser tests
 
-The browser tests need Chrome for Testing, a Chrome build made for automation that can load an unpacked extension (the normal Chrome can't, since version 137). Install it once, about 150 MB:
+The browser tests need Chrome for Testing, a Chrome build made for automation that can load an unpacked extension (the normal Chrome can't, since version 137), and Firefox. Install them once, about 250 MB:
 
 ```sh
 npm run e2e:install
@@ -96,7 +96,9 @@ npm run e2e:install
 
 It goes into `.cache/browsers`, which git ignores. Run it again to update to the latest stable version.
 
-Each test file starts its own Chrome and a small local server for the test pages, and the files run in parallel. The test video (`e2e/pages/clip.webm`) is 60 seconds at 10 frames per second, so a frame step is exactly 0.1 s.
+Each test file starts its own browser and a small local server for the test pages, and the files run in parallel. The test video (`e2e/pages/clip.webm`) is 60 seconds at 10 frames per second, so a frame step is exactly 0.1 s.
+
+Puppeteer can't click the extension's icon in Firefox. There the popup tests open the popup in a background tab instead, where it reads the site from the active tab the same way.
 
 Both browsers get a Manifest V3 build. The Firefox manifest also has the add-on ID and the data collection declaration (`wxt.config.ts`).
 

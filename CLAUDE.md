@@ -37,7 +37,7 @@ Commit messages: a short summary line, then the changes as a list, each with its
 
 ## Checking your work
 
-Run `npm run check`, `npm test` and `npm run test:e2e` before calling anything done. The browser tests need `npm run e2e:install` once. Test files run in parallel, each with its own Chrome; use the helpers in `e2e/harness.ts`.
+Run `npm run check`, `npm test` and `npm run test:e2e` before calling anything done. The browser tests need `npm run e2e:install` once. They run in Chrome and then in Firefox. Test files run in parallel, each with its own browser; use the helpers in `e2e/harness.ts`.
 
 For a UI change, also look at it: take a screenshot with Puppeteer and view it. Numbers alone miss spacing and color problems.
 
@@ -50,9 +50,8 @@ When you change what the user sees or does, also:
 
 To see how a real site works, use Puppeteer against the live site from a scratch folder, then copy the layout into a test page. Don't make the tests depend on live sites.
 
-Not yet checked by hand: running in Firefox (only `web-ext lint` was run), and real sites other than a quick look at Reddit. Say so when it matters.
+Not yet checked by hand: running in a real Firefox (only `web-ext lint` and the browser tests were run), and real sites other than a quick look at Reddit. Say so when it matters.
 
 ## Future work
 
-- Firefox in the browser tests. Puppeteer can drive Firefox (`browser: "firefox"`, installed with `browsers install firefox@stable`, about 100 MB). Whether `installExtension` works there with this extension hasn't been tried. Wait until the owner's connection allows the download.
 - Videos in shadow roots (Reddit). The test `in open shadow roots, like Reddit's player` in `e2e/pages.test.ts` is marked as failing until then. It needs: finding videos in open shadow roots, noticing shadow roots added later, and looking inside shadow roots when finding the video under the mouse.

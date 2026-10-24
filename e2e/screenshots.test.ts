@@ -7,6 +7,7 @@ import type { Page } from "puppeteer-core"
 import { it } from "vitest"
 import {
   boxOf,
+  extensionUrl,
   openPage,
   openPanel,
   openPlayer,
@@ -69,7 +70,7 @@ it("popup", async () => {
   const tab = await env.browser.newPage()
   await page.bringToFront()
   await tab.setViewport({ width: 320, height: 600, deviceScaleFactor: 2 })
-  await tab.goto(`chrome-extension://${env.extensionId}/popup.html`)
+  await tab.goto(extensionUrl(env, "popup.html"))
   await tab.waitForFunction((site) => document.querySelector(".hostname")?.textContent === site, {}, SITE)
   await tab.evaluate(() => document.fonts.ready)
   const height = await tab.evaluate(() => document.documentElement.scrollHeight)

@@ -1,5 +1,5 @@
-// Shared setup for the browser tests: a static server for the test pages, Chrome with the extension installed, and
-// helpers for reaching into the panels. Selectors starting with `>>>` look inside shadow roots, where the panels are.
+// Shared setup for the browser tests: a static server for the test pages, Chrome or Firefox with the extension
+// installed, and helpers for reaching into the panels. Selectors starting with `>>>` look inside shadow roots, where the panels are.
 
 import { createReadStream, statSync } from "node:fs"
 import { createServer } from "node:http"
@@ -12,8 +12,15 @@ import { afterAll, beforeAll } from "vitest"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const PAGES_DIR = join(ROOT, "e2e/pages")
-const EXTENSION_DIR = join(ROOT, ".output/chrome-mv3")
 const BROWSERS_DIR = join(ROOT, ".cache/browsers")
+
+/** Set by `npm run test:e2e:firefox`. Chrome otherwise. */
+export const isFirefox = process.env.E2E_BROWSER === "firefox"
+
+// The add-on ID from `wxt.config.ts`, and a fixed internal UUID for it. Firefox picks a random UUID at install, which
+// would leave no way to find the popup's `moz-extension://` URL.
+const FIREFOX_ADDON_ID = "bee.fast.video@tsopeh.github.com"
+const FIREFOX_ADDON_UUID = "0b3e6a52-6f1c-4c7e-9d38-6b4f5a3e2c10"
 
 const CONTENT_TYPES: Record<string, string> = { ".html": "text/html", ".webm": "video/webm" }
 
@@ -64,8 +71,8 @@ export interface TestEnv {
 }
 
 /**
- * Starts the test server and Chrome for Testing (installed by `npm run e2e:install`) with the built extension, once
- * for the test file.
+ * Starts the test server and Chrome for Testing or Firefox (installed by `npm run e2e:install`) with the built
+ * extension, once for the test file.
  */
 export function useBrowser(): TestEnv {
   const env = {} as TestEnv
@@ -73,23 +80,41 @@ export function useBrowser(): TestEnv {
   beforeAll(async () => {
     server = await startServer()
     const installed = await getInstalledBrowsers({ cacheDir: BROWSERS_DIR })
-    const chrome = installed.find((browser) => browser.browser === BrowserName.CHROME)
-    if (chrome == null) {
-      throw new Error("Chrome for Testing isn't installed. Run `npm run e2e:install` first.")
+    const name = isFirefox ? BrowserName.FIREFOX : BrowserName.CHROME
+    const executable = installed.find((browser) => browser.browser === name)
+    if (executable == null) {
+      throw new Error(
+        `${isFirefox ? "Firefox" : "Chrome for Testing"} isn't installed. Run \`npm run e2e:install\` first.`,
+      )
     }
-    env.browser = await puppeteer.launch({
-      executablePath: chrome.executablePath,
-      headless: true,
-      pipe: true,
-      enableExtensions: true,
-      args: [
-        // Lets test pages call `play()` without a click first.
-        "--autoplay-policy=no-user-gesture-required",
-        // A real-looking site for the screenshots.
-        "--host-resolver-rules=MAP www.example.com 127.0.0.1",
-      ],
-    })
-    env.extensionId = await env.browser.installExtension(EXTENSION_DIR)
+    env.browser = isFirefox
+      ? await puppeteer.launch({
+          browser: "firefox",
+          executablePath: executable.executablePath,
+          headless: true,
+          // Without it, Firefox won't let Puppeteer open a `moz-extension://` page.
+          args: ["--remote-allow-system-access"],
+          extraPrefsFirefox: {
+            // Lets test pages call `play()` without a click first.
+            "media.autoplay.default": 0,
+            // Every host resolves to the test server, for the real-looking site in the screenshots.
+            "network.dns.forceResolve": "127.0.0.1",
+            "extensions.webextensions.uuids": JSON.stringify({ [FIREFOX_ADDON_ID]: FIREFOX_ADDON_UUID }),
+          },
+        })
+      : await puppeteer.launch({
+          executablePath: executable.executablePath,
+          headless: true,
+          pipe: true,
+          enableExtensions: true,
+          args: [
+            // Lets test pages call `play()` without a click first.
+            "--autoplay-policy=no-user-gesture-required",
+            // A real-looking site for the screenshots.
+            "--host-resolver-rules=MAP www.example.com 127.0.0.1",
+          ],
+        })
+    env.extensionId = await env.browser.installExtension(join(ROOT, `.output/${isFirefox ? "firefox" : "chrome"}-mv3`))
     const { port } = server
     env.url = (path, host = "127.0.0.1") => `http://${host}:${port}/${path}`
   })
@@ -127,8 +152,28 @@ export async function waitForVideoReady(page: Page) {
   })
 }
 
-/** Opens the extension's popup for the page, the same as clicking the extension's icon in the toolbar. */
+/** The URL of a page of the extension, like `popup.html`. */
+export function extensionUrl(env: TestEnv, path: string) {
+  return isFirefox ? `moz-extension://${FIREFOX_ADDON_UUID}/${path}` : `chrome-extension://${env.extensionId}/${path}`
+}
+
+/**
+ * Opens the extension's popup for the page, the same as clicking the extension's icon in the toolbar. Puppeteer can't
+ * click the icon in Firefox, so there the popup opens in a background tab, where it reads the page's site the same way.
+ */
 export async function openPopup(env: TestEnv, page: Page) {
+  if (isFirefox) {
+    const popup = await env.browser.newPage()
+    await page.bringToFront()
+    // The popup loads, but Puppeteer never sees the navigation finish: it moves into the extension's process. And
+    // `waitForSelector` fails if it checks during the move ("right-hand side of 'in' should be an object, got null"),
+    // so this checks by hand and retries.
+    popup.goto(extensionUrl(env, "popup.html")).catch(() => {})
+    while (!(await popup.evaluate(() => document.querySelector(".hostname") != null).catch(() => false))) {
+      await sleep(50)
+    }
+    return popup
+  }
   const extension = (await env.browser.extensions()).get(env.extensionId)
   if (extension == null) {
     throw new Error("The extension isn't installed")
