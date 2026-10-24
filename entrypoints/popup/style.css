@@ -204,18 +204,12 @@ section:not(.site) {
   }
 }
 
-.hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted);
-}
-
-/* Two keys a row, opposites side by side. */
+/* Opposite keys side by side, then what they do. */
 .keys {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  row-gap: 6px;
+  grid-template-columns: 50px 1fr;
+  gap: 6px 8px;
+  align-items: center;
   list-style: none;
 
   li {
@@ -223,14 +217,28 @@ section:not(.site) {
   }
 }
 
-.key {
+.key-pair {
+  display: flex;
+  gap: 3px;
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
 
-  & + .key {
-    padding-left: 10px;
-    border-left: 1px solid #e3d9cf;
+  kbd {
+    height: 16px;
+    font-size: 10px;
+    border-bottom-width: 1px;
   }
 }
 
@@ -245,15 +253,9 @@ kbd {
   font-family: inherit;
   font-size: 12px;
   line-height: 1;
+  white-space: nowrap;
   background-color: var(--card);
   border: 1px solid #c9bfb5;
   border-bottom-width: 2px;
   border-radius: 4px;
-
-  /* The same width for all keys in the list, so the actions line up. */
-  .key & {
-    width: 30px;
-    padding: 0;
-    white-space: nowrap;
-  }
 }

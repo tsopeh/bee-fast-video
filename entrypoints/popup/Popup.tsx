@@ -5,25 +5,15 @@ import iconLarge from "@/assets/icon-large.png"
 import { formatHours, formatPlaybackRate } from "@/utils/format-time"
 import { GET_SPEED, useSettings, useTotalSavedSeconds } from "@/utils/settings"
 
-// Written by hand: keep in sync with `keyActions` in `shortcuts.ts`. Keys that do opposite things share a row.
+// Written by hand: keep in sync with `keyActions` in `shortcuts.ts`. Opposite keys share a row, and the step under
+// it says what Shift changes.
 
-const KEYS: Array<Array<{ key: string; action: string }>> = [
-  [
-    { key: "Z", action: "Slower" },
-    { key: "X", action: "Faster" },
-  ],
-  [
-    { key: "A", action: "Back 5 s" },
-    { key: "D", action: "Forward 5 s" },
-  ],
-  [
-    { key: "Q", action: "Frame back" },
-    { key: "E", action: "Frame forward" },
-  ],
-  [
-    { key: "S", action: "Play, pause" },
-    { key: "0–9", action: "Jump to 0–90%" },
-  ],
+const KEYS: Array<{ keys: Array<string>; action: string; step?: string; shiftStep?: string }> = [
+  { keys: ["Z", "X"], action: "Slower, faster", step: "by 0.25", shiftStep: "by 0.1" },
+  { keys: ["A", "D"], action: "Back, forward", step: "5 s", shiftStep: "20 s" },
+  { keys: ["Q", "E"], action: "Frame back, forward" },
+  { keys: ["S"], action: "Play, pause" },
+  { keys: ["0–9"], action: "Jump to 0% … 90%" },
 ]
 
 /** The speed of the video the keys act on in the active tab, or 1 when there's none. */
@@ -86,23 +76,23 @@ export function Popup() {
         <h2>Keys</h2>
         <ul class="keys">
           <For each={KEYS}>
-            {(row) => (
+            {(item) => (
               <li>
-                <For each={row}>
-                  {(item) => (
-                    <span class="key">
-                      <kbd>{item.key}</kbd>
-                      {item.action}
+                <span class="key-pair">
+                  <For each={item.keys}>{(key) => <kbd>{key}</kbd>}</For>
+                </span>
+                <span class="action">
+                  {item.action}
+                  <Show when={item.step}>
+                    <span class="step">
+                      {item.step} · <kbd>Shift</kbd> {item.shiftStep}
                     </span>
-                  )}
-                </For>
+                  </Show>
+                </span>
               </li>
             )}
           </For>
         </ul>
-        <p class="hint">
-          <kbd>Shift</kbd> for steps of 0.1 and 20 s
-        </p>
       </section>
     </main>
   )

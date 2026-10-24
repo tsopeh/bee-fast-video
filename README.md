@@ -63,7 +63,7 @@ All speed changes the user makes go through one function in `ControllersContaine
 
 ### Popup
 
-The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, and the keys, with opposite keys side by side. It fits without scrolling. The panel explains itself through its buttons' tooltips, so the popup doesn't. The key list has to be updated by hand when shortcuts change.
+The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, and the keys. Opposite keys share a row, and under it, how far they step with and without Shift. It fits without scrolling. The panel explains itself through its buttons' tooltips, so the popup doesn't. The key list has to be updated by hand when shortcuts change.
 
 The popup can't see the page's videos, so to remember a speed it asks the tab (`GET_SPEED` in `utils/settings.ts`). Only a frame with a shown panel answers, with the speed of the video the keys act on. With no answer, it remembers 1.00.
 
