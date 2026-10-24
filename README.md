@@ -29,7 +29,7 @@ Click the speed to open the full panel:
 - Fit videos on this site to 80% of the window (screen button). Useful on sites whose videos don't fit on screen.
 - Hide the panel for one video. This also undoes its resizing. The panel comes back when the page reloads.
 - Turn the extension off for a site, e.g. for video calls (in the popup).
-- See how much time you saved by watching faster, in hours, like Steam's play time (in the popup). Watching slower than 1× takes time off. The total stays on this device.
+- See how much time you saved by watching faster, in hours, like Steam's play time (in the popup). Watching slower than 1× takes time off. The total adds up all your devices where the browser syncs extension data.
 
 The panel stays on top of the page and works in fullscreen when the site makes its player fullscreen, which is what most sites do. When the `<video>` itself is fullscreen (e.g. with the browser's own fullscreen button), the panel is shown and shortcuts work, but it can't be clicked: Chrome doesn't allow clicks on anything outside a fullscreen element, and a video can't hold other elements. That's also why the panel has no fullscreen button: use the site's.
 
@@ -41,7 +41,7 @@ Keyboard shortcuts work even when the site's player tries to swallow key presses
 
 ## How it works
 
-The extension has two parts: a content script (`entrypoints/content/`), which runs on every page, and a popup (`entrypoints/popup/`). They don't talk to each other directly. They share settings through extension storage (`utils/settings.ts`).
+The extension has three parts: a content script (`entrypoints/content/`), which runs on every page, a popup (`entrypoints/popup/`), and a background script (`entrypoints/background.ts`) that only adds up the time saved. The content script and the popup share settings through extension storage (`utils/settings.ts`). The sites where the extension is off are in sync storage, so they follow you to other devices. "Fit videos" and remembered speeds are local to each device; they were in sync storage before, and the background script copies them over once after an update (`utils/moved-settings.ts`).
 
 ### Content script
 
@@ -51,7 +51,7 @@ Videos inside shadow roots aren't found yet. Reddit's player is one: its videos 
 
 The shadow root's host element is a popover, so it sits in the browser's top layer, above everything on the page. In fullscreen Chrome only lets you click inside the fullscreen element, so the host moves into it while it lasts. `host.ts` explains the details.
 
-A `Controller` applies the site settings to its video (fit videos, remembered speed), keeps a resized video's size, and counts the time it saves (`saved-time.ts`). Between two `timeupdate` events, the video time that passed took that time divided by the speed to watch; the difference is time saved. Seeks, loops and speed changes start a new measurement, so a jump never counts. The total goes to local storage, not sync: every tab with a playing video writes it, at most every 10 seconds and when a video pauses or the page is hidden. It shows a `Panel` (`panel.tsx`) only while the video is in view, visible and at least 50×50 px. Pages often keep hidden or tiny videos around, like preloaded players, and panels for those would only get in the way. `utils/video-visibility.ts` explains the rules.
+A `Controller` applies the site settings to its video (fit videos, remembered speed), keeps a resized video's size, and counts the time it saves (`saved-time.ts`). Between two `timeupdate` events, the video time that passed took that time divided by the speed to watch; the difference is time saved. Seeks, loops and speed changes start a new measurement, so a jump never counts. Each frame sends what it measured to the background script at most every 10 seconds, and when a video pauses or the page is hidden. The background script adds the additions one after another, so tabs can't overwrite each other, and keeps this device's total in local storage. At most every 20 seconds it copies the total to sync storage under a key of its own, `savedSeconds.<device id>`. Sync storage keeps whichever write came last, so two devices adding to one shared number would lose one addition; with a key each, no device writes another's. The popup shows this device's local total plus every other device's synced one (`utils/saved-time.ts`). It shows a `Panel` (`panel.tsx`) only while the video is in view, visible and at least 50×50 px. Pages often keep hidden or tiny videos around, like preloaded players, and panels for those would only get in the way. `utils/video-visibility.ts` explains the rules.
 
 `video-tracker.ts` follows where all videos are, in one pass per frame for all of them: on scroll (also inside scroll areas), on size changes, on fullscreen changes, and on a 1 s timer for moves nothing reports. Videos out of view cost nothing, and while no video is in view, nothing runs.
 

@@ -23,7 +23,7 @@ const TURN_THRESHOLD_PX = 8
  * summed since the last step. Stepping the other way takes `TURN_THRESHOLD_PX` of movement, so jitter can't reverse
  * a swipe. The first step of a swipe needs no threshold, so it still comes on the first event.
  */
-export function createWheelStepper (intervalMs: number, now: () => number = () => performance.now()) {
+export function createWheelStepper(intervalMs: number, now: () => number = () => performance.now()) {
   let lastStepAt = Number.NEGATIVE_INFINITY
   let lastEventAt = Number.NEGATIVE_INFINITY
   let axis: "x" | "y" | undefined
@@ -58,7 +58,7 @@ export function createWheelStepper (intervalMs: number, now: () => number = () =
 }
 
 /** A wheel event handler that keeps the page from scrolling and calls `onStep` at most once per `intervalMs`. */
-export function onWheelStep (intervalMs: number, onStep: (step: -1 | 1) => void) {
+export function onWheelStep(intervalMs: number, onStep: (step: -1 | 1) => void) {
   const stepWheel = createWheelStepper(intervalMs)
   return (event: WheelEvent) => {
     event.preventDefault()

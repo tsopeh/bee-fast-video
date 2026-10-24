@@ -1,30 +1,33 @@
 import { type Accessor, createSignal, onCleanup } from "solid-js"
 import { browser, storage, type WxtStorageItem } from "#imports"
+import { totalSavedSeconds } from "./saved-time"
 
 // Same storage key as v1, so that existing users keep their settings.
 const blacklistedHostnamesItem = storage.defineItem<Array<string>>("sync:blacklistedHostnames", {
   fallback: [],
 })
 
-// Sites on which all videos are limited to 80% of the window (see `FIT_TO_VIEWPORT_STYLES`).
-const fitVideosHostnamesItem = storage.defineItem<Array<string>>("sync:fitVideosHostnames", {
+// Sites on which all videos are limited to 80% of the window (see `FIT_TO_VIEWPORT_STYLES`). This and the remembered
+// speeds are kept on each device. They were in sync storage before; the background script copies them over once.
+const fitVideosHostnamesItem = storage.defineItem<Array<string>>("local:fitVideosHostnames", {
   fallback: [],
 })
 
 // The speed to use for all videos on a site, for sites where "remember my speed" is on.
-const rememberedSpeedsItem = storage.defineItem<Record<string, number>>("sync:rememberedSpeeds", {
+const rememberedSpeedsItem = storage.defineItem<Record<string, number>>("local:rememberedSpeeds", {
   fallback: {},
 })
 
-/**
- * Time saved by watching faster than 1×, in seconds, net of time lost below 1×. Local storage, not sync: every tab with
- * a playing video writes to it, and sync storage allows only 120 writes a minute.
- */
+/** This device's saved time (see `saved-time.ts`). Only the background script writes it. */
 export const savedSecondsItem = storage.defineItem<number>("local:savedSeconds", { fallback: 0 })
 
+/** Names this device's saved time in sync storage. Made by the background script the first time it copies it there. */
+export const deviceIdItem = storage.defineItem<string>("local:deviceId")
+
 /**
- * Chrome allows 120 writes a minute to sync storage, and scrolling over the speed changes it about 6 times a second.
- * So speed changes are saved at most once a second: the first one right away, the last one when the second is over.
+ * Scrolling over the speed changes it about 6 times a second, and every save reaches every tab of the site, which
+ * applies the speed to its videos. So speed changes are saved at most once a second: the first one right away, the
+ * last one when the second is over.
  */
 const SPEED_SAVE_INTERVAL_MS = 1000
 
@@ -79,8 +82,25 @@ export function useSettings() {
   }
 }
 
+/** The saved time of all devices, or `undefined` until it has been read. */
+export function useTotalSavedSeconds(): Accessor<number | undefined> {
+  const [total, setTotal] = createSignal<number>()
+  const read = async () => {
+    const [syncItems, deviceId, ownSeconds] = await Promise.all([
+      browser.storage.sync.get(null),
+      deviceIdItem.getValue(),
+      savedSecondsItem.getValue(),
+    ])
+    setTotal(totalSavedSeconds(syncItems, deviceId, ownSeconds))
+  }
+  read()
+  browser.storage.onChanged.addListener(read)
+  onCleanup(() => browser.storage.onChanged.removeListener(read))
+  return total
+}
+
 /** The item's value, or `undefined` until it has been read from storage. */
-export function useStorageItem<T>(item: WxtStorageItem<T, Record<string, unknown>>): Accessor<T | undefined> {
+function useStorageItem<T>(item: WxtStorageItem<T, Record<string, unknown>>): Accessor<T | undefined> {
   const [value, setValue] = createSignal<T>()
   item.getValue().then((newValue) => setValue(() => newValue))
   onCleanup(item.watch((newValue) => setValue(() => newValue)))

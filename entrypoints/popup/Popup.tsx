@@ -15,7 +15,7 @@ import {
 } from "@/assets/control-icons"
 import iconLarge from "@/assets/icon-large.png"
 import { formatHours } from "@/utils/format-time"
-import { savedSecondsItem, useSettings, useStorageItem } from "@/utils/settings"
+import { useSettings, useTotalSavedSeconds } from "@/utils/settings"
 
 // Written by hand: keep in sync with `keyActions` in `shortcuts.ts` and the panel in `panel.tsx`.
 
@@ -46,7 +46,7 @@ const PANEL: Array<{ icons: () => JSX.Element; action: string }> = [
 
 export function Popup() {
   const { currentHostname, isDisabledOnThisDomain, toggleBlacklistHostName } = useSettings()
-  const savedSeconds = useStorageItem(savedSecondsItem)
+  const savedSeconds = useTotalSavedSeconds()
 
   return (
     <main>

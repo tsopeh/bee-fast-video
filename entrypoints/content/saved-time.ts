@@ -1,9 +1,10 @@
-import { savedSecondsItem } from "@/utils/settings"
+import { browser } from "#imports"
+import type { AddSavedSeconds } from "@/utils/saved-time"
 
-/** Saved time is written at most this often while videos play, and also when one pauses or the page is hidden. */
+/** Saved time is sent at most this often while videos play, and also when one pauses or the page is hidden. */
 const SAVE_INTERVAL_MS = 10_000
 
-// Time saved by all videos in this frame, not written yet.
+// Time saved by all videos in this frame, not sent yet.
 let unsaved = 0
 let saveTimeoutId: ReturnType<typeof setTimeout> | undefined
 
@@ -15,13 +16,10 @@ function save() {
   }
   const added = unsaved
   unsaved = 0
-  // Another tab can write between this read and write, and one of the two additions is lost. That costs at most
-  // `SAVE_INTERVAL_MS` of one tab's saved time, which the total can afford.
-  savedSecondsItem
-    .getValue()
-    .then((total) => savedSecondsItem.setValue(total + added))
-    // Fails after the extension is updated or removed, while the old content script still runs.
-    .catch(() => {})
+  // The background script adds it up. Tabs writing the total themselves would overwrite each other's additions.
+  const message: AddSavedSeconds = { addSavedSeconds: added }
+  // Fails after the extension is updated or removed, while the old content script still runs.
+  browser.runtime.sendMessage(message).catch(() => {})
 }
 
 let isListeningForPageHide = false
