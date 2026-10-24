@@ -34,6 +34,16 @@ const SPEED_SAVE_INTERVAL_MS = 1000
 export type Settings = ReturnType<typeof useSettings>
 
 /**
+ * What the popup sends the page when "remember my speed" is turned on, to remember the speed of the video the keys act
+ * on. Only a frame with a shown panel answers, with that video's speed.
+ */
+export const GET_SPEED = { getSpeed: true }
+
+export function isGetSpeed(message: unknown): message is typeof GET_SPEED {
+  return (message as typeof GET_SPEED | null)?.getSpeed === true
+}
+
+/**
  * Used by both the content script and the popup. The content script reads the hostname of its page; the popup reads it
  * from the active tab.
  */

@@ -8,14 +8,14 @@ describe("popup", () => {
     const page = await openPlayer(env)
     const popup = await openPopup(env, page)
     await popup.waitForFunction(() => document.querySelector(".hostname")?.textContent === "127.0.0.1")
-    expect(await popup.$eval(".switch", (element) => (element as HTMLInputElement).checked)).toBe(true)
+    expect(await popup.$eval(".site-switch .switch", (element) => (element as HTMLInputElement).checked)).toBe(true)
 
-    await popup.click(".switch")
+    await popup.click(".site-switch .switch")
     await popup.waitForFunction(() => document.querySelector(".site-state")?.textContent === "Off for")
     await page.waitForSelector(">>> .controller", { hidden: true })
     expect(await countPanels(page)).toBe(0)
 
-    await popup.click(".switch")
+    await popup.click(".site-switch .switch")
     await page.waitForSelector(">>> .controller")
     expect(await countPanels(page)).toBe(1)
   })
@@ -23,7 +23,7 @@ describe("popup", () => {
   it("adds up the time saved by watching faster, on this device and others", async () => {
     const page = await openPlayer(env)
     const popup = await openPopup(env, page)
-    await popup.waitForFunction(() => document.querySelector(".stats")?.textContent === "Time saved: 0.0 hours")
+    await popup.waitForFunction(() => document.querySelector(".stats-value")?.textContent === "0.0 hours")
 
     await setVideo(page, { playbackRate: 2 })
     await page.evaluate(() => document.querySelector("video")?.play())
@@ -45,9 +45,9 @@ describe("popup", () => {
 
     // This device's total comes from local storage, plus every other device's from sync.
     await popup.evaluate(() => chrome.storage.local.set({ savedSeconds: 51_120 }))
-    await popup.waitForFunction(() => document.querySelector(".stats")?.textContent === "Time saved: 14.2 hours")
+    await popup.waitForFunction(() => document.querySelector(".stats-value")?.textContent === "14.2 hours")
     await popup.evaluate(() => chrome.storage.sync.set({ "savedSeconds.other-device": 3600 }))
-    await popup.waitForFunction(() => document.querySelector(".stats")?.textContent === "Time saved: 15.2 hours")
+    await popup.waitForFunction(() => document.querySelector(".stats-value")?.textContent === "15.2 hours")
   })
 })
 

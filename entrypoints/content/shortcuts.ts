@@ -59,15 +59,18 @@ export function createKeyboardShortcuts(adjustSpeed: (videoEl: HTMLVideoElement,
     }
   }
 
+  const targetVideo = () =>
+    pickTargetVideo(registeredVideos, lastInteractedVideo, (videoEl) => {
+      const { width, height } = videoEl.getBoundingClientRect()
+      return { area: width * height, isPlaying: !videoEl.paused && !videoEl.ended }
+    })
+
   const onKeyDown = (event: KeyboardEvent) => {
     const action = keyActions.get(event.key)
     if (action == null || event.altKey || event.ctrlKey || event.metaKey || isTyping(event)) {
       return
     }
-    const target = pickTargetVideo(registeredVideos, lastInteractedVideo, (videoEl) => {
-      const { width, height } = videoEl.getBoundingClientRect()
-      return { area: width * height, isPlaying: !videoEl.paused && !videoEl.ended }
-    })
+    const target = targetVideo()
     if (target != null) {
       // The page still receives the key; swallowing it would break the site's own shortcuts.
       action(target)
@@ -91,6 +94,8 @@ export function createKeyboardShortcuts(adjustSpeed: (videoEl: HTMLVideoElement,
       }
     },
     markInteracted,
+    /** The video the keys act on, if any panel is shown. */
+    targetVideo,
   }
 }
 

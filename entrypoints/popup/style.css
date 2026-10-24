@@ -42,50 +42,93 @@ body {
 main {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 14px;
+  gap: 12px;
+  padding: 12px;
 }
 
 header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 
   .logo {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border: 2px solid #fc9e64;
     border-radius: 50%;
   }
 
   h1 {
     font-family: "Salsa", cursive;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 400;
   }
 }
 
-/* The on/off switch for the current site. The whole card is clickable. */
-.site {
+.stats {
+  margin-left: auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  background-color: var(--yellow);
-  border: 1px solid var(--yellow-edge);
-  border-radius: var(--radius);
-  cursor: pointer;
+  flex-direction: column;
+  align-items: flex-end;
 
-  &.off {
-    background-color: var(--card);
-    border-color: #d8cfc6;
+  .stats-label {
+    font-size: 11px;
+    color: var(--muted);
   }
 
-  .site-text {
+  .stats-value {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The settings for the current site. While the extension is off for it, only the on/off switch stays bright. */
+.site {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card);
+  border: 1px solid #e3d9cf;
+  border-radius: var(--radius);
+  overflow: hidden;
+
+  .setting {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+
+    & + .setting {
+      border-top: 1px solid #efe7df;
+    }
+
+    &:has(:disabled) {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    > svg {
+      flex: none;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .setting-text {
+    flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
+  }
+
+  .site-switch {
+    background-color: var(--yellow);
+    border-bottom: 1px solid var(--yellow-edge);
+  }
+
+  &.off .site-switch {
+    background-color: transparent;
+    border-bottom-color: #efe7df;
   }
 
   .site-state {
@@ -98,6 +141,12 @@ header {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .remembered-speed {
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -137,45 +186,55 @@ header {
     outline: 2px solid var(--text);
     outline-offset: 2px;
   }
+
+  &:disabled {
+    cursor: default;
+  }
 }
 
-.stats {
-  margin-top: -6px;
-  color: var(--muted);
-}
-
-section {
+section:not(.site) {
   display: flex;
   flex-direction: column;
   gap: 6px;
 
   h2 {
     font-family: "Salsa", cursive;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 400;
   }
+}
 
-  .hint {
-    color: var(--muted);
+.hint {
+  color: var(--muted);
+
+  kbd {
+    height: 18px;
+    font-size: 11px;
   }
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  display: grid;
+  /* The same first column in both lists, so their text lines up. */
+  grid-template-columns: 44px 1fr;
+  gap: 4px 10px;
   list-style: none;
 
   li {
-    display: grid;
-    grid-template-columns: 62px 1fr;
+    display: contents;
+  }
+
+  li > :first-child {
+    display: flex;
     align-items: center;
-    gap: 8px;
+  }
+
+  li > :last-child {
+    align-self: center;
   }
 }
 
 .keys {
-  display: flex;
   gap: 3px;
 }
 
@@ -196,11 +255,8 @@ kbd {
 
 /* Icons look like the panel's buttons. */
 .icons {
-  display: flex;
-  gap: 2px;
-
   svg,
-  .chip-text,
+  .chip,
   .handle {
     height: 20px;
     background-color: var(--yellow);
@@ -213,7 +269,7 @@ kbd {
     padding: 3px;
   }
 
-  .chip-text {
+  .chip {
     padding: 0 4px;
     display: inline-flex;
     align-items: center;

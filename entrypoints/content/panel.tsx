@@ -2,8 +2,6 @@ import { onCleanup, type ParentProps, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import {
   BackwardIcon,
-  BrainIcon,
-  FitScreenIcon,
   ForwardIcon,
   GripIcon,
   HideIcon,
@@ -158,33 +156,6 @@ export function Panel(props: Props) {
                 onClick={() => toggleLoop(video)}
               >
                 <RepeatIcon />
-              </ControlButton>
-              <span class="divider" />
-              <ControlButton
-                title={
-                  app.settings.rememberedSpeed() != null
-                    ? `Remembering speed ${formatPlaybackRate(app.settings.rememberedSpeed() ?? 1)}× for all videos on this site. Click to stop.`
-                    : "Remember my speed for all videos on this site"
-                }
-                active={app.settings.rememberedSpeed() != null}
-                onClick={() =>
-                  app.settings.toggleRememberedSpeed(
-                    app.settings.rememberedSpeed() == null ? video.playbackRate : undefined,
-                  )
-                }
-              >
-                <BrainIcon />
-              </ControlButton>
-              <ControlButton
-                title={
-                  app.settings.isFitVideosOnThisDomain()
-                    ? "Videos on this site fit 80% of the window. Click to stop."
-                    : "Fit videos on this site to 80% of the window"
-                }
-                active={app.settings.isFitVideosOnThisDomain()}
-                onClick={() => app.settings.toggleFitVideosOnThisDomain()}
-              >
-                <FitScreenIcon />
               </ControlButton>
               <span class="divider" />
               <ControlButton title="Hide controls for this video" onClick={() => props.onClose()}>

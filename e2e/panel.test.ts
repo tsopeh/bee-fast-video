@@ -68,9 +68,6 @@ describe("panel", () => {
       "|",
       "Loop",
       "|",
-      "Remember my speed for all videos on this site",
-      "Fit videos on this site to 80% of the window",
-      "|",
       "Hide controls for this video",
     ])
   })

@@ -1,5 +1,6 @@
 import { createSignal, For, onCleanup, Show } from "solid-js"
-import { type Settings, useSettings } from "@/utils/settings"
+import { browser } from "#imports"
+import { isGetSpeed, type Settings, useSettings } from "@/utils/settings"
 import { adjustedPlaybackRate } from "@/utils/video-mutators"
 import { watchVideos } from "@/utils/video-set"
 import { Controller } from "./controller"
@@ -36,6 +37,16 @@ export function ControllersContainer(props: { host: HTMLElement }) {
     setSpeed,
     adjustSpeed,
   }
+
+  // Frames without a shown panel stay quiet, so the popup gets the answer from the frame that has one.
+  const onMessage = (message: unknown, _sender: unknown, sendResponse: (speed: number) => void) => {
+    const video = isGetSpeed(message) ? app.shortcuts.targetVideo() : undefined
+    if (video != null) {
+      sendResponse(video.playbackRate)
+    }
+  }
+  browser.runtime.onMessage.addListener(onMessage)
+  onCleanup(() => browser.runtime.onMessage.removeListener(onMessage))
 
   const [videos, setVideos] = createSignal(new Set<HTMLVideoElement>())
   onCleanup(watchVideos(document.body, setVideos))

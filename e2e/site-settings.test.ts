@@ -1,13 +1,41 @@
-// Per-site settings in the panel: "remember my speed" and "fit videos".
+// Per-site settings in the popup: "remember my speed" and "fit videos".
 
 import type { Page } from "puppeteer-core"
 import { describe, expect, it } from "vitest"
-import { clickInPanel, openPanel, openPlayer, setVideo, sleep, useBrowser, video, waitForVideoReady } from "./harness"
+import {
+  clickInPanel,
+  openPanel,
+  openPlayer,
+  openPopup,
+  setVideo,
+  sleep,
+  useBrowser,
+  video,
+  waitForVideoReady,
+} from "./harness"
 
 const env = useBrowser()
 
-const REMEMBER = '[title*="emember"]'
-const FIT = '[title*="80% of the window"]'
+const REMEMBER = ".remember .switch"
+const FIT = ".fit .switch"
+
+/** Flips a switch in the popup for the page, and returns whether it's on afterwards. */
+async function toggleInPopup(page: Page, selector: string) {
+  const popup = await openPopup(env, page)
+  const wasOn = await popup.$eval(selector, (element) => (element as HTMLInputElement).checked)
+  await popup.click(selector)
+  // Waits for the setting to be saved and read back.
+  await popup.waitForFunction(
+    (selector, wasOn) => (document.querySelector(selector) as HTMLInputElement | null)?.checked === !wasOn,
+    {},
+    selector,
+    wasOn,
+  )
+  await popup.close()
+  // Clicks only reach the tab in front.
+  await page.bringToFront()
+  return !wasOn
+}
 
 /** Reloads the page and returns the speed the video starts with. */
 async function speedAfterReload(page: Page) {
@@ -22,9 +50,6 @@ async function reloadPlayer(page: Page) {
   await waitForVideoReady(page)
 }
 
-const isActive = (page: Page, selector: string) =>
-  page.$eval(`>>> ${selector}`, (element) => element.classList.contains("active"))
-
 describe("remember my speed", () => {
   it("is off by default", async () => {
     const page = await openPlayer(env)
@@ -38,8 +63,8 @@ describe("remember my speed", () => {
     await openPanel(page)
     await clickInPanel(page, '[title^="Speed up"]')
     await clickInPanel(page, '[title^="Speed up"]')
-    await clickInPanel(page, REMEMBER)
-    expect(await isActive(page, REMEMBER)).toBe(true)
+    // Turning it on remembers the video's speed.
+    expect(await toggleInPopup(page, REMEMBER)).toBe(true)
     expect(await speedAfterReload(page)).toBe(1.5)
 
     // A speed set by the site (like Twitch catching up with a live stream) isn't remembered.
@@ -63,31 +88,41 @@ describe("remember my speed", () => {
     expect(await video(other, "playbackRate")).toBe(1.75)
     await other.close()
 
-    await openPanel(page)
-    await clickInPanel(page, REMEMBER)
-    expect(await isActive(page, REMEMBER)).toBe(false)
+    expect(await toggleInPopup(page, REMEMBER)).toBe(false)
     expect(await speedAfterReload(page)).toBe(1)
     await page.close()
   })
 
   it("leaves a site's own speed alone when another site's remembered speed changes", async () => {
     const page = await openPlayer(env)
-    await openPanel(page)
-    await clickInPanel(page, REMEMBER)
+    await toggleInPopup(page, REMEMBER)
     await setVideo(page, { playbackRate: 1.1 })
 
     const other = await openPlayer(env, { host: "www.example.com" })
+    await toggleInPopup(other, REMEMBER)
     await openPanel(other)
-    await clickInPanel(other, REMEMBER)
     await clickInPanel(other, '[title^="Speed up"]')
     await sleep(300)
     expect(await video(page, "playbackRate")).toBe(1.1)
 
-    await clickInPanel(other, REMEMBER)
+    await toggleInPopup(other, REMEMBER)
     await other.close()
-    // Clicks only reach the tab in front.
-    await page.bringToFront()
-    await clickInPanel(page, REMEMBER)
+    await toggleInPopup(page, REMEMBER)
+    await page.close()
+  })
+
+  it("can't be turned on while the extension is off for the site", async () => {
+    const page = await openPlayer(env)
+    const popup = await openPopup(env, page)
+    await popup.click(".site-switch .switch")
+    await popup.waitForFunction(() => document.querySelector(".site-state")?.textContent === "Off for")
+    const isDisabled = (selector: string) => popup.$eval(selector, (element) => (element as HTMLInputElement).disabled)
+    expect(await isDisabled(REMEMBER)).toBe(true)
+    expect(await isDisabled(FIT)).toBe(true)
+    await popup.click(".site-switch .switch")
+    await popup.waitForFunction(() => document.querySelector(".site-state")?.textContent === "On for")
+    expect(await isDisabled(REMEMBER)).toBe(false)
+    await popup.close()
     await page.close()
   })
 })
@@ -95,9 +130,7 @@ describe("remember my speed", () => {
 describe("fit videos", () => {
   it("limits all videos on the site to 80% of the window, and undoes it when turned off", async () => {
     const page = await openPlayer(env)
-    await openPanel(page)
-    await clickInPanel(page, FIT)
-    expect(await isActive(page, FIT)).toBe(true)
+    expect(await toggleInPopup(page, FIT)).toBe(true)
     const style = () => page.evaluate(() => document.querySelector("video")?.getAttribute("style") ?? "")
     expect(await style()).toContain("max-width: 80vw !important")
     expect(await style()).toContain("max-height: 80vh !important")
@@ -106,8 +139,8 @@ describe("fit videos", () => {
     await reloadPlayer(page)
     expect(await style()).toContain("max-height: 80vh !important")
 
-    await openPanel(page)
-    await clickInPanel(page, FIT)
+    await toggleInPopup(page, FIT)
+    await page.waitForFunction(() => document.querySelector("video")?.getAttribute("style") === "")
     expect(await style()).toBe("")
     await page.close()
   })

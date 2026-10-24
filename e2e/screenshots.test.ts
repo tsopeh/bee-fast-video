@@ -69,8 +69,14 @@ it("popup", async () => {
   // background tab: it asks for the active tab, which is still the site, so it shows the same content.
   const tab = await env.browser.newPage()
   await page.bringToFront()
-  await tab.setViewport({ width: 320, height: 600, deviceScaleFactor: 2 })
+  // Low, so the page's height below is its content's, not the window's.
+  await tab.setViewport({ width: 320, height: 100, deviceScaleFactor: 2 })
   await tab.goto(extensionUrl(env, "popup.html"))
+  // A remembered speed shows more than the default switches.
+  await tab.evaluate(() => chrome.storage.local.set({ rememberedSpeeds: { "www.example.com": 1.5 } }))
+  await tab.waitForSelector(".remembered-speed")
+  // The switch slides over for 150 ms.
+  await sleep(300)
   await tab.waitForFunction((site) => document.querySelector(".hostname")?.textContent === site, {}, SITE)
   await tab.evaluate(() => document.fonts.ready)
   const height = await tab.evaluate(() => document.documentElement.scrollHeight)
@@ -102,3 +108,6 @@ it("banner", async () => {
   await page.screenshot({ path: join(ROOT, "docs/intro.png"), captureBeyondViewport: false })
   await page.close()
 })
+
+// The popup's extension API, as far as this file uses it.
+declare const chrome: { storage: { local: { set(items: Record<string, unknown>): Promise<void> } } }

@@ -25,15 +25,15 @@ Click the speed to open the full panel. The speed stays in the same place, so yo
 - Loop.
 - Drag the panel anywhere by its grip, at the end of the second row. It goes back to its place once the video scrolls out of view.
 - Resize a video by dragging the yellow square on its corner, shown while the panel is open. The size stays when you close the panel. Double-click the square to undo.
-- Remember my speed on this site (brain button). Every video on the site then plays at the speed you last set with the extension. Speeds the site sets itself aren't remembered, like Twitch nudging the speed to catch up with a live stream.
-- Fit videos on this site to 80% of the window (screen button). Useful on sites whose videos don't fit on screen.
+- Remember my speed on this site (in the popup). Turning it on remembers the speed of the video the keys act on. Every video on the site then plays at the speed you last set with the extension. Speeds the site sets itself aren't remembered, like Twitch nudging the speed to catch up with a live stream.
+- Fit videos on this site to 80% of the window (in the popup). Useful on sites whose videos don't fit on screen.
 - Hide the panel for one video (crossed-out eye). This also undoes its resizing. The panel comes back when the page reloads.
 - Turn the extension off for a site, e.g. for video calls (in the popup).
 - See how much time you saved by watching faster, in hours, like Steam's play time (in the popup). Watching slower than 1× takes time off. The total adds up all your devices where the browser syncs extension data.
 
 The panel stays on top of the page and works in fullscreen when the site makes its player fullscreen, which is what most sites do. When the `<video>` itself is fullscreen (e.g. with the browser's own fullscreen button), the panel is shown and shortcuts work, but it can't be clicked: Chrome doesn't allow clicks on anything outside a fullscreen element, and a video can't hold other elements. That's also why the panel has no fullscreen button: use the site's.
 
-The popup lists all keys and buttons:
+The popup has the settings for the current site, the time saved, all keys, and tips for what the panel doesn't show by itself:
 
 <img src="docs/popup.png" alt="The popup" width=320>
 
@@ -63,7 +63,9 @@ All speed changes the user makes go through one function in `ControllersContaine
 
 ### Popup
 
-The popup lists the controls and shortcuts, has the switch that turns the extension off for the site, and shows the time saved. The other site settings (remember my speed, fit videos) are buttons in the panel. The popup's lists have to be updated by hand when controls or shortcuts change.
+The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, the keys, and tips for the panel. It fits without scrolling: the tips cover only what the panel can't show, like right-click, double-click and scrolling. The panel's buttons have tooltips. The lists have to be updated by hand when controls or shortcuts change.
+
+The popup can't see the page's videos, so to remember a speed it asks the tab (`GET_SPEED` in `utils/settings.ts`). Only a frame with a shown panel answers, with the speed of the video the keys act on. With no answer, it remembers 1.00.
 
 ### Styles
 
