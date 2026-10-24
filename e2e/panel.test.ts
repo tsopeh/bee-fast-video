@@ -5,6 +5,7 @@ import {
   clickInPanel,
   countPanels,
   hasInPanel,
+  isPanelOnTop,
   openPanel,
   openPlayer,
   panelOffset,
@@ -36,11 +37,7 @@ describe("panel", () => {
   it("reacts to the pointer right away", async () => {
     const label = await boxOf(page, ".playback-rate")
     await page.mouse.move(label.centerX, label.centerY)
-    const tag = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, {
-      x: label.centerX,
-      y: label.centerY,
-    })
-    expect(tag).toBe("BEE-FAST-VIDEO-ROOT")
+    expect(await isPanelOnTop(page)).toBe(true)
   })
 
   it("opens and closes with a click on the speed", async () => {
@@ -80,7 +77,7 @@ describe("panel", () => {
     const widths = []
     for (const playbackRate of [0.25, 1, 1.75, 2.5]) {
       await setVideo(page, { playbackRate })
-      await sleep(50)
+      await expect.poll(() => textOf(page, ".playback-rate")).toBe(playbackRate.toFixed(2))
       widths.push((await boxOf(page, ".playback-rate")).width)
     }
     expect(new Set(widths).size).toBe(1)
@@ -165,9 +162,7 @@ describe("panel", () => {
   it("switches the time between time played and time left", async () => {
     await openPanel(page)
     await setVideo(page, { currentTime: 20 })
-    await page.waitForFunction(() => document.querySelector("video")?.currentTime === 20)
-    await sleep(100)
-    expect(await textOf(page, ".time")).toBe("0:20")
+    await expect.poll(() => textOf(page, ".time")).toBe("0:20")
     await clickInPanel(page, ".time")
     expect(await textOf(page, ".time")).toBe("0:40")
   })
@@ -179,8 +174,7 @@ describe("panel", () => {
     await clickInPanel(page, ".time")
     expect(await textOf(page, ".time")).toBe("0:20")
     await setVideo(page, { playbackRate: 0.5 })
-    await sleep(100)
-    expect(await textOf(page, ".time")).toBe("1:20")
+    await expect.poll(() => textOf(page, ".time")).toBe("1:20")
   })
 
   it("plays, pauses, seeks and loops with the buttons", async () => {

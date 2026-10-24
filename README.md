@@ -41,7 +41,7 @@ Keyboard shortcuts work even when the site's player tries to swallow key presses
 
 ## How it works
 
-The extension has three parts: a content script (`entrypoints/content/`), which runs on every page, a popup (`entrypoints/popup/`), and a background script (`entrypoints/background.ts`) that only adds up the time saved. The content script and the popup share settings through extension storage (`utils/settings.ts`). The sites where the extension is off are in sync storage, so they follow you to other devices. "Fit videos" and remembered speeds are local to each device; they were in sync storage before, and the background script copies them over once after an update (`utils/moved-settings.ts`).
+The extension has three parts: a content script (`entrypoints/content/`), which runs on every page, a popup (`entrypoints/popup/`), and a background script (`entrypoints/background.ts`) that only adds up the time saved. The content script and the popup share settings through extension storage (`utils/settings.ts`). The sites where the extension is off are in sync storage, so they follow you to other devices. "Fit videos" and remembered speeds are local to each device.
 
 ### Content script
 

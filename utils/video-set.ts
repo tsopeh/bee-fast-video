@@ -31,18 +31,6 @@ export function computeNewState(oldState: Set<HTMLVideoElement>, mutations: Arra
   return newState ?? oldState
 }
 
-/** Whether the mutations added a video to the document. */
-export function addsVideo(mutations: Array<MutationRecord>): boolean {
-  for (const mutation of mutations) {
-    for (const video of videosIn(mutation.addedNodes)) {
-      if (video.isConnected) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
 // Same as `Node.ELEMENT_NODE`. Unlike `instanceof HTMLElement`, comparing `nodeType` also works for nodes from other
 // realms (e.g. iframes) and outside of browsers (unit tests).
 const ELEMENT_NODE = 1

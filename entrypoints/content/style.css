@@ -61,7 +61,7 @@ button {
   display: flex;
   opacity: 0.4;
   transition: opacity 200ms var(--ease-style);
-  z-index: calc(2147483647 - 5) !important; /* max_int - 5 */
+  z-index: calc(2147483647 - 5) !important;
 
   /* Grows on hover (see below), so the widget stays hovered when the pointer slips just past its edge. */
   .underlay {
@@ -71,7 +71,6 @@ button {
     top: 50%;
     left: 50%;
     transform: translateX(-50%) translateY(-50%);
-    /* background-color: red; For debugging */
     z-index: -1;
   }
 
@@ -88,6 +87,11 @@ button {
       border 200ms var(--ease-style),
       color 200ms var(--ease-style);
 
+    /* Icons follow the text color, which turns black on hover. */
+    svg {
+      fill: currentColor;
+    }
+
     .control {
       height: var(--height);
       cursor: pointer;
@@ -98,10 +102,7 @@ button {
       padding: 0 var(--gap);
       border-radius: calc(0.5 * var(--size));
 
-      &:hover {
-        background-color: rgb(233, 171, 23, 0.6);
-      }
-
+      &:hover,
       &.active {
         background-color: rgb(233, 171, 23, 0.6);
       }
@@ -115,8 +116,6 @@ button {
       svg {
         width: calc(0.7 * var(--height));
         height: calc(0.7 * var(--height));
-        fill: #ffffff;
-        transition: fill 200ms var(--ease-style);
       }
     }
 
@@ -165,7 +164,6 @@ button {
       svg {
         width: calc(0.35 * var(--height));
         height: calc(0.7 * var(--height));
-        fill: #ffffff;
       }
     }
 
@@ -221,10 +219,6 @@ button {
       background-color: #ffdb00;
       border: 1px solid #e9ab17;
       color: #000000;
-
-      svg {
-        fill: #000000;
-      }
     }
   }
 }

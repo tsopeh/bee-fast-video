@@ -1,6 +1,6 @@
 import { render } from "solid-js/web"
 import { type ContentScriptContext, createShadowRootUi, defineContentScript } from "#imports"
-import { addsVideo } from "@/utils/video-set"
+import { computeNewState } from "@/utils/video-set"
 import { ControllersContainer } from "./controllers-container"
 import { followFullscreen } from "./host"
 import css from "./style.css?inline"
@@ -25,7 +25,10 @@ export default defineContentScript({
       position: "inline",
       anchor: "body",
       css,
-      onMount: (container, _shadow, host) => render(() => <ControllersContainer host={host} />, container),
+      onMount: (container, _shadow, host) => {
+        keepEventsInside(container)
+        return render(() => <ControllersContainer host={host} />, container)
+      },
       onRemove: (unmount) => unmount?.(),
     })
     ui.mount()
@@ -40,7 +43,7 @@ function waitForVideo(ctx: ContentScriptContext): Promise<void> {
       return
     }
     const observer = new MutationObserver((mutations) => {
-      if (addsVideo(mutations)) {
+      if (computeNewState(new Set(), mutations).size > 0) {
         observer.disconnect()
         resolve()
       }
@@ -48,4 +51,18 @@ function waitForVideo(ctx: ContentScriptContext): Promise<void> {
     observer.observe(document.body, { childList: true, subtree: true })
     ctx.onInvalidated(() => observer.disconnect())
   })
+}
+
+/** Pointer events on the panels that the page must not get, e.g. a click that would pause a click-to-pause player. */
+const PANEL_EVENTS = ["click", "dblclick", "contextmenu", "pointerdown", "pointerup", "mousedown", "mouseup", "wheel"]
+
+/**
+ * Stops pointer events at the panels' container, so they don't reach the page. The panels' own handlers are native
+ * (`on:click`) and run on their elements first. Solid's usual `onClick` would be too late: it listens on the document,
+ * after the event has passed through the page's elements.
+ */
+function keepEventsInside(element: HTMLElement) {
+  for (const type of PANEL_EVENTS) {
+    element.addEventListener(type, (event) => event.stopPropagation())
+  }
 }

@@ -1,5 +1,4 @@
 import { browser, defineBackground } from "#imports"
-import { copyMovedSettings } from "@/utils/moved-settings"
 import { isAddSavedSeconds, SAVED_SECONDS_PREFIX } from "@/utils/saved-time"
 import { deviceIdItem, savedSecondsItem } from "@/utils/settings"
 
@@ -10,9 +9,6 @@ import { deviceIdItem, savedSecondsItem } from "@/utils/settings"
 const SYNC_INTERVAL_MS = 20_000
 
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(() =>
-    copyMovedSettings(browser.storage.sync, browser.storage.local).catch(() => {}),
-  )
   browser.runtime.onMessage.addListener((message) => {
     if (isAddSavedSeconds(message)) {
       addSavedSeconds(message.addSavedSeconds)

@@ -1,6 +1,6 @@
 import type { Page } from "puppeteer-core"
 import { beforeEach, describe, expect, it } from "vitest"
-import { boxOf, openPlayer, panelOffset, sleep, useBrowser, video } from "./harness"
+import { isPanelOnTop, openPlayer, panelOffset, sleep, useBrowser, video } from "./harness"
 
 const env = useBrowser()
 let page: Page
@@ -10,22 +10,13 @@ beforeEach(async () => {
   page = await openPlayer(env)
 })
 
-/** Whether the speed label is what's drawn on top at its own position, so it can be seen and clicked. */
-const isPanelOnTop = async () => {
-  const label = await boxOf(page, ".playback-rate")
-  return page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName === "BEE-FAST-VIDEO-ROOT", {
-    x: label.centerX,
-    y: label.centerY,
-  })
-}
-
 describe("fullscreen", () => {
   it("keeps the panel on top when the site makes its player fullscreen", async () => {
     await page.click("#site-fullscreen")
     await page.waitForFunction(() => document.fullscreenElement?.id === "player")
     // Fullscreen resizes the video, and the panel follows.
     await expect.poll(() => panelOffset(page)).toEqual({ x: 5, y: 5 })
-    expect(await isPanelOnTop()).toBe(true)
+    expect(await isPanelOnTop(page)).toBe(true)
   })
 
   // Chrome only lets you click inside the fullscreen element, and a `<video>` can't hold the panel (see `host.ts`).
@@ -42,7 +33,7 @@ describe("fullscreen", () => {
     await page.evaluate(() => document.exitFullscreen())
     await page.waitForFunction(() => document.fullscreenElement == null)
     // Back to normal: clickable again.
-    expect(await isPanelOnTop()).toBe(true)
+    expect(await isPanelOnTop(page)).toBe(true)
   })
 
   it("stays on top of the page without fullscreen", async () => {
@@ -52,6 +43,6 @@ describe("fullscreen", () => {
       cover.style.cssText = "position: fixed; inset: 0; z-index: 2147483647"
       document.body.append(cover)
     })
-    expect(await isPanelOnTop()).toBe(true)
+    expect(await isPanelOnTop(page)).toBe(true)
   })
 })

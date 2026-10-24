@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { addsVideo, computeNewState } from "./video-set"
+import { computeNewState } from "./video-set"
 
 // Minimal stand-ins for DOM nodes; `computeNewState` only relies on these members.
 function fakeVideo(isConnected = true): HTMLVideoElement {
@@ -63,17 +63,5 @@ describe("computeNewState", () => {
     const state = new Set<HTMLVideoElement>()
     const attributeMutation = { type: "attributes" } as unknown as MutationRecord
     expect(computeNewState(state, [attributeMutation])).toBe(state)
-  })
-})
-
-describe("addsVideo", () => {
-  it("finds added videos, also nested ones", () => {
-    expect(addsVideo([childListMutation([fakeContainer([fakeVideo()])])])).toBe(true)
-    expect(addsVideo([childListMutation([fakeVideo()])])).toBe(true)
-  })
-
-  it("ignores videos that are no longer in the document, and removals", () => {
-    expect(addsVideo([childListMutation([fakeVideo(false)])])).toBe(false)
-    expect(addsVideo([childListMutation([], [fakeVideo()])])).toBe(false)
   })
 })

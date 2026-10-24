@@ -11,7 +11,6 @@ import {
   PlayIcon,
   RemoveIcon,
   RepeatIcon,
-  SlashIcon,
   SlowDownIcon,
   SpeedIcon,
   SpeedUpIcon,
@@ -109,7 +108,6 @@ export function Panel(props: Props) {
   return (
     <>
       <div
-        ref={keepEventsInside}
         class="controller"
         classList={{ expanded: state.isExpanded }}
         tabIndex={-1}
@@ -160,10 +158,12 @@ export function Panel(props: Props) {
                 <ForwardIcon />
               </ControlButton>
               <span class="divider" />
-              <ControlButton title={state.isLooped ? "Disable loop" : "Loop"} onClick={() => toggleLoop(video)}>
-                <Slashed when={state.isLooped}>
-                  <RepeatIcon />
-                </Slashed>
+              <ControlButton
+                title={state.isLooped ? "Disable loop" : "Loop"}
+                active={state.isLooped}
+                onClick={() => toggleLoop(video)}
+              >
+                <RepeatIcon />
               </ControlButton>
               <span class="divider" />
               <ControlButton
@@ -263,7 +263,6 @@ export function Panel(props: Props) {
       </div>
       <Show when={state.isExpanded}>
         <button
-          ref={keepEventsInside}
           type="button"
           class="resize-handle"
           title="Drag to resize, double-click to reset"
@@ -291,27 +290,4 @@ function ControlButton(
       {props.children}
     </button>
   )
-}
-
-/** The icon, struck through while `when` is on, e.g. the loop icon while looping (click to stop). */
-function Slashed(props: ParentProps<{ when: boolean }>) {
-  return (
-    <Show when={props.when} fallback={props.children}>
-      <SlashIcon>{props.children}</SlashIcon>
-    </Show>
-  )
-}
-
-/** Pointer events on the panel that the page must not get, e.g. a click that would pause a click-to-pause player. */
-const PANEL_EVENTS = ["click", "dblclick", "contextmenu", "pointerdown", "pointerup", "mousedown", "mouseup", "wheel"]
-
-/**
- * Stops pointer events at the panel, so they don't reach the page. The panel's own handlers are native (`on:click`)
- * and run on their elements first. Solid's usual `onClick` would be too late: it listens on the document, after the
- * event has passed through the page's elements.
- */
-function keepEventsInside(element: HTMLElement) {
-  for (const type of PANEL_EVENTS) {
-    element.addEventListener(type, (event) => event.stopPropagation())
-  }
 }

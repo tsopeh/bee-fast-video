@@ -1,4 +1,4 @@
-import { type Accessor, createSignal, onCleanup } from "solid-js"
+import { type Accessor, createMemo, createSignal, onCleanup } from "solid-js"
 import { browser, storage, type WxtStorageItem } from "#imports"
 import { totalSavedSeconds } from "./saved-time"
 
@@ -8,7 +8,7 @@ const blacklistedHostnamesItem = storage.defineItem<Array<string>>("sync:blackli
 })
 
 // Sites on which all videos are limited to 80% of the window (see `FIT_TO_VIEWPORT_STYLES`). This and the remembered
-// speeds are kept on each device. They were in sync storage before; the background script copies them over once.
+// speeds are kept on each device.
 const fitVideosHostnamesItem = storage.defineItem<Array<string>>("local:fitVideosHostnames", {
   fallback: [],
 })
@@ -65,16 +65,21 @@ export function useSettings() {
     return speed == null ? others : { ...others, [currentHostname()]: speed }
   }
 
+  // Memos, so that a change for another site doesn't re-run the effects that apply these to every video. Without them,
+  // changing the speed on one site would put the remembered speed back on another site's videos.
+  const isFitVideosOnThisDomain = createMemo(() => fitVideos()?.includes(currentHostname()) ?? false)
+  const rememberedSpeed = createMemo(() => rememberedSpeeds()?.[currentHostname()])
+
   return {
     currentHostname,
     /** Whether all settings have been read from storage. */
     isLoaded: () => blacklist() != null && fitVideos() != null && rememberedSpeeds() != null,
     isDisabledOnThisDomain: () => blacklist()?.includes(currentHostname()) ?? false,
     toggleBlacklistHostName: () => toggleHostname(blacklistedHostnamesItem, blacklist()),
-    isFitVideosOnThisDomain: () => fitVideos()?.includes(currentHostname()) ?? false,
+    isFitVideosOnThisDomain,
     toggleFitVideosOnThisDomain: () => toggleHostname(fitVideosHostnamesItem, fitVideos()),
     /** The remembered speed for this site, or `undefined` when "remember my speed" is off. */
-    rememberedSpeed: (): number | undefined => rememberedSpeeds()?.[currentHostname()],
+    rememberedSpeed,
     /** Turns "remember my speed" on (with this speed) or off (`undefined`). Saved right away. */
     toggleRememberedSpeed: (speed: number | undefined) => saveSpeeds.now(withSpeed(speed)),
     /** Remembers a new speed while "remember my speed" is on. */

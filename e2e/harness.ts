@@ -159,6 +159,15 @@ export async function boxOf(page: Page, selector: string) {
   return { ...box, centerX: box.x + box.width / 2, centerY: box.y + box.height / 2 }
 }
 
+/** Whether the speed label is what's drawn on top at its own position, so it can be seen and clicked. */
+export async function isPanelOnTop(page: Page) {
+  const label = await boxOf(page, ".playback-rate")
+  return page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName === "BEE-FAST-VIDEO-ROOT", {
+    x: label.centerX,
+    y: label.centerY,
+  })
+}
+
 export function textOf(page: Page, selector: string) {
   return page.$eval(`>>> ${selector}`, (element) => element.textContent)
 }
