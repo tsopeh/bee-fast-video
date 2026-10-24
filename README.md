@@ -37,11 +37,13 @@ The popup has the settings for the current site, the time saved, and all keys:
 
 <img src="docs/popup.png" alt="The popup" width=320>
 
+To change a key, click it in the popup and press the new one. Esc cancels. If another action had that key, the two swap. `Reset` next to the heading puts back all the defaults; it only shows when a key was changed. Keys pressed with Shift, Ctrl, Alt or Cmd can't be used, since Shift picks the other step and the others are left to the page and the browser. The number keys always seek. Changed keys follow you to other devices where the browser syncs extension data.
+
 Keyboard shortcuts work even when the site's player tries to swallow key presses, and they act on one video only: the one you last hovered or clicked, otherwise the biggest visible one, preferring one that's playing. The page still gets the key presses, so its own shortcuts keep working. Shortcuts are ignored while you type in a text field.
 
 ## How it works
 
-The extension has four parts: a content script (`entrypoints/content/`), which runs on every page, a small second content script that helps it find videos in shadow roots (`entrypoints/shadow-roots.content.ts`), a popup (`entrypoints/popup/`), and a background script (`entrypoints/background.ts`) that only adds up the time saved. The content script and the popup share settings through extension storage (`utils/settings.ts`). The sites where the extension is off are in sync storage, so they follow you to other devices. "Fit videos" and remembered speeds are local to each device.
+The extension has four parts: a content script (`entrypoints/content/`), which runs on every page, a small second content script that helps it find videos in shadow roots (`entrypoints/shadow-roots.content.ts`), a popup (`entrypoints/popup/`), and a background script (`entrypoints/background.ts`) that only adds up the time saved. The content script and the popup share settings through extension storage (`utils/settings.ts`). The sites where the extension is off and the changed keys are in sync storage, so they follow you to other devices. "Fit videos" and remembered speeds are local to each device.
 
 ### Content script
 
@@ -57,13 +59,13 @@ A `Controller` applies the site settings to its video (fit videos, remembered sp
 
 The `Panel` changes the video when you use its controls, and follows changes the page makes to the video, so it always shows the real state. Clicks on it never reach the page, so a player that pauses on click doesn't. The panel starts collapsed each time it shows.
 
-While it shows, the panel registers its video for keyboard shortcuts (`shortcuts.ts`). Shortcuts listen on `window` in the capture phase, which runs before any of the page's own handlers, so a player can't block them. `utils/target-video.ts` picks the one video they act on.
+While it shows, the panel registers its video for keyboard shortcuts (`shortcuts.ts`). The keys come from `utils/keys.ts`, which the popup and the panel's tooltips use too. A key is matched by the character it types (`KeyboardEvent.key`), so it follows the keyboard layout. A key set in the popup also keeps its physical place (`code`), because Shift changes the character of keys like `[`. Shortcuts listen on `window` in the capture phase, which runs before any of the page's own handlers, so a player can't block them. `utils/target-video.ts` picks the one video they act on.
 
 All speed changes the user makes go through one function in `ControllersContainer`, which is also where "remember my speed" saves them. Speed, seek and volume changes are always relative to the current value and never snap to a grid like multiples of 5 seconds. So going back and forth while a video plays still moves forward. Scrolling changes values at most once every so often (`utils/wheel-stepper.ts`), so a trackpad and a mouse wheel change them at the same pace.
 
 ### Popup
 
-The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, and the keys. Opposite keys share a row, followed by how far they step, without and with Shift. It fits without scrolling. The panel explains itself through its buttons' tooltips, so the popup doesn't. The key list has to be updated by hand when shortcuts change.
+The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, and the keys, which can be changed there. Opposite keys share a row, followed by how far they step, without and with Shift. It fits without scrolling. The panel explains itself through its buttons' tooltips, so the popup doesn't. The key list has to be updated by hand when shortcuts change.
 
 The popup can't see the page's videos, so to remember a speed it asks the tab (`GET_SPEED` in `utils/settings.ts`). Only a frame with a shown panel answers, with the speed of the video the keys act on. With no answer, it remembers 1.00.
 

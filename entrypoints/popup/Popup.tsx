@@ -1,20 +1,31 @@
-import { For, type JSX, type ParentProps, Show } from "solid-js"
+import { createSignal, For, type JSX, onCleanup, type ParentProps, Show } from "solid-js"
 import { browser } from "#imports"
 import { BrainIcon, FitScreenIcon } from "@/assets/control-icons"
 import iconLarge from "@/assets/icon-large.png"
 import { formatHours, formatPlaybackRate } from "@/utils/format-time"
+import { bindingForKey, type KeyAction, keyLabel } from "@/utils/keys"
 import { GET_SPEED, useSettings, useTotalSavedSeconds } from "@/utils/settings"
 
-// Written by hand: keep in sync with `keyActions` in `shortcuts.ts`. Opposite keys share a row, followed by how
-// far they step, without and with Shift.
+// Written by hand: keep in sync with `actions` in `shortcuts.ts`. Opposite keys share a row, followed by how far they
+// step, without and with Shift.
 
-const KEYS: Array<{ keys: Array<string>; action: string; step?: string; shiftStep?: string }> = [
-  { keys: ["Z", "X"], action: "Slow down, speed up", step: "±0.25", shiftStep: "±0.1" },
-  { keys: ["A", "D"], action: "Rewind, fast forward", step: "±5 s", shiftStep: "±20 s" },
-  { keys: ["Q", "E"], action: "Previous, next frame" },
-  { keys: ["S"], action: "Play/pause" },
-  { keys: ["0–9"], action: "Seek to 0% … 90% of the video" },
+const KEYS: Array<{ keys: Array<KeyAction>; action: string; step?: string; shiftStep?: string }> = [
+  { keys: ["slowDown", "speedUp"], action: "Slow down, speed up", step: "±0.25", shiftStep: "±0.1" },
+  { keys: ["rewind", "forward"], action: "Rewind, fast forward", step: "±5 s", shiftStep: "±20 s" },
+  { keys: ["previousFrame", "nextFrame"], action: "Previous, next frame" },
+  { keys: ["playPause"], action: "Play/pause" },
 ]
+
+/** For the key buttons' tooltips. */
+const ACTION_NAMES: Record<KeyAction, string> = {
+  slowDown: "Slow down",
+  speedUp: "Speed up",
+  rewind: "Rewind",
+  forward: "Fast forward",
+  playPause: "Play/pause",
+  previousFrame: "Previous frame",
+  nextFrame: "Next frame",
+}
 
 /** The speed of the video the keys act on in the active tab, or 1 when there's none. */
 async function speedInActiveTab(): Promise<number> {
@@ -28,6 +39,59 @@ export function Popup() {
   const settings = useSettings()
   const savedSeconds = useTotalSavedSeconds()
   const isOff = () => settings.isDisabledOnThisDomain()
+  // The action whose key button waits for a new key.
+  const [recording, setRecording] = createSignal<KeyAction>()
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    const action = recording()
+    // Tab moves on, and the button losing focus stops waiting.
+    if (action == null || event.key === "Tab") {
+      return
+    }
+    // Keeps Space and Enter from clicking the button again.
+    event.preventDefault()
+    const binding = bindingForKey(event)
+    if (event.key === "Escape" || binding != null) {
+      setRecording(undefined)
+    }
+    if (binding != null) {
+      settings.setKey(action, binding)
+    }
+  }
+  window.addEventListener("keydown", onKeyDown)
+  onCleanup(() => window.removeEventListener("keydown", onKeyDown))
+
+  const keyRow = (item: (typeof KEYS)[number]) => (
+    <li>
+      <span class="key-pair">
+        <For each={item.keys}>
+          {(action) => (
+            <button
+              type="button"
+              class="key"
+              classList={{ recording: recording() === action }}
+              title={
+                recording() === action ? "Press a new key. Esc cancels." : `${ACTION_NAMES[action]}. Click to change.`
+              }
+              onClick={() => setRecording(recording() === action ? undefined : action)}
+              onBlur={() => setRecording(undefined)}
+            >
+              {recording() === action ? "…" : keyLabel(settings.keys()[action].key)}
+            </button>
+          )}
+        </For>
+      </span>
+      <span class="action" classList={{ wide: item.step == null }}>
+        {item.action}
+      </span>
+      <Show when={item.step}>
+        <span class="step">{item.step}</span>
+        <span class="shift-step">
+          or <kbd>Shift</kbd> {item.shiftStep}
+        </span>
+      </Show>
+    </li>
+  )
 
   return (
     <main>
@@ -73,26 +137,23 @@ export function Popup() {
       </section>
 
       <section>
-        <h2>Keys</h2>
+        <div class="keys-heading">
+          <h2>Keys</h2>
+          <Show when={!settings.areDefaultKeys()}>
+            <button type="button" class="reset-keys" onClick={() => settings.resetKeys()}>
+              Reset
+            </button>
+          </Show>
+        </div>
         <ul class="keys">
-          <For each={KEYS}>
-            {(item) => (
-              <li>
-                <span class="key-pair">
-                  <For each={item.keys}>{(key) => <kbd>{key}</kbd>}</For>
-                </span>
-                <span class="action" classList={{ wide: item.step == null }}>
-                  {item.action}
-                </span>
-                <Show when={item.step}>
-                  <span class="step">{item.step}</span>
-                  <span class="shift-step">
-                    or <kbd>Shift</kbd> {item.shiftStep}
-                  </span>
-                </Show>
-              </li>
-            )}
-          </For>
+          <For each={KEYS}>{keyRow}</For>
+          {/* Always seek, so they can't be changed. */}
+          <li>
+            <span class="key-pair">
+              <kbd>0–9</kbd>
+            </span>
+            <span class="action wide">Seek to 0% … 90% of the video</span>
+          </li>
         </ul>
       </section>
     </main>

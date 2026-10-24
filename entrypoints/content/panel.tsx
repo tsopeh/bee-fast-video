@@ -14,6 +14,7 @@ import {
   VolumeIcon,
 } from "@/assets/control-icons"
 import { formatPlaybackRate, formatTime, timeLeftAtSpeed } from "@/utils/format-time"
+import { type KeyAction, keyLabel } from "@/utils/keys"
 import { adjustVolume, SEEK_STEP_MS, SPEED_STEP, seekBy, toggleLoop, togglePlayPause } from "@/utils/video-mutators"
 import { onWheelStep } from "@/utils/wheel-stepper"
 import type { App } from "./controllers-container"
@@ -96,6 +97,8 @@ export function Panel(props: Props) {
   onCleanup(app.shortcuts.registerVideo(video))
   onCleanup(trackFrameDuration(video))
 
+  const keyFor = (action: KeyAction) => keyLabel(app.settings.keys()[action].key)
+
   // The seek bar's end. A live stream has no duration, only the part that can be seeked.
   const seekEnd = () => (Number.isFinite(state.duration) ? state.duration : state.seekableEnd)
 
@@ -136,20 +139,35 @@ export function Panel(props: Props) {
               <span>{formatPlaybackRate(state.playbackRate)}</span>
             </button>
             <Show when={state.isExpanded}>
-              <ControlButton title="Slow down (Z)" onClick={() => app.adjustSpeed(video, -SPEED_STEP)}>
+              <ControlButton
+                title={`Slow down (${keyFor("slowDown")})`}
+                onClick={() => app.adjustSpeed(video, -SPEED_STEP)}
+              >
                 <SlowDownIcon />
               </ControlButton>
-              <ControlButton title="Speed up (X)" onClick={() => app.adjustSpeed(video, +SPEED_STEP)}>
+              <ControlButton
+                title={`Speed up (${keyFor("speedUp")})`}
+                onClick={() => app.adjustSpeed(video, +SPEED_STEP)}
+              >
                 <SpeedUpIcon />
               </ControlButton>
               <span class="divider" />
-              <ControlButton title="Rewind 5 seconds (A)" onClick={() => seekBy(video, -SEEK_STEP_MS)}>
+              <ControlButton
+                title={`Rewind 5 seconds (${keyFor("rewind")})`}
+                onClick={() => seekBy(video, -SEEK_STEP_MS)}
+              >
                 <BackwardIcon />
               </ControlButton>
-              <ControlButton title={`${state.isPaused ? "Play" : "Pause"} (S)`} onClick={() => togglePlayPause(video)}>
+              <ControlButton
+                title={`${state.isPaused ? "Play" : "Pause"} (${keyFor("playPause")})`}
+                onClick={() => togglePlayPause(video)}
+              >
                 {state.isPaused ? <PlayIcon /> : <PauseIcon />}
               </ControlButton>
-              <ControlButton title="Fast forward 5 seconds (D)" onClick={() => seekBy(video, +SEEK_STEP_MS)}>
+              <ControlButton
+                title={`Fast forward 5 seconds (${keyFor("forward")})`}
+                onClick={() => seekBy(video, +SEEK_STEP_MS)}
+              >
                 <ForwardIcon />
               </ControlButton>
               <span class="divider" />

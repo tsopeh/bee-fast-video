@@ -1,5 +1,14 @@
 import { type Accessor, createMemo, createSignal, onCleanup } from "solid-js"
 import { browser, storage, type WxtStorageItem } from "#imports"
+import {
+  areDefaultKeys,
+  changedKeys,
+  type KeyAction,
+  type KeyBinding,
+  type KeyBindings,
+  resolveKeys,
+  withKey,
+} from "./keys"
 import { totalSavedSeconds } from "./saved-time"
 
 // Same storage key as v1, so that existing users keep their settings.
@@ -17,6 +26,9 @@ const fitVideosHostnamesItem = storage.defineItem<Array<string>>("local:fitVideo
 const rememberedSpeedsItem = storage.defineItem<Record<string, number>>("local:rememberedSpeeds", {
   fallback: {},
 })
+
+// The keys the user changed in the popup. In sync storage, since they're about the user's hands, not the device.
+const keysItem = storage.defineItem<Partial<KeyBindings>>("sync:keys", { fallback: {} })
 
 /** This device's saved time (see `saved-time.ts`). Only the background script writes it. */
 export const savedSecondsItem = storage.defineItem<number>("local:savedSeconds", { fallback: 0 })
@@ -61,6 +73,7 @@ export function useSettings() {
   const blacklist = useStorageItem(blacklistedHostnamesItem)
   const fitVideos = useStorageItem(fitVideosHostnamesItem)
   const rememberedSpeeds = useStorageItem(rememberedSpeedsItem)
+  const storedKeys = useStorageItem(keysItem)
 
   const toggleHostname = (item: typeof blacklistedHostnamesItem, list: Array<string> = []) => {
     const hostname = currentHostname()
@@ -79,11 +92,12 @@ export function useSettings() {
   // changing the speed on one site would put the remembered speed back on another site's videos.
   const isFitVideosOnThisDomain = createMemo(() => fitVideos()?.includes(currentHostname()) ?? false)
   const rememberedSpeed = createMemo(() => rememberedSpeeds()?.[currentHostname()])
+  const keys = createMemo(() => resolveKeys(storedKeys() ?? {}))
 
   return {
     currentHostname,
     /** Whether all settings have been read from storage. */
-    isLoaded: () => blacklist() != null && fitVideos() != null && rememberedSpeeds() != null,
+    isLoaded: () => blacklist() != null && fitVideos() != null && rememberedSpeeds() != null && storedKeys() != null,
     isDisabledOnThisDomain: () => blacklist()?.includes(currentHostname()) ?? false,
     toggleBlacklistHostName: () => toggleHostname(blacklistedHostnamesItem, blacklist()),
     isFitVideosOnThisDomain,
@@ -94,6 +108,12 @@ export function useSettings() {
     toggleRememberedSpeed: (speed: number | undefined) => saveSpeeds.now(withSpeed(speed)),
     /** Remembers a new speed while "remember my speed" is on. */
     updateRememberedSpeed: (speed: number) => saveSpeeds.later(withSpeed(speed)),
+    /** The shortcut keys, the defaults until the user's have been read. */
+    keys,
+    areDefaultKeys: () => areDefaultKeys(keys()),
+    setKey: (action: KeyAction, binding: KeyBinding) =>
+      keysItem.setValue(changedKeys(withKey(keys(), action, binding))),
+    resetKeys: () => keysItem.removeValue(),
   }
 }
 

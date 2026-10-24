@@ -1,11 +1,13 @@
 // Keyboard event reference: https://w3c.github.io/uievents/tools/key-event-viewer.html
 
-import { onCleanup } from "solid-js"
+import { type Accessor, onCleanup } from "solid-js"
+import { actionForKey, type KeyAction, type KeyBindings } from "@/utils/keys"
 import { pickTargetVideo } from "@/utils/target-video"
 import { SEEK_STEP_MS, SPEED_STEP, seekBy, seekToNormalized, stepFrame, togglePlayPause } from "@/utils/video-mutators"
 import { getFrameDuration } from "./frame-duration"
 
-type VideoAction = (videoEl: HTMLVideoElement) => void
+/** What a key does. `shift` is whether Shift is held, which picks the second step. */
+type VideoAction = (videoEl: HTMLVideoElement, shift: boolean) => void
 
 export type KeyboardShortcuts = ReturnType<typeof createKeyboardShortcuts>
 
@@ -13,26 +15,33 @@ export type KeyboardShortcuts = ReturnType<typeof createKeyboardShortcuts>
  * Keyboard shortcuts for the videos whose panel is shown. `adjustSpeed` is how the user changes the speed (see
  * `ControllersContainer`), so speed keys count as the user's choice for "remember my speed".
  */
-export function createKeyboardShortcuts(adjustSpeed: (videoEl: HTMLVideoElement, adjustment: number) => void) {
-  const keyActions = new Map<string, VideoAction>([
-    ["z", (v) => adjustSpeed(v, -SPEED_STEP)],
-    ["Z", (v) => adjustSpeed(v, -0.1)],
-    ["x", (v) => adjustSpeed(v, +SPEED_STEP)],
-    ["X", (v) => adjustSpeed(v, +0.1)],
-    ["a", (v) => seekBy(v, -SEEK_STEP_MS)],
-    ["A", (v) => seekBy(v, -4 * SEEK_STEP_MS)],
-    ["d", (v) => seekBy(v, +SEEK_STEP_MS)],
-    ["D", (v) => seekBy(v, +4 * SEEK_STEP_MS)],
-    ["s", (v) => togglePlayPause(v)],
-    // Above A and D, so frame steps sit right over seeking back and forward.
-    ["q", (v) => stepFrame(v, -1, getFrameDuration(v))],
-    ["e", (v) => stepFrame(v, 1, getFrameDuration(v))],
-    // Number keys 0-9 seek to 0%-90%
-    ...Array.from({ length: 10 }, (_, index): [string, VideoAction] => [
-      index.toString(),
-      (v) => seekToNormalized(v, index / 10),
-    ]),
-  ])
+export function createKeyboardShortcuts(
+  keys: Accessor<KeyBindings>,
+  adjustSpeed: (videoEl: HTMLVideoElement, adjustment: number) => void,
+) {
+  const actions: Record<KeyAction, VideoAction> = {
+    slowDown: (v, shift) => adjustSpeed(v, shift ? -0.1 : -SPEED_STEP),
+    speedUp: (v, shift) => adjustSpeed(v, shift ? +0.1 : +SPEED_STEP),
+    rewind: (v, shift) => seekBy(v, (shift ? -4 : -1) * SEEK_STEP_MS),
+    forward: (v, shift) => seekBy(v, (shift ? +4 : +1) * SEEK_STEP_MS),
+    playPause: (v) => togglePlayPause(v),
+    previousFrame: (v) => stepFrame(v, -1, getFrameDuration(v)),
+    nextFrame: (v) => stepFrame(v, 1, getFrameDuration(v)),
+  }
+  // The others leave Shift to the page.
+  const shiftActions = new Set<KeyAction>(["slowDown", "speedUp", "rewind", "forward"])
+
+  // Number keys 0-9 seek to 0%-90%. They can't be changed.
+  const actionFor = (event: KeyboardEvent): ((videoEl: HTMLVideoElement) => void) | undefined => {
+    if (/^[0-9]$/.test(event.key)) {
+      return (v) => seekToNormalized(v, Number(event.key) / 10)
+    }
+    const action = actionForKey(keys(), event)
+    if (action == null || (event.shiftKey && !shiftActions.has(action))) {
+      return undefined
+    }
+    return (v) => actions[action](v, event.shiftKey)
+  }
 
   // Videos whose panel is currently shown; only these can be controlled via shortcuts.
   const registeredVideos = new Set<HTMLVideoElement>()
@@ -66,7 +75,7 @@ export function createKeyboardShortcuts(adjustSpeed: (videoEl: HTMLVideoElement,
     })
 
   const onKeyDown = (event: KeyboardEvent) => {
-    const action = keyActions.get(event.key)
+    const action = actionFor(event)
     if (action == null || event.altKey || event.ctrlKey || event.metaKey || isTyping(event)) {
       return
     }

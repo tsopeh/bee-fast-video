@@ -1,5 +1,6 @@
+import type { KeyInput, Page } from "puppeteer-core"
 import { describe, expect, it } from "vitest"
-import { countPanels, openPlayer, openPopup, setVideo, sleep, useBrowser } from "./harness"
+import { countPanels, openPanel, openPlayer, openPopup, setVideo, sleep, useBrowser, video } from "./harness"
 
 const env = useBrowser()
 
@@ -48,6 +49,63 @@ describe("popup", () => {
     await popup.waitForFunction(() => document.querySelector(".stats-value")?.textContent === "14.2 hours")
     await popup.evaluate(() => chrome.storage.sync.set({ "savedSeconds.other-device": 3600 }))
     await popup.waitForFunction(() => document.querySelector(".stats-value")?.textContent === "15.2 hours")
+  })
+})
+
+describe("popup keys", () => {
+  const DEFAULTS = ["Z", "X", "A", "D", "Q", "E", "S"]
+  const keyLabels = (popup: Page) => popup.$$eval(".key", (keys) => keys.map((key) => key.textContent))
+  /** Clicks the key button at `index`, in the order of `DEFAULTS`, and presses `key`. */
+  const changeKey = async (popup: Page, index: number, key: KeyInput) => {
+    // In Firefox, `ElementHandle.click()` here sometimes never returns. Clicking by position works.
+    const box = await (await popup.$$(".key"))[index]?.boundingBox()
+    if (box == null) {
+      throw new Error(`No key button ${index}`)
+    }
+    await popup.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+    await popup.waitForSelector(".key.recording")
+    await popup.keyboard.press(key)
+    await sleep(50)
+  }
+  const slowDownTitle = (page: Page) => page.$eval(">>> .control[title^='Slow down']", (el) => el.getAttribute("title"))
+
+  it("change when a key is clicked and a new one pressed, swap when taken, and reset", async () => {
+    const page = await openPlayer(env)
+    const popup = await openPopup(env, page)
+    expect(await keyLabels(popup)).toEqual(DEFAULTS)
+    expect(await popup.$(".reset-keys")).toBeNull()
+
+    // Number keys always seek, so they're refused and the button keeps waiting. Escape stops waiting.
+    await changeKey(popup, 6, "5")
+    expect(await popup.$(".key.recording")).not.toBeNull()
+    await popup.keyboard.press("Escape")
+    await popup.waitForFunction(() => document.querySelector(".key.recording") == null)
+    expect(await keyLabels(popup)).toEqual(DEFAULTS)
+
+    await changeKey(popup, 6, "k")
+    // Slow down takes X, so speed up gets Z.
+    await changeKey(popup, 0, "x")
+    await popup.waitForFunction(() => document.querySelector(".key")?.textContent === "X")
+    expect(await keyLabels(popup)).toEqual(["X", "Z", "A", "D", "Q", "E", "K"])
+
+    await page.bringToFront()
+    await page.click("#overlay")
+    await page.keyboard.press("x")
+    await sleep(50)
+    expect(await video(page, "playbackRate")).toBe(0.75)
+    await page.keyboard.press("k")
+    await page.waitForFunction(() => !document.querySelector("video")?.paused)
+    await page.keyboard.press("s")
+    await sleep(50)
+    expect(await video(page, "paused")).toBe(false)
+    await openPanel(page)
+    expect(await slowDownTitle(page)).toBe("Slow down (X)")
+
+    await popup.click(".reset-keys")
+    await popup.waitForFunction(() => document.querySelector(".reset-keys") == null)
+    expect(await keyLabels(popup)).toEqual(DEFAULTS)
+    await sleep(100)
+    expect(await slowDownTitle(page)).toBe("Slow down (Z)")
   })
 })
 
