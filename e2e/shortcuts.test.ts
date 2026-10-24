@@ -81,4 +81,22 @@ describe("keyboard shortcuts", () => {
     expect(end).toBeGreaterThan(start + 0.5)
     expect(end).toBeLessThan(start + 5)
   })
+
+  it("show what they did next to the panel, and replace it on the next key", async () => {
+    const feedback = () => page.$$eval(">>> .feedback", (els) => els.map((el) => el.textContent))
+    await page.keyboard.press("d")
+    expect(await feedback()).toEqual(["+5 s"])
+    await page.keyboard.press("a")
+    expect(await feedback()).toEqual(["−5 s"])
+    await page.keyboard.down("Shift")
+    await page.keyboard.press("X")
+    await page.keyboard.up("Shift")
+    expect(await feedback()).toEqual(["+0.1"])
+    await page.keyboard.press("s")
+    expect(await feedback()).toEqual(["Play"])
+    await page.keyboard.press("5")
+    expect(await feedback()).toEqual(["50%"])
+    // Gone after half a second.
+    await page.waitForSelector(">>> .feedback", { hidden: true, timeout: 2000 })
+  })
 })

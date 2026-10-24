@@ -60,8 +60,6 @@ button {
   /* top: _; Set in component. */
   /* left: _; Set in component. */
   display: flex;
-  opacity: 0.6;
-  transition: opacity 200ms var(--ease-style);
   z-index: calc(2147483647 - 5) !important;
 
   /* Grows on hover (see below), so the widget stays hovered when the pointer slips just past its edge. */
@@ -75,15 +73,18 @@ button {
     z-index: -1;
   }
 
+  /* On the controls, not the whole panel, so the feedback next to it isn't faded too. */
   .controls {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
+    opacity: 0.6;
     background-color: rgba(96, 96, 96, 0.7);
     border: 1px solid rgba(0, 0, 0, 0);
     color: #ffffff;
     border-radius: calc(0.5 * var(--size));
     transition:
+      opacity 200ms var(--ease-style),
       background-color 200ms var(--ease-style),
       border 200ms var(--ease-style),
       color 200ms var(--ease-style);
@@ -268,10 +269,65 @@ button {
     }
 
     .controls {
+      opacity: 1;
       background-color: #ffdb00;
       border: 1px solid #e9ab17;
       color: #000000;
     }
+  }
+}
+
+/*
+  What a key did, right of the first row. It comes in fast and settles (ease-out), then speeds up as it leaves (ease-in),
+  in half a second. On the way it moves along `--direction`: right for +, left for -, not at all for 0.
+*/
+.feedback {
+  /* How far it moves on the way in, and again on the way out. Its place leaves that much room, so it never covers the
+  panel. */
+  --travel: calc(0.5 * var(--height));
+
+  position: absolute;
+  left: calc(100% + var(--gap) + var(--travel));
+  top: 0;
+  height: var(--height);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--gap);
+  white-space: nowrap;
+  font-size: round(calc(0.65 * var(--height)), 1px);
+  font-variant-numeric: tabular-nums;
+  color: #000000;
+  background-color: #ffdb00;
+  border: 1px solid #e9ab17;
+  border-radius: calc(0.5 * var(--size));
+  pointer-events: none;
+  animation: feedback 500ms both;
+}
+
+@keyframes feedback {
+  0% {
+    opacity: 0;
+    transform: translateX(calc(var(--direction) * -1 * var(--travel)));
+    animation-timing-function: ease-out;
+  }
+  30% {
+    opacity: 1;
+    transform: none;
+  }
+  70% {
+    opacity: 1;
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(var(--direction) * var(--travel)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback {
+    --direction: 0 !important;
   }
 }
 

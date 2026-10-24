@@ -39,6 +39,8 @@ The popup has the settings for the current site, the time saved, and all keys:
 
 To change a key, click it in the popup and press the new one. Esc cancels. If another action had that key, the two swap. `Reset` next to the heading puts back all the defaults; it only shows when a key was changed. Keys pressed with Shift, Ctrl, Alt or Cmd can't be used, since Shift picks the other step and the others are left to the page and the browser. The number keys always seek. Changed keys follow you to other devices where the browser syncs extension data.
 
+Each key press shows what it did right of the panel for half a second: `+5 s`, `−0.25`, `+1 frame`, `Pause`, `50%`. A step forward or up drifts to the right, a step back or down to the left. The panel's buttons don't show it, since they're right where you look anyway.
+
 Keyboard shortcuts work even when the site's player tries to swallow key presses, and they act on one video only: the one you last hovered or clicked, otherwise the biggest visible one, preferring one that's playing. The page still gets the key presses, so its own shortcuts keep working. Shortcuts are ignored while you type in a text field.
 
 ## How it works

@@ -6,8 +6,17 @@ import { pickTargetVideo } from "@/utils/target-video"
 import { SEEK_STEP_MS, SPEED_STEP, seekBy, seekToNormalized, stepFrame, togglePlayPause } from "@/utils/video-mutators"
 import { getFrameDuration } from "./frame-duration"
 
+/**
+ * What a key did, shown next to the panel. `direction` is which way the text moves: right for more or forward, left for
+ * less or back, and 0 for in place.
+ */
+export interface Feedback {
+  text: string
+  direction: -1 | 0 | 1
+}
+
 /** What a key does. `shift` is whether Shift is held, which picks the second step. */
-type VideoAction = (videoEl: HTMLVideoElement, shift: boolean) => void
+type VideoAction = (videoEl: HTMLVideoElement, shift: boolean) => Feedback
 
 export type KeyboardShortcuts = ReturnType<typeof createKeyboardShortcuts>
 
@@ -19,22 +28,44 @@ export function createKeyboardShortcuts(
   keys: Accessor<KeyBindings>,
   adjustSpeed: (videoEl: HTMLVideoElement, adjustment: number) => void,
 ) {
+  const changeSpeed = (v: HTMLVideoElement, direction: -1 | 1, shift: boolean): Feedback => {
+    const step = shift ? 0.1 : SPEED_STEP
+    adjustSpeed(v, direction * step)
+    return { text: `${sign(direction)}${step}`, direction }
+  }
+  const seek = (v: HTMLVideoElement, direction: -1 | 1, shift: boolean): Feedback => {
+    const ms = (shift ? 4 : 1) * SEEK_STEP_MS
+    seekBy(v, direction * ms)
+    return { text: `${sign(direction)}${ms / 1000} s`, direction }
+  }
+  const stepOneFrame = (v: HTMLVideoElement, direction: -1 | 1): Feedback => {
+    stepFrame(v, direction, getFrameDuration(v))
+    return { text: `${sign(direction)}1 frame`, direction }
+  }
   const actions: Record<KeyAction, VideoAction> = {
-    slowDown: (v, shift) => adjustSpeed(v, shift ? -0.1 : -SPEED_STEP),
-    speedUp: (v, shift) => adjustSpeed(v, shift ? +0.1 : +SPEED_STEP),
-    rewind: (v, shift) => seekBy(v, (shift ? -4 : -1) * SEEK_STEP_MS),
-    forward: (v, shift) => seekBy(v, (shift ? +4 : +1) * SEEK_STEP_MS),
-    playPause: (v) => togglePlayPause(v),
-    previousFrame: (v) => stepFrame(v, -1, getFrameDuration(v)),
-    nextFrame: (v) => stepFrame(v, 1, getFrameDuration(v)),
+    slowDown: (v, shift) => changeSpeed(v, -1, shift),
+    speedUp: (v, shift) => changeSpeed(v, +1, shift),
+    rewind: (v, shift) => seek(v, -1, shift),
+    forward: (v, shift) => seek(v, +1, shift),
+    playPause: (v) => {
+      // What it was before, since `play()` can fail, e.g. when the browser blocks playing with sound.
+      const text = v.paused ? "Play" : "Pause"
+      togglePlayPause(v)
+      return { text, direction: 0 }
+    },
+    previousFrame: (v) => stepOneFrame(v, -1),
+    nextFrame: (v) => stepOneFrame(v, +1),
   }
   // The others leave Shift to the page.
   const shiftActions = new Set<KeyAction>(["slowDown", "speedUp", "rewind", "forward"])
 
   // Number keys 0-9 seek to 0%-90%. They can't be changed.
-  const actionFor = (event: KeyboardEvent): ((videoEl: HTMLVideoElement) => void) | undefined => {
+  const actionFor = (event: KeyboardEvent): ((videoEl: HTMLVideoElement) => Feedback) | undefined => {
     if (/^[0-9]$/.test(event.key)) {
-      return (v) => seekToNormalized(v, Number(event.key) / 10)
+      return (v) => {
+        seekToNormalized(v, Number(event.key) / 10)
+        return { text: `${Number(event.key) * 10}%`, direction: 0 }
+      }
     }
     const action = actionForKey(keys(), event)
     if (action == null || (event.shiftKey && !shiftActions.has(action))) {
@@ -43,8 +74,9 @@ export function createKeyboardShortcuts(
     return (v) => actions[action](v, event.shiftKey)
   }
 
-  // Videos whose panel is currently shown; only these can be controlled via shortcuts.
-  const registeredVideos = new Set<HTMLVideoElement>()
+  // Videos whose panel is currently shown, with how their panel shows feedback. Only these can be controlled via
+  // shortcuts.
+  const registeredVideos = new Map<HTMLVideoElement, (feedback: Feedback) => void>()
   let lastInteractedVideo: HTMLVideoElement | undefined
 
   const markInteracted = (videoEl: HTMLVideoElement) => {
@@ -69,7 +101,7 @@ export function createKeyboardShortcuts(
   }
 
   const targetVideo = () =>
-    pickTargetVideo(registeredVideos, lastInteractedVideo, (videoEl) => {
+    pickTargetVideo(registeredVideos.keys(), lastInteractedVideo, (videoEl) => {
       const { width, height } = videoEl.getBoundingClientRect()
       return { area: width * height, isPlaying: !videoEl.paused && !videoEl.ended }
     })
@@ -82,7 +114,7 @@ export function createKeyboardShortcuts(
     const target = targetVideo()
     if (target != null) {
       // The page still receives the key; swallowing it would break the site's own shortcuts.
-      action(target)
+      registeredVideos.get(target)?.(action(target))
     }
   }
 
@@ -96,8 +128,8 @@ export function createKeyboardShortcuts(
   onCleanup(() => listeners.abort())
 
   return {
-    registerVideo: (videoEl: HTMLVideoElement) => {
-      registeredVideos.add(videoEl)
+    registerVideo: (videoEl: HTMLVideoElement, showFeedback: (feedback: Feedback) => void) => {
+      registeredVideos.set(videoEl, showFeedback)
       return () => {
         registeredVideos.delete(videoEl)
       }
@@ -127,6 +159,9 @@ function elementsFromPoint(
     return elementsFromPoint(shadowRoot, x, y, visited)
   })
 }
+
+// A real minus sign, as wide as the plus.
+const sign = (direction: -1 | 1) => (direction > 0 ? "+" : "−")
 
 function isTyping(event: KeyboardEvent): boolean {
   // `composedPath()[0]` is the real target, also inside (open) shadow roots, where `event.target` is the shadow host.

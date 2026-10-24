@@ -1,4 +1,4 @@
-import { onCleanup, type ParentProps, Show } from "solid-js"
+import { createSignal, onCleanup, type ParentProps, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import {
   BackwardIcon,
@@ -20,6 +20,7 @@ import { onWheelStep } from "@/utils/wheel-stepper"
 import type { App } from "./controllers-container"
 import { trackDrag } from "./drag"
 import { trackFrameDuration } from "./frame-duration"
+import type { Feedback } from "./shortcuts"
 import type { VideoLayout } from "./video-tracker"
 
 /** How far inside the video's top left corner the panel sits. */
@@ -94,7 +95,9 @@ export function Panel(props: Props) {
     listeners.abort()
     loopObserver.disconnect()
   })
-  onCleanup(app.shortcuts.registerVideo(video))
+  // What the last key did. A new object for each key press, so the keyed `Show` below restarts the animation.
+  const [feedback, setFeedback] = createSignal<Feedback>()
+  onCleanup(app.shortcuts.registerVideo(video, (newFeedback) => setFeedback({ ...newFeedback })))
   onCleanup(trackFrameDuration(video))
 
   const keyFor = (action: KeyAction) => keyLabel(app.settings.keys()[action].key)
@@ -122,6 +125,17 @@ export function Panel(props: Props) {
         }}
       >
         <div class="underlay" />
+        <Show when={feedback()} keyed>
+          {(shown) => (
+            <span
+              class="feedback"
+              style={{ "--direction": shown.direction }}
+              on:animationend={() => setFeedback(undefined)}
+            >
+              {shown.text}
+            </span>
+          )}
+        </Show>
         <div class="controls">
           <div class="row">
             {/* First, so it stays in place when the panel opens and closes. */}
