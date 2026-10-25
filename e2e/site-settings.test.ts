@@ -119,7 +119,20 @@ describe("remember my speed", () => {
     // Other pages on the same site get it too.
     const other = await openPlayer(env)
     expect(await video(other, "playbackRate")).toBe(1.75)
+
+    // A speed set in a tab wins over the remembered one. The other tab saves 1.50 for the site, but this tab keeps the
+    // 1.75 it set, also after a reload.
+    await other.click("#overlay")
+    await other.keyboard.press("z")
+    await sleep(300)
+    expect(await speedAfterReload(other)).toBe(1.5)
     await other.close()
+    const third = await openPlayer(env)
+    expect(await video(third, "playbackRate")).toBe(1.5)
+    await third.close()
+    await page.bringToFront()
+    expect(await video(page, "playbackRate")).toBe(1.75)
+    expect(await speedAfterReload(page)).toBe(1.75)
 
     // Turned off, the tab keeps its speed, but a new tab doesn't get it.
     expect(await toggleInPopup(page, REMEMBER)).toBe(false)

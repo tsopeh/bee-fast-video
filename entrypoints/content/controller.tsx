@@ -37,13 +37,14 @@ export function Controller(props: { video: HTMLVideoElement; app: App }) {
     }
   })
 
-  // Sites often reset the speed when a new video starts, sometimes in the same `<video>` element (YouTube), so the
-  // speed is applied again when a video loads or starts playing. A change of the remembered speed reaches every video
-  // right away. The tab's speed doesn't, since keys and buttons change only one video; it waits for the next start.
+  // The speed last set in this tab wins, then the site's remembered speed, else the site's own speed. Sites often reset
+  // the speed when a new video starts, sometimes in the same `<video>` element (YouTube), so it's applied again when a
+  // video loads or starts playing. A change of the remembered speed reaches every video right away. The tab's speed
+  // doesn't, since keys and buttons change only one video; it waits for the next start.
   createEffect(() => {
     const rememberedSpeed = app.settings.rememberedSpeed()
     const apply = () => {
-      const speed = rememberedSpeed ?? readTabSpeed()
+      const speed = readTabSpeed() ?? rememberedSpeed
       if (speed != null && video.playbackRate !== speed) {
         video.playbackRate = speed
       }
