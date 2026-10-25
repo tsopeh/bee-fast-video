@@ -10,6 +10,8 @@ export default defineConfig({
   manifestVersion: 3,
   // Don't launch a browser in dev mode (requires `web-ext`); load `dist/<browser>-mv3-dev` manually.
   webExt: { disabled: true },
+  // Firefox's store asks for the source. The pictures in `docs/` are 1.7 MB of it and aren't needed to build.
+  zip: { excludeSources: ["docs/**"] },
   manifest: ({ browser }) => ({
     name: "Bee fast video",
     // `activeTab` exposes the current tab's URL to the popup, without the "Read your browsing history" warning of `tabs`.

@@ -91,6 +91,7 @@ The project started from a [Preact template](https://github.com/fell-lucas/chrom
 - `npm run dev` / `npm run dev:firefox`: development build that reloads on changes. Load `dist/chrome-mv3-dev` (or `dist/firefox-mv3-dev`) into the browser once as an unpacked (Firefox: temporary) extension.
 - `npm run build`: production builds for both browsers, in `dist/chrome-mv3` and `dist/firefox-mv3`. `npm run build:chrome` and `npm run build:firefox` build one.
 - `npm run zip` / `npm run zip:firefox`: zips for the stores in `dist/`. Firefox also gets the source zip that its store asks for.
+- `npm run prepare-for-publish`: runs the type check, lint and unit tests, deletes `dist`, then makes the zips for both stores. It deletes `dist` because a build only clears its own folder (`dist/chrome-mv3`, `dist/firefox-mv3`), so zips from an older version would stay. The browser tests take too long to run here; run them yourself first.
 - `npm run check`: type check (`tsc`), then lint and format check ([Biome](https://biomejs.dev)).
 - `npm run format`: apply Biome's formatting and safe fixes.
 - `npm test`: unit tests ([Vitest](https://vitest.dev)).

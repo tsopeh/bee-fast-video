@@ -25,7 +25,8 @@
     "test:e2e:firefox": "wxt build -b firefox && E2E_BROWSER=firefox vitest run --dir e2e --exclude screenshots.test.ts --testTimeout 30000 --hookTimeout 60000",
     "e2e:install": "browsers install chrome@stable --path .cache/browsers && browsers install firefox@stable --path .cache/browsers",
     "screenshots": "wxt build && vitest run e2e/screenshots.test.ts --testTimeout 60000 --hookTimeout 60000",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "prepare-for-publish": "npm run check && npm test && rm -rf dist && wxt zip && wxt zip -b firefox"
   },
   "dependencies": {
     "solid-js": "^1.9.17"
