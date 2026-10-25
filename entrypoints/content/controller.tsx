@@ -1,5 +1,6 @@
 import { createEffect, createSignal, onCleanup, Show } from "solid-js"
 import { createStore } from "solid-js/store"
+import { readTabSpeed } from "@/utils/tab-speed"
 import { FIT_TO_VIEWPORT_STYLES, setImportantStyles } from "@/utils/video-styles"
 import type { App } from "./controllers-container"
 import { trackDrag } from "./drag"
@@ -11,9 +12,9 @@ import type { VideoLayout } from "./video-tracker"
 const MIN_RESIZE_PX = 100
 
 /**
- * Everything the extension does to one video. The site settings (fit videos, remembered speed) apply to every video,
- * a resized video keeps its size, and the time it saves counts for the popup. The panel only exists while the video is
- * in view and visible.
+ * Everything the extension does to one video. The site settings (fit videos, remembered speed) and the tab's speed apply
+ * to every video, a resized video keeps its size, and the time it saves counts for the popup. The panel only exists
+ * while the video is in view and visible.
  */
 export function Controller(props: { video: HTMLVideoElement; app: App }) {
   const { video, app } = props
@@ -37,14 +38,13 @@ export function Controller(props: { video: HTMLVideoElement; app: App }) {
   })
 
   // Sites often reset the speed when a new video starts, sometimes in the same `<video>` element (YouTube), so the
-  // remembered speed is applied again when a video loads or starts playing.
+  // speed is applied again when a video loads or starts playing. A change of the remembered speed reaches every video
+  // right away. The tab's speed doesn't, since keys and buttons change only one video; it waits for the next start.
   createEffect(() => {
-    const speed = app.settings.rememberedSpeed()
-    if (speed == null) {
-      return
-    }
+    const rememberedSpeed = app.settings.rememberedSpeed()
     const apply = () => {
-      if (video.playbackRate !== speed) {
+      const speed = rememberedSpeed ?? readTabSpeed()
+      if (speed != null && video.playbackRate !== speed) {
         video.playbackRate = speed
       }
     }

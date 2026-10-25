@@ -1,4 +1,4 @@
-// Per-site settings in the popup: "remember my speed" and "fit videos".
+// Per-site settings in the popup: "remember my speed" and "fit videos". And the speed each tab keeps without them.
 
 import type { Page } from "puppeteer-core"
 import { describe, expect, it } from "vitest"
@@ -22,6 +22,8 @@ const FIT = ".fit .switch"
 /** Flips a switch in the popup for the page, and returns whether it's on afterwards. */
 async function toggleInPopup(page: Page, selector: string) {
   const popup = await openPopup(env, page)
+  // In Chrome the popup's target can show up before the popup has drawn.
+  await popup.waitForSelector(selector)
   const wasOn = await popup.$eval(selector, (element) => (element as HTMLInputElement).checked)
   await popup.click(selector)
   // Waits for the setting to be saved and read back.
@@ -50,11 +52,42 @@ async function reloadPlayer(page: Page) {
   await waitForVideoReady(page)
 }
 
+describe("tab speed", () => {
+  it("keeps the speed set in a tab for that tab only", async () => {
+    const page = await openPlayer(env)
+    await page.keyboard.press("x")
+    expect(await speedAfterReload(page)).toBe(1.25)
+
+    // A speed set by the site isn't kept.
+    await setVideo(page, { playbackRate: 1.1 })
+    expect(await speedAfterReload(page)).toBe(1.25)
+
+    // The next video in the same element gets it too.
+    await setVideo(page, { playbackRate: 1, src: "clip.webm?next" })
+    await page.waitForFunction(() => document.querySelector("video")?.currentSrc.endsWith("?next"))
+    await waitForVideoReady(page)
+    await sleep(100)
+    expect(await video(page, "playbackRate")).toBe(1.25)
+
+    // A new tab, and another site in the same tab, start at the site's own speed.
+    const other = await openPlayer(env)
+    expect(await video(other, "playbackRate")).toBe(1)
+    await other.close()
+    await page.goto(env.url("player.html", "www.example.com"))
+    await page.waitForSelector(">>> .controller")
+    await waitForVideoReady(page)
+    expect(await video(page, "playbackRate")).toBe(1)
+    await page.close()
+  })
+})
+
 describe("remember my speed", () => {
   it("is off by default", async () => {
     const page = await openPlayer(env)
     await page.keyboard.press("x")
-    expect(await speedAfterReload(page)).toBe(1)
+    const other = await openPlayer(env)
+    expect(await video(other, "playbackRate")).toBe(1)
+    await other.close()
     await page.close()
   })
 
@@ -88,8 +121,12 @@ describe("remember my speed", () => {
     expect(await video(other, "playbackRate")).toBe(1.75)
     await other.close()
 
+    // Turned off, the tab keeps its speed, but a new tab doesn't get it.
     expect(await toggleInPopup(page, REMEMBER)).toBe(false)
-    expect(await speedAfterReload(page)).toBe(1)
+    expect(await speedAfterReload(page)).toBe(1.75)
+    const newTab = await openPlayer(env)
+    expect(await video(newTab, "playbackRate")).toBe(1)
+    await newTab.close()
     await page.close()
   })
 

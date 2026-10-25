@@ -1,6 +1,7 @@
 import { createSignal, For, onCleanup, Show } from "solid-js"
 import { browser } from "#imports"
 import { isGetSpeed, type Settings, useSettings } from "@/utils/settings"
+import { writeTabSpeed } from "@/utils/tab-speed"
 import { adjustedPlaybackRate } from "@/utils/video-mutators"
 import { watchVideos } from "@/utils/video-set"
 import { Controller } from "./controller"
@@ -23,6 +24,7 @@ export function ControllersContainer(props: { host: HTMLElement }) {
   // are remembered, not the ones the site makes, e.g. Twitch nudging the speed to catch up with a live stream.
   const setSpeed = (video: HTMLVideoElement, rate: number) => {
     video.playbackRate = rate
+    writeTabSpeed(video.playbackRate)
     if (settings.rememberedSpeed() != null) {
       settings.updateRememberedSpeed(video.playbackRate)
     }
