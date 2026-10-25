@@ -1,6 +1,6 @@
 // Not a test: `npm run screenshots` runs this to update the images in `docs/` that the README shows.
 
-import { readFileSync } from "node:fs"
+import { mkdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import type { Page } from "puppeteer-core"
@@ -72,8 +72,10 @@ it("popup", async () => {
   // Low, so the page's height below is its content's, not the window's.
   await tab.setViewport({ width: 320, height: 100, deviceScaleFactor: 2 })
   await tab.goto(extensionUrl(env, "popup.html"))
-  // A remembered speed shows more than the default switches.
-  await tab.evaluate(() => chrome.storage.local.set({ rememberedSpeeds: { "www.example.com": 1.5 } }))
+  // A remembered speed shows more than the default switches, and 0.0 hours saved would look like nobody uses it.
+  await tab.evaluate(() =>
+    chrome.storage.local.set({ rememberedSpeeds: { "www.example.com": 1.5 }, savedSeconds: 12.4 * 3600 }),
+  )
   await tab.waitForSelector(".remembered-speed")
   // The switch slides over for 150 ms.
   await sleep(300)
@@ -108,6 +110,65 @@ it("banner", async () => {
   await page.screenshot({ path: join(ROOT, "docs/intro.png"), captureBeyondViewport: false })
   await page.close()
 })
+
+// The images for the Chrome Web Store and Firefox Add-ons. Each is taken at 2× from a window half its size, so the
+// panel is big enough to read. Chrome asks for exactly these sizes.
+const STORE_IMAGES = [
+  { name: "marquee", width: 1400, height: 560 },
+  { name: "tile", width: 440, height: 280 },
+  { name: "speed", width: 1280, height: 800 },
+  { name: "keys", width: 1280, height: 800 },
+  { name: "popup", width: 1280, height: 800 },
+]
+
+for (const { name, width, height } of STORE_IMAGES) {
+  it(`store ${name}`, async () => {
+    const viewport = { width: width / 2, height: height / 2, deviceScaleFactor: 2 }
+    const page = await env.browser.newPage()
+    await page.setViewport(viewport)
+    await page.goto(env.url(`store.html#${name}`))
+    await page.addStyleTag({
+      content: `
+        @font-face { font-family: "Salsa"; src: url(data:font/woff2;base64,${base64("assets/fonts/salsa-latin.woff2")}); }
+        @font-face { font-family: "Roboto Condensed"; src: url(data:font/woff2;base64,${base64("assets/fonts/roboto-condensed-latin.woff2")}); }
+      `,
+    })
+    const images = { logo: "assets/icon-large.png", popup: "docs/popup.png" }
+    for (const [id, path] of Object.entries(images)) {
+      await page.$eval(
+        `#${id}`,
+        (img, data) => {
+          ;(img as HTMLImageElement).src = `data:image/png;base64,${data}`
+        },
+        base64(path),
+      )
+    }
+    await page.evaluate(() => Promise.all([document.fonts.ready, ...[...document.images].map((img) => img.decode())]))
+    // The small tile has no panel.
+    if (name !== "tile") {
+      await page.waitForSelector(">>> .controller")
+      await waitForVideoReady(page)
+      await setUpVideo(page)
+      await openPanel(page)
+      await hoverPanel(page)
+    }
+    if (name === "keys") {
+      // Opening the panel focused the speed label, and a key press would draw a focus ring around it.
+      await page.$eval(">>> .playback-rate", (element) => (element as HTMLElement).blur())
+      await page.keyboard.press("d")
+      // The feedback fades out in half a second. This holds it where it's fully shown.
+      await page.$eval(">>> .feedback", (element) => {
+        for (const animation of element.getAnimations()) {
+          animation.pause()
+          animation.currentTime = 250
+        }
+      })
+    }
+    mkdirSync(join(ROOT, "docs/store"), { recursive: true })
+    await page.screenshot({ path: join(ROOT, `docs/store/${name}.png`), captureBeyondViewport: false })
+    await page.close()
+  })
+}
 
 // The popup's extension API, as far as this file uses it.
 declare const chrome: { storage: { local: { set(items: Record<string, unknown>): Promise<void> } } }

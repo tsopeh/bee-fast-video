@@ -130,7 +130,7 @@ export function Popup() {
     <main>
       <header>
         <img class="logo" src={iconLarge} alt="" />
-        <h1>Bee Fast Video</h1>
+        <h1>Bee fast video</h1>
         <Show when={savedSeconds() != null}>
           <p class="stats" title="Time saved by watching faster, on all your devices">
             <span class="stats-label">Time saved</span>

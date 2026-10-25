@@ -95,7 +95,7 @@ The project started from a [Preact template](https://github.com/fell-lucas/chrom
 - `npm run format`: apply Biome's formatting and safe fixes.
 - `npm test`: unit tests ([Vitest](https://vitest.dev)).
 - `npm run test:e2e`: browser tests. They build the extension, install it in Chrome for Testing and then in Firefox, and use it on the test pages in `e2e/pages` through [Puppeteer](https://pptr.dev). `npm run test:e2e:chrome` and `npm run test:e2e:firefox` run one browser.
-- `npm run screenshots`: retakes the pictures in `docs/`: the panel, the popup, and the banner at the top of this file (`e2e/pages/banner.html`, with the real panel on it). The logo and `docs/store-banner.psd` aren't made by it.
+- `npm run screenshots`: retakes the pictures in `docs/`: the panel, the popup, and the banner at the top of this file (`e2e/pages/banner.html`, with the real panel on it). It also makes the store images in `docs/store` from `e2e/pages/store.html`: the 1400×560 marquee and 440×280 small tile for the Chrome Web Store, and three 1280×800 screenshots for both stores. The logo isn't made by it.
 
 ### Browser tests
 
