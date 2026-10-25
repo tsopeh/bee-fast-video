@@ -231,8 +231,14 @@ function StepField(props: {
   onChange: (value: number) => void
 }) {
   const [text, setText] = createSignal(String(props.value))
+  // The value saved last, until storage has it. Enter saves and then blurs, which saves again before `props.value` has
+  // changed, and would write to sync storage twice.
+  let saving: number | undefined
   // Follows the stored value, also when Reset or another device changes it.
-  createEffect(() => setText(String(props.value)))
+  createEffect(() => {
+    setText(String(props.value))
+    saving = undefined
+  })
   const show = (input: HTMLInputElement, value: number) => {
     input.value = String(value)
     setText(input.value)
@@ -241,7 +247,8 @@ function StepField(props: {
     const value = props.parse(input.value)
     // Shown even when unchanged, since a value out of range is moved into it and storage wouldn't change.
     show(input, value ?? props.value)
-    if (value != null && value !== props.value) {
+    if (value != null && value !== props.value && value !== saving) {
+      saving = value
       props.onChange(value)
     }
   }

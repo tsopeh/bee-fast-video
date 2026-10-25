@@ -18,6 +18,9 @@ export default defineConfig({
       browser_specific_settings: {
         gecko: {
           id: "bee.fast.video@tsopeh.github.com",
+          // `data_collection_permissions` needs 140, and the content script in the page's world (`shadow-roots.content.ts`)
+          // needs 128. Older versions would install the add-on without them.
+          strict_min_version: "140.0",
           data_collection_permissions: { required: ["none"] },
         },
       },

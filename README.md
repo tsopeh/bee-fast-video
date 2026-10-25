@@ -111,7 +111,7 @@ Each test file starts its own browser and a small local server for the test page
 
 Puppeteer can't click the extension's icon in Firefox. There the popup tests open the popup in a background tab instead, where it reads the site from the active tab the same way.
 
-Both browsers get a Manifest V3 build. The Firefox manifest also has the add-on ID and the data collection declaration (`wxt.config.ts`).
+Both browsers get a Manifest V3 build. The Firefox manifest also has the add-on ID, the data collection declaration and the lowest version, Firefox 140 (`wxt.config.ts`).
 
 <p align=center>
   <img align=center src="docs/logo.png" alt="Bee fast video logo" width=200>

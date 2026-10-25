@@ -171,6 +171,26 @@ describe("popup steps", () => {
     await sleep(100)
     expect(await rewindTitle(page)).toBe("Rewind 5 seconds (A)")
   })
+
+  // Enter saves, then leaves the field, which saves again before storage has the first value.
+  it("save once when Enter is pressed", async () => {
+    const page = await openPlayer(env)
+    const popup = await openPopup(env, page)
+    await popup.evaluate(() => {
+      const sync = chrome.storage.sync as StorageArea & { writes: number }
+      const set = sync.set.bind(sync)
+      sync.writes = 0
+      sync.set = (items) => {
+        sync.writes++
+        return set(items)
+      }
+    })
+    await typeStep(popup, 2, "7")
+    await sleep(200)
+    expect(await stepValues(popup)).toEqual(["0.25", "0.1", "7", "20"])
+    expect(await popup.evaluate(() => (chrome.storage.sync as StorageArea & { writes: number }).writes)).toBe(1)
+    await popup.click(".reset-keys")
+  })
 })
 
 // The popup's extension API, as far as these tests use it.
