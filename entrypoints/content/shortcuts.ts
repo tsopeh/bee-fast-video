@@ -2,8 +2,9 @@
 
 import { type Accessor, onCleanup } from "solid-js"
 import { actionForKey, type KeyAction, type KeyBindings } from "@/utils/keys"
+import type { Steps } from "@/utils/steps"
 import { pickTargetVideo } from "@/utils/target-video"
-import { SEEK_STEP_MS, SPEED_STEP, seekBy, seekToNormalized, stepFrame, togglePlayPause } from "@/utils/video-mutators"
+import { seekBy, seekToNormalized, stepFrame, togglePlayPause } from "@/utils/video-mutators"
 import { getFrameDuration } from "./frame-duration"
 
 /**
@@ -26,17 +27,18 @@ export type KeyboardShortcuts = ReturnType<typeof createKeyboardShortcuts>
  */
 export function createKeyboardShortcuts(
   keys: Accessor<KeyBindings>,
+  steps: Accessor<Steps>,
   adjustSpeed: (videoEl: HTMLVideoElement, adjustment: number) => void,
 ) {
   const changeSpeed = (v: HTMLVideoElement, direction: -1 | 1, shift: boolean): Feedback => {
-    const step = shift ? 0.1 : SPEED_STEP
+    const step = shift ? steps().shiftSpeed : steps().speed
     adjustSpeed(v, direction * step)
     return { text: `${sign(direction)}${step}`, direction }
   }
   const seek = (v: HTMLVideoElement, direction: -1 | 1, shift: boolean): Feedback => {
-    const ms = (shift ? 4 : 1) * SEEK_STEP_MS
-    seekBy(v, direction * ms)
-    return { text: `${sign(direction)}${ms / 1000} s`, direction }
+    const seconds = shift ? steps().shiftSeek : steps().seek
+    seekBy(v, direction * seconds * 1000)
+    return { text: `${sign(direction)}${seconds} s`, direction }
   }
   const stepOneFrame = (v: HTMLVideoElement, direction: -1 | 1): Feedback => {
     stepFrame(v, direction, getFrameDuration(v))

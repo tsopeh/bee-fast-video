@@ -210,8 +210,9 @@ section:not(.site) {
 */
 .keys {
   display: grid;
-  grid-template-columns: max-content max-content max-content 1fr;
-  gap: 6px 8px;
+  /* The action takes what's left and wraps if it must, so a long key or step never pushes the steps out. */
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+  gap: 6px;
   align-items: center;
   list-style: none;
 
@@ -261,7 +262,7 @@ section:not(.site) {
 .shift-step {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
@@ -311,5 +312,32 @@ kbd,
   &.recording {
     background-color: var(--yellow);
     border-color: var(--yellow-edge);
+  }
+}
+
+/* A step that can be typed over. A faint box says it's editable; it darkens on hover and turns yellow while typing,
+   like a key button waiting for a key. */
+.step-field {
+  height: 18px;
+  margin: 0 1px;
+  padding: 0 2px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text);
+  background-color: transparent;
+  border: 1px solid #ddd2c7;
+  border-radius: 3px;
+  cursor: text;
+
+  &:hover {
+    border-color: #a89a8c;
+  }
+
+  &:focus {
+    outline: none;
+    background-color: var(--card);
+    border-color: var(--yellow-edge);
+    box-shadow: 0 0 0 2px var(--yellow);
   }
 }

@@ -15,7 +15,8 @@ import {
 } from "@/assets/control-icons"
 import { formatPlaybackRate, formatTime, timeLeftAtSpeed } from "@/utils/format-time"
 import { type KeyAction, keyLabel } from "@/utils/keys"
-import { adjustVolume, SEEK_STEP_MS, SPEED_STEP, seekBy, toggleLoop, togglePlayPause } from "@/utils/video-mutators"
+import { secondsLabel } from "@/utils/steps"
+import { adjustVolume, seekBy, toggleLoop, togglePlayPause } from "@/utils/video-mutators"
 import { onWheelStep } from "@/utils/wheel-stepper"
 import type { App } from "./controllers-container"
 import { trackDrag } from "./drag"
@@ -101,6 +102,8 @@ export function Panel(props: Props) {
   onCleanup(trackFrameDuration(video))
 
   const keyFor = (action: KeyAction) => keyLabel(app.settings.keys()[action].key)
+  const steps = app.settings.steps
+  const seekStepMs = () => steps().seek * 1000
 
   // The seek bar's end. A live stream has no duration, only the part that can be seeked.
   const seekEnd = () => (Number.isFinite(state.duration) ? state.duration : state.seekableEnd)
@@ -148,27 +151,27 @@ export function Panel(props: Props) {
                 event.preventDefault()
                 app.setSpeed(video, 1)
               }}
-              on:wheel={onWheelStep(WHEEL_RATE_INTERVAL_MS, (step) => app.adjustSpeed(video, step * SPEED_STEP))}
+              on:wheel={onWheelStep(WHEEL_RATE_INTERVAL_MS, (step) => app.adjustSpeed(video, step * steps().speed))}
             >
               <span>{formatPlaybackRate(state.playbackRate)}</span>
             </button>
             <Show when={state.isExpanded}>
               <ControlButton
                 title={`Slow down (${keyFor("slowDown")})`}
-                onClick={() => app.adjustSpeed(video, -SPEED_STEP)}
+                onClick={() => app.adjustSpeed(video, -steps().speed)}
               >
                 <SlowDownIcon />
               </ControlButton>
               <ControlButton
                 title={`Speed up (${keyFor("speedUp")})`}
-                onClick={() => app.adjustSpeed(video, +SPEED_STEP)}
+                onClick={() => app.adjustSpeed(video, +steps().speed)}
               >
                 <SpeedUpIcon />
               </ControlButton>
               <span class="divider" />
               <ControlButton
-                title={`Rewind 5 seconds (${keyFor("rewind")})`}
-                onClick={() => seekBy(video, -SEEK_STEP_MS)}
+                title={`Rewind ${secondsLabel(steps().seek)} (${keyFor("rewind")})`}
+                onClick={() => seekBy(video, -seekStepMs())}
               >
                 <BackwardIcon />
               </ControlButton>
@@ -179,8 +182,8 @@ export function Panel(props: Props) {
                 {state.isPaused ? <PlayIcon /> : <PauseIcon />}
               </ControlButton>
               <ControlButton
-                title={`Fast forward 5 seconds (${keyFor("forward")})`}
-                onClick={() => seekBy(video, +SEEK_STEP_MS)}
+                title={`Fast forward ${secondsLabel(steps().seek)} (${keyFor("forward")})`}
+                onClick={() => seekBy(video, +seekStepMs())}
               >
                 <ForwardIcon />
               </ControlButton>
@@ -203,7 +206,7 @@ export function Panel(props: Props) {
               <input
                 class="seek"
                 type="range"
-                title="Seek (scroll to rewind or fast forward 5 seconds)"
+                title={`Seek (scroll to rewind or fast forward ${secondsLabel(steps().seek)})`}
                 min={0}
                 max={seekEnd()}
                 step="any"
@@ -212,7 +215,7 @@ export function Panel(props: Props) {
                 on:input={(event) => {
                   video.currentTime = event.currentTarget.valueAsNumber
                 }}
-                on:wheel={onWheelStep(WHEEL_RATE_INTERVAL_MS, (step) => seekBy(video, step * SEEK_STEP_MS))}
+                on:wheel={onWheelStep(WHEEL_RATE_INTERVAL_MS, (step) => seekBy(video, step * seekStepMs()))}
               />
               <ControlButton
                 class="time"

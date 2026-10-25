@@ -109,6 +109,70 @@ describe("popup keys", () => {
   })
 })
 
+describe("popup steps", () => {
+  const stepValues = (popup: Page) =>
+    popup.$$eval(".step-field", (fields) => fields.map((field) => (field as HTMLInputElement).value))
+  /** Types `text` over the step field at `index` (speed, Shift speed, seek, Shift seek) and presses `key`. */
+  const typeStep = async (popup: Page, index: number, text: string, key: KeyInput = "Enter") => {
+    // Clicking by position, as with the key buttons.
+    const box = await (await popup.$$(".step-field"))[index]?.boundingBox()
+    if (box == null) {
+      throw new Error(`No step field ${index}`)
+    }
+    await popup.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+    await popup.evaluate(() => (document.activeElement as HTMLInputElement).select())
+    await popup.keyboard.type(text)
+    await popup.keyboard.press(key)
+    await sleep(50)
+  }
+  const rewindTitle = (page: Page) => page.$eval(">>> .control[title^='Rewind']", (el) => el.getAttribute("title"))
+
+  it("change when typed over, refuse text that isn't a number, and reset", async () => {
+    const page = await openPlayer(env)
+    const popup = await openPopup(env, page)
+    expect(await stepValues(popup)).toEqual(["0.25", "0.1", "5", "20"])
+
+    // Not a number, and Esc: both put the old value back.
+    await typeStep(popup, 0, "fast")
+    await typeStep(popup, 2, "9", "Escape")
+    expect(await stepValues(popup)).toEqual(["0.25", "0.1", "5", "20"])
+    expect(await popup.$(".reset-keys")).toBeNull()
+
+    await typeStep(popup, 0, "0,5")
+    await typeStep(popup, 2, "1")
+    await typeStep(popup, 3, "30")
+    await popup.waitForSelector(".reset-keys")
+    expect(await stepValues(popup)).toEqual(["0.5", "0.1", "1", "30"])
+
+    await page.bringToFront()
+    await page.click("#overlay")
+    await page.keyboard.press("x")
+    await sleep(50)
+    expect(await video(page, "playbackRate")).toBe(1.5)
+    await page.keyboard.down("Shift")
+    await page.keyboard.press("D")
+    await page.keyboard.up("Shift")
+    await sleep(50)
+    expect(await video(page, "currentTime")).toBe(30)
+    await page.keyboard.press("a")
+    await sleep(50)
+    expect(await video(page, "currentTime")).toBe(29)
+
+    // The panel's buttons use the step without Shift too.
+    await openPanel(page)
+    expect(await rewindTitle(page)).toBe("Rewind 1 second (A)")
+    await page.click(">>> .control[title^='Speed up']")
+    await sleep(50)
+    expect(await video(page, "playbackRate")).toBe(2)
+
+    await popup.click(".reset-keys")
+    await popup.waitForFunction(() => document.querySelector(".reset-keys") == null)
+    expect(await stepValues(popup)).toEqual(["0.25", "0.1", "5", "20"])
+    await sleep(100)
+    expect(await rewindTitle(page)).toBe("Rewind 5 seconds (A)")
+  })
+})
+
 // The popup's extension API, as far as these tests use it.
 interface StorageArea {
   get(keys: string | Array<string>): Promise<Record<string, unknown>>

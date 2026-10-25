@@ -32,7 +32,7 @@ export function ControllersContainer(props: { host: HTMLElement }) {
 
   const app: App = {
     settings,
-    shortcuts: createKeyboardShortcuts(settings.keys, adjustSpeed),
+    shortcuts: createKeyboardShortcuts(settings.keys, settings.steps, adjustSpeed),
     tracker: createVideoTracker(props.host),
     setSpeed,
     adjustSpeed,

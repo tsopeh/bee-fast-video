@@ -18,6 +18,7 @@ Click the speed to open the full panel. The speed stays in the same place, so yo
 
 - Speed: slow down (`Z`) and speed up (`X`) by 0.25, or by 0.1 with `Shift`. Scroll over the speed to change it. Right-click the speed to reset it to 1.00.
 - Seek: rewind (`A`) and fast forward (`D`) by 5 seconds, or by 20 seconds with `Shift`. Keys `0`–`9` jump to 0%–90% of the video, like on YouTube. Scroll over the seek bar to move 5 seconds at a time.
+- All four steps can be changed in the popup. The step without `Shift` is also the step of the panel's buttons and of scrolling.
 - Scrolling works up and down or sideways: up and right are more. A swipe stays on the axis it starts on until you pause, so a diagonal swipe on a trackpad doesn't flip between more and less. Turning back takes a few pixels of movement, so jitter is ignored.
 - Play and pause (`S`).
 - Step to the previous (`Q`) or next (`E`) frame. This pauses the video.
@@ -37,7 +38,11 @@ The popup has the settings for the current site, the time saved, and all keys:
 
 <img src="docs/popup.png" alt="The popup" width=320>
 
-To change a key, click it in the popup and press the new one. Esc cancels. If another action had that key, the two swap. `Reset` next to the heading puts back all the defaults; it only shows when a key was changed. Keys pressed with Shift, Ctrl, Alt or Cmd can't be used, since Shift picks the other step and the others are left to the page and the browser. The number keys always seek. Changed keys follow you to other devices where the browser syncs extension data.
+To change a key, click it in the popup and press the new one. Esc cancels. If another action had that key, the two swap.
+
+To change a step, click its number in the faint box and type a new one. Enter or clicking elsewhere saves it; Esc, or text that isn't a number, puts the old one back. A comma works as the decimal point. Speed steps go from 0.01 to 16, seek steps from 0.1 seconds to an hour.
+
+`Reset` next to the heading puts back all the default keys and steps; it only shows when one was changed. Keys pressed with Shift, Ctrl, Alt or Cmd can't be used, since Shift picks the other step and the others are left to the page and the browser. The number keys always seek. Changed keys and steps follow you to other devices where the browser syncs extension data.
 
 Each key press shows what it did right of the panel for half a second: `+5 s`, `−0.25`, `+1 frame`, `Pause`, `50%`. A step forward or up drifts to the right, a step back or down to the left. The panel's buttons don't show it, since they're right where you look anyway.
 
@@ -45,7 +50,7 @@ Keyboard shortcuts work even when the site's player tries to swallow key presses
 
 ## How it works
 
-The extension has four parts: a content script (`entrypoints/content/`), which runs on every page, a small second content script that helps it find videos in shadow roots (`entrypoints/shadow-roots.content.ts`), a popup (`entrypoints/popup/`), and a background script (`entrypoints/background.ts`) that only adds up the time saved. The content script and the popup share settings through extension storage (`utils/settings.ts`). The sites where the extension is off and the changed keys are in sync storage, so they follow you to other devices. "Fit videos" and remembered speeds are local to each device.
+The extension has four parts: a content script (`entrypoints/content/`), which runs on every page, a small second content script that helps it find videos in shadow roots (`entrypoints/shadow-roots.content.ts`), a popup (`entrypoints/popup/`), and a background script (`entrypoints/background.ts`) that only adds up the time saved. The content script and the popup share settings through extension storage (`utils/settings.ts`). The sites where the extension is off and the changed keys and steps are in sync storage, so they follow you to other devices. "Fit videos" and remembered speeds are local to each device.
 
 ### Content script
 
@@ -67,7 +72,7 @@ All speed changes the user makes go through one function in `ControllersContaine
 
 ### Popup
 
-The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, and the keys, which can be changed there. Opposite keys share a row, followed by how far they step, without and with Shift. It fits without scrolling. The panel explains itself through its buttons' tooltips, so the popup doesn't. The key list has to be updated by hand when shortcuts change.
+The popup has the switches for the current site (on/off, remember my speed, fit videos), the time saved, and the keys, which can be changed there. Opposite keys share a row, followed by how far they step, without and with Shift; the steps can be changed too (`utils/steps.ts`). It fits without scrolling. With very long steps, like 3600 seconds, the action names wrap instead of pushing the steps out of view. The panel explains itself through its buttons' tooltips, so the popup doesn't. The key list has to be updated by hand when shortcuts change.
 
 The popup can't see the page's videos, so to remember a speed it asks the tab (`GET_SPEED` in `utils/settings.ts`). Only a frame with a shown panel answers, with the speed of the video the keys act on. With no answer, it remembers 1.00.
 

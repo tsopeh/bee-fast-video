@@ -10,6 +10,7 @@ import {
   withKey,
 } from "./keys"
 import { totalSavedSeconds } from "./saved-time"
+import { areDefaultSteps, changedSteps, resolveSteps, type StepName, type Steps } from "./steps"
 
 // Same storage key as v1, so that existing users keep their settings.
 const blacklistedHostnamesItem = storage.defineItem<Array<string>>("sync:blacklistedHostnames", {
@@ -29,6 +30,9 @@ const rememberedSpeedsItem = storage.defineItem<Record<string, number>>("local:r
 
 // The keys the user changed in the popup. In sync storage, since they're about the user's hands, not the device.
 const keysItem = storage.defineItem<Partial<KeyBindings>>("sync:keys", { fallback: {} })
+
+// The steps the user changed in the popup. In sync storage, like the keys.
+const stepsItem = storage.defineItem<Partial<Steps>>("sync:steps", { fallback: {} })
 
 /** This device's saved time (see `saved-time.ts`). Only the background script writes it. */
 export const savedSecondsItem = storage.defineItem<number>("local:savedSeconds", { fallback: 0 })
@@ -74,6 +78,7 @@ export function useSettings() {
   const fitVideos = useStorageItem(fitVideosHostnamesItem)
   const rememberedSpeeds = useStorageItem(rememberedSpeedsItem)
   const storedKeys = useStorageItem(keysItem)
+  const storedSteps = useStorageItem(stepsItem)
 
   const toggleHostname = (item: typeof blacklistedHostnamesItem, list: Array<string> = []) => {
     const hostname = currentHostname()
@@ -93,11 +98,17 @@ export function useSettings() {
   const isFitVideosOnThisDomain = createMemo(() => fitVideos()?.includes(currentHostname()) ?? false)
   const rememberedSpeed = createMemo(() => rememberedSpeeds()?.[currentHostname()])
   const keys = createMemo(() => resolveKeys(storedKeys() ?? {}))
+  const steps = createMemo(() => resolveSteps(storedSteps() ?? {}))
 
   return {
     currentHostname,
     /** Whether all settings have been read from storage. */
-    isLoaded: () => blacklist() != null && fitVideos() != null && rememberedSpeeds() != null && storedKeys() != null,
+    isLoaded: () =>
+      blacklist() != null &&
+      fitVideos() != null &&
+      rememberedSpeeds() != null &&
+      storedKeys() != null &&
+      storedSteps() != null,
     isDisabledOnThisDomain: () => blacklist()?.includes(currentHostname()) ?? false,
     toggleBlacklistHostName: () => toggleHostname(blacklistedHostnamesItem, blacklist()),
     isFitVideosOnThisDomain,
@@ -110,10 +121,13 @@ export function useSettings() {
     updateRememberedSpeed: (speed: number) => saveSpeeds.later(withSpeed(speed)),
     /** The shortcut keys, the defaults until the user's have been read. */
     keys,
-    areDefaultKeys: () => areDefaultKeys(keys()),
     setKey: (action: KeyAction, binding: KeyBinding) =>
       keysItem.setValue(changedKeys(withKey(keys(), action, binding))),
-    resetKeys: () => keysItem.removeValue(),
+    /** How far the speed and seek keys step, the defaults until the user's have been read. */
+    steps,
+    setStep: (name: StepName, value: number) => stepsItem.setValue(changedSteps({ ...steps(), [name]: value })),
+    areDefaultKeysAndSteps: () => areDefaultKeys(keys()) && areDefaultSteps(steps()),
+    resetKeysAndSteps: () => Promise.all([keysItem.removeValue(), stepsItem.removeValue()]),
   }
 }
 

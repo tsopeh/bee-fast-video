@@ -1,17 +1,33 @@
-import { createSignal, For, type JSX, onCleanup, type ParentProps, Show } from "solid-js"
+import { createEffect, createSignal, For, type JSX, onCleanup, type ParentProps, Show } from "solid-js"
 import { browser } from "#imports"
 import { BrainIcon, FitScreenIcon } from "@/assets/control-icons"
 import iconLarge from "@/assets/icon-large.png"
 import { formatHours, formatPlaybackRate } from "@/utils/format-time"
 import { bindingForKey, type KeyAction, keyLabel } from "@/utils/keys"
 import { GET_SPEED, useSettings, useTotalSavedSeconds } from "@/utils/settings"
+import { parseStep, type StepName } from "@/utils/steps"
 
 // Written by hand: keep in sync with `actions` in `shortcuts.ts`. Opposite keys share a row, followed by how far they
 // step, without and with Shift.
 
-const KEYS: Array<{ keys: Array<KeyAction>; action: string; step?: string; shiftStep?: string }> = [
-  { keys: ["slowDown", "speedUp"], action: "Slow down, speed up", step: "±0.25", shiftStep: "±0.1" },
-  { keys: ["rewind", "forward"], action: "Rewind, fast forward", step: "±5 s", shiftStep: "±20 s" },
+interface StepFields {
+  step: StepName
+  shiftStep: StepName
+  unit?: string
+  title: string
+}
+
+const KEYS: Array<{ keys: Array<KeyAction>; action: string; steps?: StepFields }> = [
+  {
+    keys: ["slowDown", "speedUp"],
+    action: "Slow down, speed up",
+    steps: { step: "speed", shiftStep: "shiftSpeed", title: "How much the speed changes" },
+  },
+  {
+    keys: ["rewind", "forward"],
+    action: "Rewind, fast forward",
+    steps: { step: "seek", shiftStep: "shiftSeek", unit: "s", title: "How many seconds to jump" },
+  },
   { keys: ["previousFrame", "nextFrame"], action: "Previous, next frame" },
   { keys: ["playPause"], action: "Play/pause" },
 ]
@@ -61,6 +77,15 @@ export function Popup() {
   window.addEventListener("keydown", onKeyDown)
   onCleanup(() => window.removeEventListener("keydown", onKeyDown))
 
+  const stepField = (name: StepName, title: string) => (
+    <StepField
+      value={settings.steps()[name]}
+      title={`${title}. Click to change.`}
+      parse={(text) => parseStep(name, text)}
+      onChange={(value) => settings.setStep(name, value)}
+    />
+  )
+
   const keyRow = (item: (typeof KEYS)[number]) => (
     <li>
       <span class="key-pair">
@@ -81,14 +106,22 @@ export function Popup() {
           )}
         </For>
       </span>
-      <span class="action" classList={{ wide: item.step == null }}>
+      <span class="action" classList={{ wide: item.steps == null }}>
         {item.action}
       </span>
-      <Show when={item.step}>
-        <span class="step">{item.step}</span>
-        <span class="shift-step">
-          or <kbd>Shift</kbd> {item.shiftStep}
-        </span>
+      <Show when={item.steps}>
+        {(steps) => (
+          <>
+            <span class="step">
+              ±{stepField(steps().step, steps().title)}
+              {steps().unit}
+            </span>
+            <span class="shift-step">
+              or <kbd>Shift</kbd> ±{stepField(steps().shiftStep, `${steps().title}, with Shift`)}
+              {steps().unit}
+            </span>
+          </>
+        )}
       </Show>
     </li>
   )
@@ -139,8 +172,8 @@ export function Popup() {
       <section>
         <div class="keys-heading">
           <h2>Keys</h2>
-          <Show when={!settings.areDefaultKeys()}>
-            <button type="button" class="reset-keys" onClick={() => settings.resetKeys()}>
+          <Show when={!settings.areDefaultKeysAndSteps()}>
+            <button type="button" class="reset-keys" onClick={() => settings.resetKeysAndSteps()}>
               Reset
             </button>
           </Show>
@@ -184,5 +217,56 @@ function Setting(
         onChange={() => props.onChange()}
       />
     </label>
+  )
+}
+
+/**
+ * A step that can be typed over, in a faint box so it looks editable. Enter or leaving the box saves it. Esc, or text
+ * that isn't a number, puts the old value back.
+ */
+function StepField(props: {
+  value: number
+  title: string
+  parse: (text: string) => number | undefined
+  onChange: (value: number) => void
+}) {
+  const [text, setText] = createSignal(String(props.value))
+  // Follows the stored value, also when Reset or another device changes it.
+  createEffect(() => setText(String(props.value)))
+  const show = (input: HTMLInputElement, value: number) => {
+    input.value = String(value)
+    setText(input.value)
+  }
+  const save = (input: HTMLInputElement) => {
+    const value = props.parse(input.value)
+    // Shown even when unchanged, since a value out of range is moved into it and storage wouldn't change.
+    show(input, value ?? props.value)
+    if (value != null && value !== props.value) {
+      props.onChange(value)
+    }
+  }
+  return (
+    <input
+      type="text"
+      inputmode="decimal"
+      class="step-field"
+      title={props.title}
+      value={text()}
+      // As wide as its text, plus padding and border. The popup has no room to spare.
+      style={{ width: `calc(${Math.max(text().length, 1)}ch + 6px)` }}
+      onInput={(event) => setText(event.currentTarget.value)}
+      onBlur={(event) => save(event.currentTarget)}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault()
+          show(event.currentTarget, props.value)
+          event.currentTarget.blur()
+        } else if (event.key === "Enter") {
+          // Saved here too, since a window without focus gets no blur until it has focus again.
+          save(event.currentTarget)
+          event.currentTarget.blur()
+        }
+      }}
+    />
   )
 }

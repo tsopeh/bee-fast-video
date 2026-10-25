@@ -1,8 +1,3 @@
-/** Speed change of the slow down / speed up buttons, the Z / X keys and one scroll step. */
-export const SPEED_STEP = 0.25
-/** Seek of the back / forward buttons, the A / D keys and one scroll step on the seek bar. */
-export const SEEK_STEP_MS = 5_000
-
 // Adjustments (rate, seek, volume) are relative to the current value and never snap to a grid (e.g. multiples of 5 s),
 // so going back and forth while the video plays doesn't get stuck in the same window, and stepping up then down returns
 // to the starting value. Rates and volumes are only rounded to hundredths to remove floating point noise
